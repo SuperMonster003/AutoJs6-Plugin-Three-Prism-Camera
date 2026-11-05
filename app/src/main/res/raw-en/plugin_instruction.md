@@ -1,6 +1,6 @@
 3-Prism Camera is the camera plugin of AutoJs6. Built on Jetpack CameraX, it gives scripts photo capture, continuous frame analysis and viewfinder preview. Live frames reach the script as AutoJs6 `ImageWrapper` objects, so a script can hand them straight to existing modules such as `ocr`, `barcode` or `yolo` for live barcode scanning, text recognition and object detection.
 
-> This is a development preview: the AutoJs6 Plugin Center recognizes the plugin, but photo capture, live frames, preview, the capture screen and the `camera` script module are not delivered yet. The sections below describe the design goals of 1.0.0; see the roadmap for progress.
+> This is a development preview: the AutoJs6 Plugin Center recognizes the plugin and AutoJs6 can already use the camera core (opening the camera, live frames, photo capture, preview and the controls), but the capture screen and the `camera` script module are not delivered yet. The sections below describe the design goals of 1.0.0; see the roadmap for progress.
 
 ### Features
 

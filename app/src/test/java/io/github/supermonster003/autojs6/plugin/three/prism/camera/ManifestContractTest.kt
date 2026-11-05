@@ -26,13 +26,15 @@ class ManifestContractTest {
     private val application: Element get() = manifest.child("application")
 
     @Test
-    fun `the permissions are exactly the plugin permission, the camera and the camera foreground service`() {
+    fun `the permissions are exactly the plugin permission, the camera, the camera foreground service and its notification`() {
+        // Appendix D Q12: POST_NOTIFICATIONS keeps the ongoing camera notification visible on API 33+.
         assertEquals(
             listOf(
                 PLUGIN_PERMISSION,
                 "android.permission.CAMERA",
                 "android.permission.FOREGROUND_SERVICE",
                 CAMERA_SERVICE_PERMISSION,
+                "android.permission.POST_NOTIFICATIONS",
             ),
             manifest.children("uses-permission").map { it.android("name") },
         )
@@ -96,16 +98,18 @@ class ManifestContractTest {
     }
 
     @Test
-    fun `the activities are the wake, capture and transparent start screens`() {
+    fun `the activities are the wake, capture, transparent start and permission screens`() {
         assertEquals(
-            listOf(".WakeActivity", CAPTURE_ACTIVITY, ".ThreePrismCameraStartActivity"),
+            listOf(".WakeActivity", CAPTURE_ACTIVITY, ".ThreePrismCameraStartActivity", ".ThreePrismCameraPermissionActivity"),
             application.children("activity").map { it.android("name") },
         )
         assertEquals("false", activity(CAPTURE_ACTIVITY).android("exported"))
-        val start = activity(".ThreePrismCameraStartActivity")
-        assertEquals("false", start.android("exported"))
-        assertEquals("true", start.android("excludeFromRecents"))
-        assertEquals("@style/Theme.ThreePrismCamera.Transparent", start.android("theme"))
+        listOf(".ThreePrismCameraStartActivity", ".ThreePrismCameraPermissionActivity").forEach { name ->
+            val transparent = activity(name)
+            assertEquals("false", transparent.android("exported"))
+            assertEquals("true", transparent.android("excludeFromRecents"))
+            assertEquals("@style/Theme.ThreePrismCamera.Transparent", transparent.android("theme"))
+        }
     }
 
     @Test

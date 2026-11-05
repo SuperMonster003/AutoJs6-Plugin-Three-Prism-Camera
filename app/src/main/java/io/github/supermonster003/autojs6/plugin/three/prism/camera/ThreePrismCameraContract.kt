@@ -60,8 +60,17 @@ internal object ThreePrismCameraContract {
      * zh-CN: 本构建端到端实现的功能 (路线图 D42); 宿主不调用未声明功能的方法. `sharedMemory` 需要 API 27 (API 24 - 26 经文件传帧,
      * 路线图 D27). `captureUi` 随路线图 P3.1 的取景页加入 (附录 D Q3 = (b)).
      */
-    @Suppress("UNUSED_PARAMETER")
-    fun features(sdkInt: Int = Build.VERSION.SDK_INT): List<String> = emptyList()
+    fun features(sdkInt: Int = Build.VERSION.SDK_INT): List<String> = buildList {
+        add(CameraContract.FEATURE_PREVIEW)
+        add(CameraContract.FEATURE_ANALYSIS)
+        add(CameraContract.FEATURE_CAPTURE)
+        add(CameraContract.FEATURE_TORCH)
+        add(CameraContract.FEATURE_ZOOM)
+        add(CameraContract.FEATURE_EXPOSURE)
+        add(CameraContract.FEATURE_FOCUS)
+        add(CameraContract.FEATURE_FLASH)
+        if (sdkInt >= Build.VERSION_CODES.O_MR1) add(CameraContract.FEATURE_SHARED_MEMORY)
+    }
 
     /** Resource reference of the localized Plugin Center instruction. zh-CN: 插件中心本地化说明的资源引用. */
     const val INSTRUCTION_REFERENCE = "@raw/plugin_instruction"

@@ -12,6 +12,13 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
 
+    <!--
+        Roadmap appendix D Q12: from API 33 the ongoing notification of the camera foreground service only
+        shows in the notification drawer with this permission (roadmap D10); the permission screen asks for it together
+        with the camera.
+    -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false" />
@@ -123,7 +130,17 @@
             android:exported="false"
             android:theme="@style/Theme.ThreePrismCamera.Transparent" />
 
-        <!-- Camera foreground service (roadmap D25): not exported, started for an open session (roadmap P2.1). -->
+        <!--
+            Transparent permission screen of requestPermission (roadmap D25, P2.1): asks for the camera (and the
+            notifications on API 33+) and finishes. Not exported; the plugin starts it itself.
+        -->
+        <activity
+            android:name=".ThreePrismCameraPermissionActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:theme="@style/Theme.ThreePrismCamera.Transparent" />
+
+        <!-- Camera foreground service (roadmap D25): not exported, started while a camera session is open (roadmap P2.1). -->
         <service
             android:name=".ThreePrismCameraForegroundService"
             android:exported="false"
@@ -144,7 +161,7 @@
             </intent-filter>
         </service>
 
-        <!-- Camera capability service (roadmap D23, appendix B.2): a placeholder Binder until roadmap P2.1 stages the host contract. -->
+        <!-- Camera capability service (roadmap D23, appendix B.2): ICameraPlugin of the staged host contract (roadmap P2.1). -->
         <service
             android:name=".ThreePrismCameraService"
             android:exported="true"

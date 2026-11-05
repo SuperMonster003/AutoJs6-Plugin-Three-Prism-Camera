@@ -1,5 +1,6 @@
 package io.github.supermonster003.autojs6.plugin.three.prism.camera
 
+import android.Manifest
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -8,12 +9,18 @@ import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.os.Build
+import android.os.Bundle
 import android.os.IBinder
 import android.os.Parcel
 import android.os.Parcelable
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import io.github.supermonster003.autojs6.plugin.three.prism.camera.session.CameraEngine
 import org.autojs.plugin.camera.api.CameraCapabilityKeys
+import org.autojs.plugin.camera.api.CameraContract
+import org.autojs.plugin.camera.api.CameraErrorCodes
+import org.autojs.plugin.camera.api.CameraResultKeys
+import org.autojs.plugin.camera.api.ICameraPlugin
 import org.autojs.plugin.common.api.IPluginInfoProvider
 import org.autojs.plugin.common.api.PluginCapabilityKeys
 import org.autojs.plugin.common.api.PluginInfo
@@ -30,16 +37,16 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * The host-facing activation and discovery contract against the installed APK (roadmap P0.4): the Wake activity,
  * discovery of exactly one service per formal action and category, explicit binding with the expected Binder descriptors,
- * `getInfo()` marshalled through a real Parcel with the transaction code the host uses, and the placeholder capability
- * Binder that rejects every call until roadmap P2.1 implements `ICameraPlugin`.
+ * `getInfo()` marshalled through a real Parcel with the transaction code the host uses, and the `ICameraPlugin` of the
+ * capability service (roadmap P2.1): `getInfo`, `getCapabilities` and the error answer of `openSession`.
  *
  * The services run in the plugin's own process, so the calls below use `transact` with explicit Parcels instead of
- * `asInterface`, which would return the local object and skip marshalling. Roadmap P2 and P5.1 add the camera calls.
+ * `asInterface`, which would return the local object and skip marshalling. Roadmap P5.1 adds the camera calls.
  *
  * zh-CN: 针对已安装 APK 验证面向宿主的激活与发现契约 (路线图 P0.4): Wake Activity, 每组正式 action 与 category 恰好发现一个服务,
- * 显式绑定与 Binder 描述符, 以宿主使用的事务号经真实 Parcel 编组的 `getInfo()`, 以及在路线图 P2.1 实现 `ICameraPlugin` 之前拒绝全部
- * 调用的占位能力 Binder. 服务与测试同进程, 因此下文用显式 Parcel 调用 `transact`, 不用会直接返回本地对象而跳过编组的
- * `asInterface`. 相机调用由路线图 P2 与 P5.1 补充.
+ * 显式绑定与 Binder 描述符, 以宿主使用的事务号经真实 Parcel 编组的 `getInfo()`, 以及能力服务的 `ICameraPlugin` (路线图 P2.1):
+ * `getInfo`, `getCapabilities` 与 `openSession` 的错误应答. 服务与测试同进程, 因此下文用显式 Parcel 调用 `transact`, 不用会直接返回
+ * 本地对象而跳过编组的 `asInterface`. 相机调用由路线图 P5.1 补充.
  */
 @RunWith(AndroidJUnit4::class)
 class ThreePrismCameraContractTest {
@@ -92,23 +99,61 @@ class ThreePrismCameraContractTest {
     }
 
     @Test
-    fun capabilityServiceCarriesThePlaceholderDescriptor() {
+    fun capabilityServiceAnswersTheCameraPlugin() {
         val serviceInfo = discoverSingleService(
             ThreePrismCameraContract.SERVICE_ACTION, ThreePrismCameraContract.SERVICE_CATEGORY, ThreePrismCameraService::class.java.name,
         )
         assertEquals(ThreePrismCameraContract.REQUIRED_HOST_VERSION.toString(), serviceInfo.metaData?.get(PluginCapabilityKeys.REQUIRES_HOST_VERSION)?.toString())
         withBoundService(serviceInfo) { binder ->
+            assertEquals(ICameraPlugin.DESCRIPTOR, binder.interfaceDescriptor)
             assertEquals(ThreePrismCameraContract.CAPABILITY_DESCRIPTOR, binder.interfaceDescriptor)
-            // The first AIDL transaction of ICameraPlugin (roadmap P1.1) is not handled by the placeholder.
-            val data = Parcel.obtain()
-            val reply = Parcel.obtain()
-            try {
-                data.writeInterfaceToken(ThreePrismCameraContract.CAPABILITY_DESCRIPTOR)
-                assertFalse("the placeholder rejects every call", binder.transact(IBinder.FIRST_CALL_TRANSACTION, data, reply, 0))
-            } finally {
-                data.recycle()
-                reply.recycle()
-            }
+
+            // ICameraPlugin 1: getInfo() answers the identity of the INFO service (roadmap P2.1).
+            // zh-CN: ICameraPlugin 1: getInfo() 应答与 INFO 服务相同的身份 (路线图 P2.1).
+            assertIdentity(transactCamera(binder, GET_INFO) { pluginInfoCreator.createFromParcel(it) })
+
+            // ICameraPlugin 2: getCapabilities() adds the live state to the static capabilities (protocol "getCapabilities").
+            // zh-CN: ICameraPlugin 2: getCapabilities() 在静态能力之外加上实时状态 (协议 "getCapabilities" 一节).
+            val capabilities = transactCamera(binder, GET_CAPABILITIES) { Bundle.CREATOR.createFromParcel(it) }
+            capabilities.classLoader = javaClass.classLoader
+            assertFalse("no error answer", capabilities.containsKey(CameraContract.KEY_ERROR_CODE))
+            assertEquals(1, capabilities.getInt(CameraContract.KEY_CONTRACT_VERSION))
+            assertEquals(ThreePrismCameraContract.REQUIRED_HOST_VERSION, capabilities.getLong(PluginCapabilityKeys.REQUIRES_HOST_VERSION))
+            assertArrayEquals(ThreePrismCameraContract.features().toTypedArray(), capabilities.getStringArray(CameraCapabilityKeys.FEATURES))
+            val granted = context.checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+            assertEquals(granted, capabilities.getBoolean(CameraCapabilityKeys.PERMISSION_GRANTED))
+            assertEquals(CameraEngine.VERSION, capabilities.getString(CameraCapabilityKeys.ENGINE_VERSION))
+            assertEquals(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1, capabilities.getBoolean(CameraCapabilityKeys.SHARED_MEMORY))
+            assertTrue(capabilities.containsKey(CameraCapabilityKeys.CAMERA_COUNT))
+            if (!granted) assertEquals(0, capabilities.getInt(CameraCapabilityKeys.CAMERA_COUNT))
+
+            // ICameraPlugin 4: openSession without a callback is an error answer, not an exception (protocol "Common rules").
+            // zh-CN: ICameraPlugin 4: 不带回调的 openSession 得到错误应答而不是异常 (协议 "Common rules" 一节).
+            val refused = transactCamera(binder, OPEN_SESSION, write = { data ->
+                data.writeInt(1)
+                Bundle().apply { putInt(CameraContract.KEY_CONTRACT_VERSION, 1) }.writeToParcel(data, 0)
+                data.writeStrongBinder(null)
+            }) { Bundle.CREATOR.createFromParcel(it) }
+            assertEquals(CameraErrorCodes.INVALID_ARGUMENT, refused.getString(CameraContract.KEY_ERROR_CODE))
+            assertEquals(1, refused.getInt(CameraContract.KEY_CONTRACT_VERSION))
+            assertFalse("errors carry no result keys", refused.containsKey(CameraResultKeys.SESSION))
+        }
+    }
+
+    /** A call of ICameraPlugin through a real Parcel; [read] reads the non-null result. */
+    private fun <T> transactCamera(binder: IBinder, code: Int, write: (Parcel) -> Unit = {}, read: (Parcel) -> T): T {
+        val data = Parcel.obtain()
+        val reply = Parcel.obtain()
+        try {
+            data.writeInterfaceToken(ICameraPlugin.DESCRIPTOR)
+            write(data)
+            assertTrue("transaction $code must be handled", binder.transact(code, data, reply, 0))
+            reply.readException()
+            assertTrue("transaction $code must not answer null", reply.readInt() != 0)
+            return read(reply)
+        } finally {
+            data.recycle()
+            reply.recycle()
         }
     }
 
@@ -216,6 +261,12 @@ class ThreePrismCameraContractTest {
 
     private companion object {
         const val PLUGIN_PERMISSION = "org.autojs.permission.PLUGIN"
+
+        // The transaction codes of ICameraPlugin (protocol "Interfaces"; CameraContractMirrorTest pins the order).
+        // zh-CN: ICameraPlugin 的事务号 (协议 "Interfaces" 一节; CameraContractMirrorTest 固定其顺序).
+        const val GET_INFO = IBinder.FIRST_CALL_TRANSACTION
+        const val GET_CAPABILITIES = IBinder.FIRST_CALL_TRANSACTION + 1
+        const val OPEN_SESSION = IBinder.FIRST_CALL_TRANSACTION + 3
 
         @Suppress("UNCHECKED_CAST")
         val pluginInfoCreator: Parcelable.Creator<PluginInfo> =

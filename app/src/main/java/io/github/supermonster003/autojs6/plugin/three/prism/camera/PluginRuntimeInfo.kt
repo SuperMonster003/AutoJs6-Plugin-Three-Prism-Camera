@@ -69,8 +69,8 @@ internal fun pluginRuntimeFields(
 )
 
 /**
- * The identity answered by the INFO service (and by `ICameraPlugin.getInfo` once roadmap P2.1 lands).
- * zh-CN: INFO 服务返回的身份 (路线图 P2.1 落地后 `ICameraPlugin.getInfo` 也返回它).
+ * The identity answered by the INFO service and by `ICameraPlugin.getInfo` (roadmap P2.1).
+ * zh-CN: INFO 服务与 `ICameraPlugin.getInfo` 返回的身份 (路线图 P2.1).
  */
 internal fun PluginRuntimeFields.toPluginInfo(): PluginInfo = PluginInfo().also { info ->
     info.name = name

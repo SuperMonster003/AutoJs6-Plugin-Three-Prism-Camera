@@ -46,7 +46,7 @@ Le README.md actuel prend en charge les langues suivantes:
 
 Le plugin détient la caméra et communique avec AutoJs6 par Binder: les images en direct passent par un tampon circulaire en mémoire partagée (des fichiers temporaires sous Android 7.0 - 8.0), les photos arrivent dans AutoJs6 en JPEG pour être décodées ou enregistrées telles quelles, et l'aperçu s'affiche directement dans une `SurfaceView` de l'interface du script, sans faire passer de pixels par Binder. Tant qu'une session est ouverte, le plugin exécute un service de premier plan caméra, si bien que les scripts continuent de recevoir des images en arrière-plan ou écran éteint.
 
-> Ceci est une préversion de développement: le centre de plugins d'AutoJs6 reconnaît le plugin, mais la prise de photos, les images en direct, l'aperçu, l'écran de prise de vue et le module de script `camera` ne sont pas encore livrés. Les sections suivantes décrivent les objectifs de conception de la 1.0.0; consultez la feuille de route pour l'avancement.
+> Ceci est une préversion de développement: le centre de plugins d'AutoJs6 reconnaît le plugin et AutoJs6 peut déjà utiliser le cœur caméra (ouverture de la caméra, images en direct, prise de photos, aperçu et réglages), mais l'écran de prise de vue et le module de script `camera` ne sont pas encore livrés. Les sections suivantes décrivent les objectifs de conception de la 1.0.0; consultez la feuille de route pour l'avancement.
 
 ******
 
@@ -134,7 +134,7 @@ Non. Le plugin ne demande aucune autorisation de stockage et n'écrit jamais dan
 Le plugin réduit autant que possible ses autorisations:
 
 - Points d'entrée protégés: le service de capacités et le point d'activation exigent l'autorisation de plugin d'AutoJs6 (`org.autojs.permission.PLUGIN`), les autres applications ne peuvent donc pas les appeler; le service de premier plan et l'écran de démarrage transparent ne sont pas exportés.
-- Caméra: seules les autorisations `CAMERA` et de service de premier plan caméra sont demandées; la caméra n'est utilisée que pendant une session ouverte et est libérée dès que la session se ferme, que le script se termine ou qu'AutoJs6 est arrêté.
+- Caméra: seules les autorisations `CAMERA`, de service de premier plan caméra et, sur Android 13 ou ultérieur, des notifications (pour la notification de caméra en cours d'utilisation) sont demandées; la caméra n'est utilisée que pendant une session ouverte et est libérée dès que la session se ferme, que le script se termine ou qu'AutoJs6 est arrêté.
 - Réseau et stockage: aucune autorisation réseau ni stockage; les images et les photos ne circulent qu'entre le plugin et AutoJs6 et n'atteignent jamais la galerie du système.
 - Usage exclusif: une session à la fois (un script ou l'écran de prise de vue du plugin), et le message d'erreur indique le détenteur.
 
@@ -178,11 +178,17 @@ Les plans, décisions de conception et l'avancement sont suivis sous forme de li
 
 _2026/11/05_
 
-- `Note` Préversion de développement: le centre des plugins d'AutoJs6 peut détecter le plugin; la prise de photos, les images en direct, le viseur, l'écran de prise de vue et le module de script camera ne sont pas encore livrés
+- `Note` Préversion de développement: AutoJs6 peut déjà utiliser le cœur caméra (ouverture de la caméra, images en direct, prise de photos, aperçu et réglages); l'écran de prise de vue et le module de script camera ne sont pas encore livrés
 - `Note` Nécessite AutoJs6 6.8.1 (6641) ou ultérieur (la version minimale exacte sera renseignée une fois les modifications de l'hôte intégrées)
 - `Note` L'icône actuelle est une proposition et peut encore changer
-- `Fonctionnalité` Squelette du plugin: protocole d'activation Wake, service d'identité du centre des plugins et service de capacité caméra (provisoire)
-- `Fonctionnalité` Un seul APK pour tous les appareils; les bibliothèques natives fournies avec CameraX et Compose sont alignées sur des pages mémoire de 16 KB
+- `Fonctionnalité` Squelette du plugin: protocole d'activation Wake et service d'identité du centre des plugins
+- `Fonctionnalité` Service de capacité caméra: une seule session peut utiliser la caméra à la fois et une caméra occupée indique son détenteur; une notification de premier plan s'affiche tant que la caméra est utilisée, et quand AutoJs6 se ferme la caméra est libérée aussitôt et la notification disparaît
+- `Fonctionnalité` Images en direct: les images RGBA parviennent à AutoJs6 à tour de rôle par 3 blocs de mémoire partagée (Android 8.1 ou ultérieur) ou 3 fichiers temporaires (Android 7.0 - 8.0), avec la résolution et la fréquence choisies; les images qui ne peuvent pas être traitées à temps sont sautées et comptées
+- `Fonctionnalité` Prise de photos: le JPEG parvient à AutoJs6 sous forme de fichier en lecture seule avec ses dimensions, l'orientation EXIF, le nombre d'octets et l'indication miroir; la qualité, la résolution et le mode flash sont réglables
+- `Fonctionnalité` Aperçu: l'image s'affiche sur une surface fournie par AutoJs6 et suit la rotation de l'écran; l'aperçu de l'objectif avant est en miroir par défaut, pas les images ni les photos
+- `Fonctionnalité` Réglages: lampe torche, mode flash, zoom (rapport ou linéaire), correction d'exposition, mise au point et mesure par toucher; ce que l'appareil ne prend pas en charge (comme le flash de l'objectif avant) renvoie UNSUPPORTED
+- `Fonctionnalité` Autorisation caméra: ouvrir la caméra sans elle renvoie PERMISSION_DENIED et l'autorisation peut être demandée; sur Android 13 ou ultérieur, l'autorisation des notifications est aussi demandée, pour la notification de caméra en cours d'utilisation
+- `Fonctionnalité` Un paquet par ABI (arm64-v8a, armeabi-v7a, x86_64, x86) et un paquet universal pour tous les appareils; les bibliothèques natives fournies avec CameraX et Compose sont alignées sur des pages mémoire de 16 KB
 - `Fonctionnalité` README, instructions du centre des plugins et journaux des modifications en 10 langues, générés à partir de sources JSON
 - `Dépendance` Ajout de Jetpack CameraX 1.6.2 (ouvre la caméra, prend les photos, fournit les images et le viseur)
 - `Dépendance` Ajout de Jetpack Compose BOM 2026.09.00 (écrans du plugin)

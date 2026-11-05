@@ -4,17 +4,20 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
+import io.github.supermonster003.autojs6.plugin.three.prism.camera.session.CameraExecutors
+import io.github.supermonster003.autojs6.plugin.three.prism.camera.session.CameraSession
 
 /**
- * The application. It only registers the notification channel of the camera foreground service (roadmap D25), so the
- * channel exists before roadmap P2.1 starts the service for the first time.
- * zh-CN: 应用类. 只注册相机前台服务的通知渠道 (路线图 D25), 使渠道在路线图 P2.1 首次启动服务之前就已存在.
+ * The application. It registers the notification channel of the camera foreground service (roadmap D25) and removes
+ * the picture and frame files a killed process left behind.
+ * zh-CN: 应用类. 注册相机前台服务的通知渠道 (路线图 D25), 并删除被杀进程遗留的照片与帧文件.
  */
 class ThreePrismCameraApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannels()
+        CameraExecutors.io.execute { runCatching { CameraSession.cleanStaleFiles(this) } }
     }
 
     private fun createNotificationChannels() {

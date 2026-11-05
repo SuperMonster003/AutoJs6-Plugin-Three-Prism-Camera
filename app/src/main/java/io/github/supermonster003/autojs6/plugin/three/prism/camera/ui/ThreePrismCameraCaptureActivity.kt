@@ -24,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.supermonster003.autojs6.plugin.three.prism.camera.R
 import io.github.supermonster003.autojs6.plugin.three.prism.camera.session.CameraController
+import io.github.supermonster003.autojs6.plugin.three.prism.camera.session.CaptureUiRegistry
 
 /**
  * Launcher target of the plugin. Roadmap P3.1 turns it into the capture screen (CameraXViewfinder of `camera-compose`,
@@ -31,20 +32,33 @@ import io.github.supermonster003.autojs6.plugin.three.prism.camera.session.Camer
  * (roadmap P0.2), which is enough to see on a device that CameraX initializes.
  * zh-CN: 插件的启动器目标. 路线图 P3.1 把它改为取景页 (`camera-compose` 的 CameraXViewfinder, 路线图 D41, 附录 D Q3); 骨架显示
  * 插件描述与 CameraX 探测得到的镜头数 (路线图 P0.2), 足以在设备上确认 CameraX 能够初始化.
+ *
+ * Started by `openCaptureUi` it carries [CaptureUiRegistry.EXTRA_TOKEN]; closing it without a picture answers
+ * `CANCELLED` through the registry (protocol "Capture").
+ * zh-CN: 由 `openCaptureUi` 启动时携带 [CaptureUiRegistry.EXTRA_TOKEN]; 未拍照就关闭时经登记表应答 `CANCELLED` (协议 "Capture" 一节).
  */
 class ThreePrismCameraCaptureActivity : ComponentActivity() {
 
     private val probe = mutableStateOf<CameraController.Probe?>(null)
+    private var captureToken: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        captureToken = intent?.getStringExtra(CaptureUiRegistry.EXTRA_TOKEN)
         CameraController(this).probe { probe.value = it }
         setContent {
             PrismTheme {
                 SkeletonScreen(probe.value)
             }
         }
+    }
+
+    override fun onDestroy() {
+        // A rotation recreates the activity; only a real close cancels the pending result.
+        // zh-CN: 旋转会重建 Activity; 只有真正关闭时才取消待返回的结果.
+        if (isFinishing) captureToken?.let(CaptureUiRegistry::cancel)
+        super.onDestroy()
     }
 
 }

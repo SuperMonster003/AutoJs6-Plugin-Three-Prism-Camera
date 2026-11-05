@@ -4,17 +4,21 @@ import android.app.Activity
 import android.os.Bundle
 
 /**
- * Transparent start entry of the camera foreground service (roadmap D25): on API 34+ a camera foreground service may only
- * start while the plugin is visible, so roadmap P2.1 starts the service from here and finishes. The skeleton finishes at
- * once without any user interface.
- * zh-CN: 相机前台服务的透明启动入口 (路线图 D25): API 34+ 只允许插件在可见状态启动相机前台服务, 路线图 P2.1 在这里启动服务后
- * 结束. 骨架立即结束, 不显示任何界面.
+ * Transparent, internal activity that starts [ThreePrismCameraForegroundService] while the plugin is the top app (API
+ * 34+, roadmap D25): only a camera foreground service started from a visible state gets camera access since Android 14.
+ * It shows nothing and closes as soon as the service reports (three seconds at the latest).
+ * zh-CN: 透明的内部 Activity, 在插件为顶层应用时启动 [ThreePrismCameraForegroundService] (API 34+, 路线图 D25): 自 Android 14 起, 只有在可见状态下
+ * 启动的相机前台服务才能访问相机. 它不显示任何内容, 服务一有结果即关闭 (最迟三秒).
  */
 class ThreePrismCameraStartActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        finish()
+        if (savedInstanceState != null) {
+            finish()
+            return
+        }
+        ThreePrismCameraForegroundService.onStarterCreated(this)
     }
 
 }

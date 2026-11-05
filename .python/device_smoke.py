@@ -17,7 +17,8 @@
 5. activation and getInfo: an AutoJs6 script (RunIntentActivity, as in 3-Macaw Speech) starts the Wake activity (it
    needs org.autojs.permission.PLUGIN, which the shell lacks), binds the INFO service explicitly and calls getInfo(),
    whose supportedAbis must equal the ABIs whose whitelisted native libraries the installed APK carries,
-   then binds the CAMERA service and checks the placeholder ICameraPlugin descriptor (roadmap P2.1 replaces it). The
+   then binds the CAMERA service and calls ICameraPlugin getInfo() and getCapabilities() (roadmap P2.1): the descriptor,
+   the plugin ID, the features, the permission state, the camera count, shared memory and the CameraX version. The
    Wake start is confirmed from the ActivityManager log lines since the step began (device clock, logcat -t).
 6. --screenshot <dir>: the script opens AutoJs6's Plugin Center and the screen is saved as
    plugin-center-<serial>-system-<light|dark>.png. The name records the system night mode, which picks the launcher
@@ -117,11 +118,27 @@ attempt("info", function () {
 });
 attempt("camera", function () {
     var binder = bind(".ThreePrismCameraService");
-    var data = android.os.Parcel.obtain(), reply = android.os.Parcel.obtain();
-    data.writeInterfaceToken("%(descriptor)s");
-    var handled = binder.transact(android.os.IBinder.FIRST_CALL_TRANSACTION, data, reply, 0);
-    data.recycle(); reply.recycle();
-    return { descriptor: String(binder.getInterfaceDescriptor()), firstCallHandled: handled };
+    // ICameraPlugin 1 getInfo and 2 getCapabilities as raw Parcels, so a host without the camera contract can run them.
+    function call(code, read) {
+        var data = android.os.Parcel.obtain(), reply = android.os.Parcel.obtain();
+        try {
+            data.writeInterfaceToken("%(descriptor)s");
+            if (!binder.transact(android.os.IBinder.FIRST_CALL_TRANSACTION + code, data, reply, 0)) throw new Error("transaction " + code + " not handled");
+            reply.readException();
+            return reply.readInt() !== 0 ? read(reply) : null;
+        } finally { data.recycle(); reply.recycle(); }
+    }
+    var info = call(0, function (p) { return Packages.org.autojs.plugin.common.api.PluginInfo.CREATOR.createFromParcel(p); });
+    var caps = call(1, function (p) { return android.os.Bundle.CREATOR.createFromParcel(p); });
+    if (caps == null) throw new Error("getCapabilities returned null");
+    var features = caps.getStringArray("cameraFeatures");
+    return {
+        descriptor: String(binder.getInterfaceDescriptor()), id: info == null ? "null" : String(info.id),
+        error: caps.getString("errorCode") == null ? undefined : String(caps.getString("errorCode")),
+        features: features == null ? "null" : String(java.util.Arrays.toString(features)),
+        permission: caps.getBoolean("cameraPermissionGranted", false), engine: String(caps.getString("cameraEngineVersion")),
+        cameras: caps.getInt("cameraCount", -1), sharedMemory: caps.getBoolean("cameraSharedMemory", false)
+    };
 });
 bound.forEach(function (c) { try { context.unbindService(c); } catch (e) { r.errors.push("unbind " + e); } });
 if (%(center)s) {
@@ -154,6 +171,12 @@ def sha256(path):
 def required_host_version():
     match = re.search(r"^val requiredHostVersion = (\d+)$", (ROOT / "app" / "build.gradle.kts").read_text(encoding="utf-8"), re.M)
     return int(match.group(1))
+
+
+def camerax_version():
+    """The CameraX version of the version catalog, answered as cameraEngineVersion."""
+    match = re.search(r'^camerax = "([^"]+)"$', (ROOT / "gradle" / "libs.versions.toml").read_text(encoding="utf-8"), re.M)
+    return match.group(1)
 
 
 def apk_abis(apk):
@@ -328,8 +351,11 @@ def run(serial, args):
            f"{info.get('requiresHostVersion')}, contract {info.get('contractVersion')}, features {info.get('features')}, capability keys "
            f"[{info.get('capabilityKeys')}], {info.get('ms')} ms {info.get('error') or ''}".rstrip())
     camera = steps.get("camera", {})
-    report("camera binder", camera.get("descriptor") == CAPABILITY_DESCRIPTOR and camera.get("firstCallHandled") is False,
-           f"descriptor {camera.get('descriptor')}, first call handled {camera.get('firstCallHandled')} {camera.get('error') or ''}".rstrip())
+    report("camera binder", not camera.get("error") and camera.get("descriptor") == CAPABILITY_DESCRIPTOR and camera.get("id") == PLUGIN_ID
+           and camera.get("engine") == camerax_version() and camera.get("features", "null") != "null",
+           f"descriptor {camera.get('descriptor')}, getInfo id {camera.get('id')}, features {camera.get('features')}, permission "
+           f"{camera.get('permission')}, cameras {camera.get('cameras')}, sharedMemory {camera.get('sharedMemory')}, engine "
+           f"{camera.get('engine')} {camera.get('error') or ''}".rstrip())
     if r.get("errors"):
         report("script", False, f"errors {[e[:160] for e in r['errors']]}")
     if args.screenshot:
