@@ -67,11 +67,11 @@
 
 ******
 
-1. [Releases](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/releases) から APK をダウンロードしてインストールします. パッケージは 1 つで, すべての端末で使えます.
+1. [Releases](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/releases) から端末の ABI に合った APK をダウンロードしてインストールします. ほとんどのスマートフォンは `arm64-v8a` です. わからない場合は, すべての端末で使えるもののサイズが大きい `universal` を選んでください.
 2. プラグインを開き, 案内に従ってカメラの権限を許可します; スクリプトから `camera.requestPermission()` を呼んで許可画面を開くこともできます.
-3. スクリプトで `camera` モジュールを使うには, AutoJs6 を内部バージョン 6640 (6.8.1) 以降に更新し, プラグインセンターで本プラグインを有効にしてください.
+3. スクリプトで `camera` モジュールを使うには, AutoJs6 を内部バージョン 6641 (6.8.1) 以降に更新し, プラグインセンターで本プラグインを有効にしてください.
 
-> プラグインは Android 7.0 (API 24) 以降の端末に対応しています. APK はすべての端末で共通の 1 つだけです; CameraX と Compose に付属する少量のネイティブライブラリ (合計約 200 KB) は 16 KB メモリページに揃えてあるため, 16 KB メモリページを採用した新しい端末にもインストールできます.
+> プラグインは Android 7.0 (API 24) 以降の端末に対応しています. APK は ABI ごとに 1 つあり, すべての端末で使える `universal` もあります; CameraX と Compose に付属する少量のネイティブライブラリ (ABI ごとに約 50 KB) は 16 KB メモリページに揃えてあるため, 16 KB メモリページを採用した新しい端末にもインストールできます.
 
 ******
 
@@ -154,8 +154,8 @@ variant: default
 info service: org.autojs.plugin.INFO (category three-prism-camera)
 capability service: org.autojs.plugin.CAMERA (category camera)
 wake action: org.autojs.plugin.action.WAKE
-minimum host build: 6640
-native libraries: libimage_processing_util_jni.so, libsurface_util_jni.so (CameraX), libandroidx.graphics.path.so (Compose); one APK for every ABI, stored uncompressed and 16 KB page-aligned
+minimum host build: 6641
+native libraries: libimage_processing_util_jni.so, libsurface_util_jni.so (CameraX), libandroidx.graphics.path.so (Compose); one APK per ABI plus a universal APK, stored uncompressed and 16 KB page-aligned
 ```
 
 ******
@@ -179,7 +179,7 @@ native libraries: libimage_processing_util_jni.so, libsurface_util_jni.so (Camer
 _2026/11/05_
 
 - `ヒント` 開発プレビュー: AutoJs6 のプラグインセンターはプラグインを検出できます. 写真撮影, ライブフレーム, ファインダー, 撮影画面, camera スクリプトモジュールはまだ提供されていません
-- `ヒント` AutoJs6 6.8.1 (6640) 以降が必要です (正確な最低バージョンはホスト側の変更が反映された後に記入されます)
+- `ヒント` AutoJs6 6.8.1 (6641) 以降が必要です (正確な最低バージョンはホスト側の変更が反映された後に記入されます)
 - `ヒント` 現在のアイコンは候補のデザインで, 今後変わる可能性があります
 - `機能` プラグインの骨組み: Wake 有効化プロトコル, プラグインセンターの識別サービス, カメラ機能サービス (仮実装)
 - `機能` すべての端末で使える APK は 1 つだけです. CameraX と Compose に付属するネイティブライブラリは 16 KB メモリページに揃えてあります

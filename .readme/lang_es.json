@@ -34,11 +34,11 @@
     "Funciona en segundo plano: un servicio en primer plano de cámara se ejecuta mientras hay una sesión abierta, así que los fotogramas siguen llegando en segundo plano o con la pantalla apagada; la cámara se libera cuando el script termina o AutoJs6 se detiene."
   ],
   "usage_steps": [
-    "Descargue el APK desde [Releases]({{ repo_url }}/releases) e instálelo. Hay un único paquete para todos los dispositivos.",
+    "Descargue desde [Releases]({{ repo_url }}/releases) el APK que corresponde a la ABI del dispositivo e instálelo: la mayoría de los teléfonos necesitan `arm64-v8a`; si no está seguro, elija `universal`, que funciona en todos los dispositivos pero ocupa más.",
     "Abra el complemento y conceda el permiso de cámara cuando se solicite; los scripts también pueden llamar a `camera.requestPermission()` para abrir la pantalla de permisos.",
     "Para usar el módulo `camera` en scripts, actualice AutoJs6 a la versión interna {{ required_host_version_code }} ({{ required_host_version_name }}) o posterior y active este complemento en el centro de complementos."
   ],
-  "p_usage_note": "El complemento es compatible con dispositivos con Android {{ min_android_version }} (API {{ android_min_sdk }}) o posterior. Hay un único APK para todos los dispositivos; las pocas bibliotecas nativas que incluyen CameraX y Compose (unos 200 KB en total) están alineadas a páginas de memoria de 16 KB, por lo que los dispositivos nuevos con páginas de 16 KB también lo instalan.",
+  "p_usage_note": "El complemento es compatible con dispositivos con Android {{ min_android_version }} (API {{ android_min_sdk }}) o posterior. Hay un APK por ABI y un paquete `universal` para todos los dispositivos; las pocas bibliotecas nativas que incluyen CameraX y Compose (unos 50 KB por ABI) están alineadas a páginas de memoria de 16 KB, por lo que los dispositivos nuevos con páginas de 16 KB también lo instalan.",
   "p_script_api_intro": "Los scripts usan estas funciones a través del módulo global `camera` (también disponible como `$camera`; borrador de diseño de la 1.0.0, la documentación publicada es la referencia)",
   "api_points": [
     "`camera.capture(options)` abre, captura y cierra en un solo paso; `camera.open(options)` abre una sesión exclusiva cuyo objeto ofrece `preview`, `analyze`, `capture`, `torch`, `zoom`, `exposure`, `focusAt`, `state` y `close`.",

@@ -1,4 +1,6 @@
 import com.android.apksig.ApkVerifier
+import com.android.build.api.variant.FilterConfiguration
+import com.android.build.api.variant.VariantOutputConfiguration
 import org.gradle.api.provider.Property
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
@@ -18,12 +20,14 @@ plugins {
 
 val globalApplicationId = "io.github.supermonster003.autojs6.plugin.three.prism.camera"
 
-// Minimum host build (roadmap D39): the temporary baseline 6640 (host 6.8.1 master 3ce52d2fd7, whose VERSION_BUILD is the
-// versionCode) until roadmap P1.3 writes the build that contains the camera contract and P5.4 the final one. Keep it in sync
-// with ThreePrismCameraContract.REQUIRED_HOST_VERSION and .readme/common.json.
-// zh-CN: 最低宿主构建号 (路线图 D39): 临时基线 6640 (宿主 6.8.1 master 3ce52d2fd7, 其 VERSION_BUILD 即 versionCode), 路线图 P1.3
-// 写入含相机契约的构建, P5.4 回填最终值. 与 ThreePrismCameraContract.REQUIRED_HOST_VERSION 及 .readme/common.json 保持一致.
-val requiredHostVersion = 6640
+// Minimum host build (roadmap D39, appendix D Q9 = (a)): 6641, the first host build after the public 6.8.0 (6640) and the
+// value of CameraPluginIds.REQUIRED_HOST_VERSION_CODE in the host contract, until roadmap P5.4 writes the build that ships
+// the camera contract. The host versionCode is its VERSION_BUILD. Keep it in sync with
+// ThreePrismCameraContract.REQUIRED_HOST_VERSION and .readme/common.json.
+// zh-CN: 最低宿主构建号 (路线图 D39, 附录 D Q9 = (a)): 6641, 即已公开的 6.8.0 (6640) 之后的第一个宿主构建, 与宿主契约中的
+// CameraPluginIds.REQUIRED_HOST_VERSION_CODE 相同, 路线图 P5.4 回填实际发布相机契约的构建. 宿主 versionCode 即其 VERSION_BUILD.
+// 与 ThreePrismCameraContract.REQUIRED_HOST_VERSION 及 .readme/common.json 保持一致.
+val requiredHostVersion = 6641
 
 val buildTypeDebug = "debug"
 val buildTypeRelease = "release"
@@ -62,10 +66,10 @@ fun verifiedFile(path: String, expected: String?, label: String): File {
     return file
 }
 
-// The host contract AARs (roadmap 5.5): common-plugin-api now, camera-api from roadmap P2.1 (built from the host contract
-// module of P1.1). Release AARs only, staged under libs/ and pinned by locks/host-api-aars.lock.
-// zh-CN: 宿主契约 AAR (路线图 5.5): 现在只有 common-plugin-api, camera-api 自路线图 P2.1 起加入 (来自 P1.1 的宿主契约模块).
-// 只接受 release AAR, 暂存于 libs/ 并由 locks/host-api-aars.lock 固定.
+// The host contract AARs (roadmap 5.5): common-plugin-api and camera-api (roadmap P2.1, both built from one recorded host
+// commit that contains the contract module of P1.1). Release AARs only, staged under libs/ and pinned by locks/host-api-aars.lock.
+// zh-CN: 宿主契约 AAR (路线图 5.5): common-plugin-api 与 camera-api (路线图 P2.1, 均由同一个记录在案且含 P1.1 契约模块的宿主提交
+// 构建). 只接受 release AAR, 暂存于 libs/ 并由 locks/host-api-aars.lock 固定.
 val hostApiAars: List<File> = run {
     val entries = readLock("locks/host-api-aars.lock")
     val names = entries.keys.filter { it.endsWith(".file") }.map { it.removeSuffix(".file") }.sorted()
@@ -80,15 +84,15 @@ val hostApiAars: List<File> = run {
 // Native code inventory (roadmap D22, amended by the P0.2 evidence): the plugin has no native code of its own, but
 // camera-core bundles libimage_processing_util_jni.so and libsurface_util_jni.so, and Compose ui-graphics depends on
 // androidx.graphics:graphics-path with libandroidx.graphics.path.so, each for the four Android ABIs (202140 bytes in
-// CameraX 1.6.2 / Compose BOM 2026.09.00). The APK stays one universal package without ABI splits (the 3-Block Compose
-// form); the release gate verifies that exactly these libraries are present, stored uncompressed and 16 KB page-aligned
-// (ELF PT_LOAD and zip data offset), so that 16 KB page devices map them straight from the APK. A dependency update that
-// changes the set changes this list, D22 and the README together.
+// CameraX 1.6.2 / Compose BOM 2026.09.00). Appendix D Q8 = (b): one APK per ABI plus the universal APK (new repository
+// specification 5.5); the release gate verifies that every package holds exactly these libraries for its ABIs, stored
+// uncompressed and 16 KB page-aligned (ELF PT_LOAD and zip data offset), so that 16 KB page devices map them straight from
+// the APK. A dependency update that changes the set changes this list, D22 and the README together.
 // zh-CN: 原生代码清单 (路线图 D22, 按 P0.2 证据修订): 插件自身没有原生代码, 但 camera-core 自带
 // libimage_processing_util_jni.so 与 libsurface_util_jni.so, Compose ui-graphics 依赖的 androidx.graphics:graphics-path 自带
-// libandroidx.graphics.path.so, 各含四个 Android ABI (CameraX 1.6.2 / Compose BOM 2026.09.00 共 202140 字节). APK 仍是不拆分
-// ABI 的单一通用包 (3-Block Compose 形态); release 门禁校验恰好是这些库, 不压缩存储, 且按 16 KB 页对齐 (ELF PT_LOAD 与 zip
-// 数据偏移), 以便 16 KB 页设备直接从 APK 映射. 依赖升级改变库集合时, 同时修改此清单, D22 与 README.
+// libandroidx.graphics.path.so, 各含四个 Android ABI (CameraX 1.6.2 / Compose BOM 2026.09.00 共 202140 字节). 附录 D Q8 = (b):
+// 每个 ABI 一个 APK 并附 Universal APK (新仓库规范 5.5); release 门禁逐包校验其 ABI 恰好是这些库, 不压缩存储, 且按 16 KB 页
+// 对齐 (ELF PT_LOAD 与 zip 数据偏移), 以便 16 KB 页设备直接从 APK 映射. 依赖升级改变库集合时, 同时修改此清单, D22 与 README.
 val nativeAbis = listOf("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
 val allowedNativeLibraries = listOf("libandroidx.graphics.path.so", "libimage_processing_util_jni.so", "libsurface_util_jni.so")
 val nativePageAlignment = 16384L
@@ -149,8 +153,9 @@ fun nativeEntryDataOffsets(apk: File): Map<String, Long> = RandomAccessFile(apk,
     offsets
 }
 
-fun verifyNativeLibraries(apk: File) {
-    val expected = nativeAbis.flatMap { abi -> allowedNativeLibraries.map { "lib/$abi/$it" } }.toSet()
+/** Verifies that [apk] holds exactly the whitelisted libraries of [abis], stored and 16 KB aligned (roadmap D22). */
+fun verifyNativeLibraries(apk: File, abis: List<String>) {
+    val expected = abis.flatMap { abi -> allowedNativeLibraries.map { "lib/$abi/$it" } }.toSet()
     ZipFile(apk).use { zip ->
         val entries = zip.entries().asSequence().filter { it.name.startsWith("lib/") || it.name.endsWith(".so") }.toList()
         check(entries.map { it.name }.toSet() == expected) {
@@ -238,12 +243,19 @@ android {
         resValues = true
     }
 
-    // No ABI splits on purpose (roadmap D22): the only native code is the about 200 KB of CameraX and Compose helpers listed
-    // in nativeAbis / allowedNativeLibraries above, so every device installs the same single APK and getInfo() reports
-    // supportedAbis = emptyArray(); appendDigestToReleasedFiles verifies the exact native library set and its alignment.
-    // zh-CN: 有意不拆分 ABI (路线图 D22): 唯一的原生代码是上方 nativeAbis / allowedNativeLibraries 列出的约 200 KB CameraX 与
-    // Compose 辅助库, 因此所有设备安装同一个 APK, getInfo() 报告 supportedAbis = emptyArray(); appendDigestToReleasedFiles 校验
-    // 原生库集合与对齐.
+    // One APK per ABI plus the universal APK (roadmap D22, appendix D Q8 = (b), new repository specification 5.5). BuildConfig
+    // is shared by the splits, so getInfo() derives supportedAbis at run time from the lib/<abi>/ entries of the installed APK.
+    // zh-CN: 每个 ABI 一个 APK 并附 Universal APK (路线图 D22, 附录 D Q8 = (b), 新仓库规范 5.5). 各分包共用 BuildConfig, 因此
+    // getInfo() 在运行时根据已安装 APK 的 lib/<abi>/ 条目得出 supportedAbis.
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include(*nativeAbis.toTypedArray())
+            isUniversalApk = true
+        }
+    }
+
     packaging {
         resources.pickFirsts.addAll(
             listOf(
@@ -266,6 +278,9 @@ android {
 androidComponents {
     onVariants { variant ->
         variant.outputs.forEach { output ->
+            val architecture = output.filters.find {
+                it.filterType == FilterConfiguration.FilterType.ABI
+            }?.identifier ?: "universal".takeIf { output.outputType == VariantOutputConfiguration.OutputType.UNIVERSAL }
             val outputFileNameProperty = output.javaClass.methods.firstOrNull {
                 it.name == "getOutputFileName" && it.parameterTypes.isEmpty()
             }?.invoke(output) as? Property<*>
@@ -274,7 +289,8 @@ androidComponents {
             (outputFileNameProperty as? Property<String>)?.set(
                 output.versionName.map { versionName ->
                     val version = versionName.replace("\\s".toRegex(), "-")
-                    "${rootProject.name}-v$version.${utils.FILE_EXTENSION_APK}".lowercase()
+                    val abiSuffix = architecture?.let { "-$it" }.orEmpty()
+                    "${rootProject.name}-v$version$abiSuffix.${utils.FILE_EXTENSION_APK}".lowercase()
                 },
             )
         }
@@ -316,38 +332,41 @@ tasks {
         options.encoding = "UTF-8"
     }
 
-    // Single signed release APK (roadmap D22, the 3-Block Compose form): exactly one APK, a valid signature, exactly the
-    // whitelisted native libraries stored and 16 KB aligned, then `{ROOT_PROJECT_NAME}-v{VERSION_NAME}-{CRC32}.apk` in releases/.
-    // zh-CN: 单个已签名 release APK (路线图 D22, 3-Block Compose 形态): 恰好一个 APK, 签名有效, 原生库恰为白名单且不压缩, 按
-    // 16 KB 对齐, 然后以 `{ROOT_PROJECT_NAME}-v{VERSION_NAME}-{CRC32}.apk` 放入 releases/.
+    // Signed release APKs (roadmap D22, appendix D Q8 = (b)): exactly one APK per ABI plus the universal APK, each with a valid
+    // signature and exactly the whitelisted native libraries of its ABIs, stored and 16 KB aligned, then
+    // `{ROOT_PROJECT_NAME}-v{VERSION_NAME}-{ABI}-{CRC32}.apk` in releases/ (`universal` for the universal APK).
+    // zh-CN: 已签名 release APK (路线图 D22, 附录 D Q8 = (b)): 每个 ABI 恰好一个 APK 并附 Universal APK, 每个签名有效, 原生库恰为
+    // 其 ABI 的白名单且不压缩, 按 16 KB 对齐, 然后以 `{ROOT_PROJECT_NAME}-v{VERSION_NAME}-{ABI}-{CRC32}.apk` 放入 releases/
+    // (Universal APK 的 ABI 为 `universal`).
     register("appendDigestToReleasedFiles") {
         group = "distribution"
-        description = "Builds and verifies the single signed release APK of 3-Prism Camera, then appends its CRC32 digest"
+        description = "Builds and verifies the signed per-ABI and universal release APKs of 3-Prism Camera, then appends their CRC32 digests"
         dependsOn("assembleRelease")
         doLast {
             check(signs.isValid) { "Release signing is not configured (sign.properties); refusing to collect an unsigned APK" }
             val extension = utils.FILE_EXTENSION_APK
             val prefix = "${rootProject.name}-v${versions.appVersionName.replace("\\s".toRegex(), "-")}".lowercase()
-            val expectedName = "$prefix.$extension"
+            val packages = (nativeAbis + "universal").associateBy { "$prefix-$it.$extension" }
             val source = layout.buildDirectory.dir("outputs/apk/$buildTypeRelease").get().asFile
-            val apks = source.listFiles { candidate -> candidate.extension == extension }.orEmpty()
-            check(apks.map { it.name } == listOf(expectedName)) {
-                "Unexpected release APK set in $source: expected [$expectedName], actual ${apks.map { it.name }.sorted()}"
+            val apks = source.listFiles { candidate -> candidate.extension == extension }.orEmpty().associateBy { it.name }
+            check(apks.keys == packages.keys) {
+                "Unexpected release APK set in $source: expected ${packages.keys.sorted()}, actual ${apks.keys.sorted()}"
             }
-            val apk = apks.single()
-            val verification = ApkVerifier.Builder(apk).build().verify()
-            check(verification.isVerified) { "Invalid or unsigned release APK ${apk.name}: ${verification.errors}" }
-            verifyNativeLibraries(apk)
-            val collectedName = "$prefix-${utils.digestCRC32(apk)}.$extension"
             val destination = file("$rootDir/${buildTypeRelease}s")
             check(destination.isDirectory || destination.mkdirs()) { "Cannot create $destination" }
-            apk.copyTo(destination.resolve(collectedName), overwrite = true)
+            val collected = packages.map { (name, abi) ->
+                val apk = apks.getValue(name)
+                val verification = ApkVerifier.Builder(apk).build().verify()
+                check(verification.isVerified) { "Invalid or unsigned release APK ${apk.name}: ${verification.errors}" }
+                verifyNativeLibraries(apk, if (abi == "universal") nativeAbis else listOf(abi))
+                "$prefix-$abi-${utils.digestCRC32(apk)}.$extension".also { apk.copyTo(destination.resolve(it), overwrite = true) }
+            }.toSet()
             destination.listFiles { file -> file.name.startsWith("$prefix-") && file.extension == extension }
                 .orEmpty()
-                .filter { it.name != collectedName }
+                .filter { it.name !in collected }
                 .forEach { stale -> check(stale.delete()) { "Cannot remove superseded artifact: $stale" } }
             println("Destination: $destination")
-            println(collectedName)
+            collected.sorted().forEach(::println)
         }
     }
 }

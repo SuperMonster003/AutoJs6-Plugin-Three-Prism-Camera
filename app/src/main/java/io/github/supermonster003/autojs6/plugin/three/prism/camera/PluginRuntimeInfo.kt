@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.pm.PackageInfo
 import android.os.Build
 import android.os.Bundle
-import org.autojs.plugin.common.api.PluginCapabilityKeys
+import org.autojs.plugin.camera.api.CameraCapabilityKeys
 import org.autojs.plugin.common.api.PluginInfo
 
 /**
@@ -23,8 +23,9 @@ internal data class PluginRuntimeFields(
     val versionCode: Long,
     val versionDate: String,
     /**
-     * Always empty: the single APK is ABI independent (roadmap D22); the plugin itself ships no native code of its own.
-     * zh-CN: 恒为空: 单 APK 与 ABI 无关 (路线图 D22); 插件本身不携带自有原生代码.
+     * The ABIs of the installed package (roadmap D22, appendix D Q8 = (b)): one for a single-ABI APK, all four for the
+     * universal APK, as [NativeLibraryInventory] finds them.
+     * zh-CN: 已安装包的 ABI (路线图 D22, 附录 D Q8 = (b)): 单 ABI 包为一个, Universal 包为全部四个, 由 [NativeLibraryInventory] 得出.
      */
     val supportedAbis: List<String>,
     val requiredHostVersion: Long,
@@ -48,6 +49,8 @@ internal fun pluginRuntimeFields(
     versionName: String,
     versionCode: Long,
     versionDate: String,
+    supportedAbis: List<String>,
+    features: List<String> = ThreePrismCameraContract.features(),
 ): PluginRuntimeFields = PluginRuntimeFields(
     name = name,
     description = description,
@@ -59,10 +62,10 @@ internal fun pluginRuntimeFields(
     versionName = versionName,
     versionCode = versionCode,
     versionDate = versionDate,
-    supportedAbis = emptyList(),
+    supportedAbis = supportedAbis,
     requiredHostVersion = ThreePrismCameraContract.REQUIRED_HOST_VERSION,
     contractVersion = ThreePrismCameraContract.CONTRACT_VERSION,
-    features = ThreePrismCameraContract.FEATURES,
+    features = features,
 )
 
 /**
@@ -80,13 +83,13 @@ internal fun PluginRuntimeFields.toPluginInfo(): PluginInfo = PluginInfo().also 
     info.versionName = versionName
     info.versionCode = versionCode
     info.versionDate = versionDate
-    // ABI independent: an explicit empty array, never null (new repository specification 5.5, roadmap D22).
-    // zh-CN: 与 ABI 无关: 显式空数组, 不为 null (新仓库规范 5.5, 路线图 D22).
+    // The ABIs of this package, never null (new repository specification 5.5, roadmap D22, appendix D Q8 = (b)).
+    // zh-CN: 本包的 ABI, 不为 null (新仓库规范 5.5, 路线图 D22, 附录 D Q8 = (b)).
     info.supportedAbis = supportedAbis.toTypedArray()
     info.capabilities = Bundle().apply {
-        putLong(PluginCapabilityKeys.REQUIRES_HOST_VERSION, requiredHostVersion)
-        putInt(ThreePrismCameraContract.CAPABILITY_CONTRACT_VERSION, contractVersion)
-        putStringArray(ThreePrismCameraContract.CAPABILITY_FEATURES, features.toTypedArray())
+        putLong(CameraCapabilityKeys.REQUIRES_HOST_VERSION, requiredHostVersion)
+        putInt(CameraCapabilityKeys.CONTRACT_VERSION, contractVersion)
+        putStringArray(CameraCapabilityKeys.FEATURES, features.toTypedArray())
     }
 }
 
@@ -107,6 +110,7 @@ internal fun Context.pluginRuntimeFields(): PluginRuntimeFields {
         versionName = packageInfo.versionName.orEmpty(),
         versionCode = packageInfo.versionCodeCompat(),
         versionDate = appContext.getString(R.string.plugin_version_date),
+        supportedAbis = NativeLibraryInventory.supportedAbis(appContext),
     )
 }
 

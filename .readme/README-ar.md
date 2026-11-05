@@ -67,11 +67,11 @@
 
 ******
 
-1. نزّل ملف APK من [Releases](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/releases) وثبّته. توجد حزمة واحدة تناسب جميع الأجهزة.
+1. نزّل من [Releases](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/releases) ملف APK المطابق لـ ABI الجهاز وثبّته: تحتاج معظم الهواتف إلى `arm64-v8a`; وإن لم تكن متأكدًا فاختر `universal` الذي يعمل على جميع الأجهزة لكنه أكبر حجمًا.
 2. افتح الإضافة وامنح إذن الكاميرا عند الطلب; ويمكن للنصوص البرمجية أيضًا استدعاء `camera.requestPermission()` لفتح شاشة الأذونات.
-3. لاستخدام الوحدة `camera` في النصوص البرمجية, حدّث AutoJs6 إلى الإصدار الداخلي 6640 (6.8.1) أو أحدث, وفعّل هذه الإضافة في مركز الإضافات.
+3. لاستخدام الوحدة `camera` في النصوص البرمجية, حدّث AutoJs6 إلى الإصدار الداخلي 6641 (6.8.1) أو أحدث, وفعّل هذه الإضافة في مركز الإضافات.
 
-> تدعم الإضافة الأجهزة التي تعمل بنظام Android 7.0 (API 24) أو أحدث. يوجد ملف APK واحد لجميع الأجهزة; والمكتبات الأصلية القليلة المرفقة مع CameraX و Compose (نحو 200 KB إجمالًا) محاذاة لصفحات ذاكرة 16 KB, لذا تُثبَّت الإضافة أيضًا على الأجهزة الحديثة ذات صفحات 16 KB.
+> تدعم الإضافة الأجهزة التي تعمل بنظام Android 7.0 (API 24) أو أحدث. لكل ABI ملف APK خاص به, إضافة إلى حزمة `universal` لجميع الأجهزة; والمكتبات الأصلية القليلة المرفقة مع CameraX و Compose (نحو 50 KB لكل ABI) محاذاة لصفحات ذاكرة 16 KB, لذا تُثبَّت الإضافة أيضًا على الأجهزة الحديثة ذات صفحات 16 KB.
 
 ******
 
@@ -154,8 +154,8 @@ variant: default
 info service: org.autojs.plugin.INFO (category three-prism-camera)
 capability service: org.autojs.plugin.CAMERA (category camera)
 wake action: org.autojs.plugin.action.WAKE
-minimum host build: 6640
-native libraries: libimage_processing_util_jni.so, libsurface_util_jni.so (CameraX), libandroidx.graphics.path.so (Compose); one APK for every ABI, stored uncompressed and 16 KB page-aligned
+minimum host build: 6641
+native libraries: libimage_processing_util_jni.so, libsurface_util_jni.so (CameraX), libandroidx.graphics.path.so (Compose); one APK per ABI plus a universal APK, stored uncompressed and 16 KB page-aligned
 ```
 
 ******
@@ -179,7 +179,7 @@ native libraries: libimage_processing_util_jni.so, libsurface_util_jni.so (Camer
 _2026/11/05_
 
 - `تلميح` معاينة للتطوير: يستطيع مركز الإضافات في AutoJs6 اكتشاف الإضافة, ولم تُسلَّم بعد ميزات التقاط الصور والإطارات الحية والعدسة وشاشة التصوير ووحدة السكربت camera
-- `تلميح` يتطلب AutoJs6 6.8.1 (6640) أو أحدث (سيُحدَّد الحد الأدنى الدقيق للإصدار بعد اكتمال تغييرات المضيف)
+- `تلميح` يتطلب AutoJs6 6.8.1 (6641) أو أحدث (سيُحدَّد الحد الأدنى الدقيق للإصدار بعد اكتمال تغييرات المضيف)
 - `تلميح` الأيقونة الحالية تصميم مرشح وقد تتغير لاحقا
 - `ميزة` هيكل الإضافة: بروتوكول التفعيل Wake, وخدمة الهوية في مركز الإضافات, وخدمة قدرات الكاميرا (مؤقتة)
 - `ميزة` ملف APK واحد لجميع الأجهزة; والمكتبات الأصلية المرفقة مع CameraX و Compose محاذاة لصفحات ذاكرة 16 KB

@@ -9,7 +9,7 @@
 ###### 2026/11/05
 
 * `Aviso` Versión preliminar de desarrollo: el centro de complementos de AutoJs6 puede detectar el complemento; la captura de fotos, los fotogramas en vivo, el visor, la pantalla de captura y el módulo de script camera aún no están disponibles
-* `Aviso` Requiere AutoJs6 6.8.1 (6640) o posterior (la versión mínima exacta se indicará cuando se integren los cambios del anfitrión)
+* `Aviso` Requiere AutoJs6 6.8.1 (6641) o posterior (la versión mínima exacta se indicará cuando se integren los cambios del anfitrión)
 * `Aviso` El icono actual es un diseño candidato y aún puede cambiar
 * `Función` Esqueleto del complemento: protocolo de activación Wake, servicio de identidad del centro de complementos y servicio de capacidad de cámara (provisional)
 * `Función` Un único APK para todos los dispositivos; las bibliotecas nativas que incluyen CameraX y Compose están alineadas a páginas de memoria de 16 KB

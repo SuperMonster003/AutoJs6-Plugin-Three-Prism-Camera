@@ -14,7 +14,7 @@
       ],
       "feature": [
         "插件骨架: Wake 激活协议, 插件中心身份服务与相机能力服务 (占位)",
-        "只有一个适用于全部设备的 APK, CameraX 与 Compose 自带的原生库已按 16 KB 内存页对齐",
+        "按 ABI 分别提供安装包 (arm64-v8a, armeabi-v7a, x86_64, x86), 另有适用于全部设备的 universal 安装包; CameraX 与 Compose 自带的原生库已按 16 KB 内存页对齐",
         "10 种语言的 README, 插件中心说明与更新日志, 由 JSON 源文件统一生成"
       ],
       "dependency": [

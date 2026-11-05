@@ -34,11 +34,11 @@
     "背景可用: 工作階段開啟期間執行相機前景服務, 指令碼切到背景或螢幕關閉後仍可擷取影格; 指令碼結束或 AutoJs6 被終止時自動釋放相機."
   ],
   "usage_steps": [
-    "從 [Releases]({{ repo_url }}/releases) 下載 APK 並安裝. 安裝檔只有一個, 適用於全部裝置.",
+    "從 [Releases]({{ repo_url }}/releases) 下載與裝置 ABI 對應的 APK 並安裝: 大多數手機選擇 `arm64-v8a`, 不確定時選擇適用於所有裝置但檔案較大的 `universal`.",
     "開啟外掛, 依提示授予相機權限; 指令碼也可以呼叫 `camera.requestPermission()` 開啟授權頁.",
     "如要在指令碼中使用 `camera` 模組, 請將 AutoJs6 升級到內部版本號 {{ required_host_version_code }} ({{ required_host_version_name }}) 或更高版本, 並在外掛中心啟用本外掛."
   ],
-  "p_usage_note": "外掛支援 Android {{ min_android_version }} (API {{ android_min_sdk }}) 以上的裝置. 只有一個適用於所有裝置的安裝包; CameraX 與 Compose 內建的少量原生程式庫 (共約 200 KB) 已按 16 KB 記憶體分頁對齊, 採用 16 KB 記憶體分頁的新裝置也能正常安裝.",
+  "p_usage_note": "外掛支援 Android {{ min_android_version }} (API {{ android_min_sdk }}) 以上的裝置. 每種 ABI 各有一個安裝檔, 另有適用於所有裝置的 `universal` 安裝檔; CameraX 與 Compose 內建的少量原生程式庫 (每種 ABI 約 50 KB) 已按 16 KB 記憶體分頁對齊, 採用 16 KB 記憶體分頁的新裝置也能正常安裝.",
   "p_script_api_intro": "指令碼透過全域模組 `camera` (也可寫作 `$camera`) 使用這些能力 (1.0.0 設計草案, 以發布版本的文件為準)",
   "api_points": [
     "`camera.capture(options)` 一步完成開啟, 拍照與關閉; `camera.open(options)` 開啟獨占工作階段, 工作階段物件提供 `preview`, `analyze`, `capture`, `torch`, `zoom`, `exposure`, `focusAt`, `state` 與 `close`.",

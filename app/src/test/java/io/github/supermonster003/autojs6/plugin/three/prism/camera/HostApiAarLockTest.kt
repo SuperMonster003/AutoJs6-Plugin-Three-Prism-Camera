@@ -10,9 +10,9 @@ import java.util.zip.ZipFile
 /**
  * The host API lock, the staged AARs and the human-readable records describe the same bytes (roadmap 4.5, P0.1).
  * Gradle enforces the lock during configuration; this test keeps `libs/README.md` and `THIRD_PARTY_NOTICES.md` honest
- * and pins the artifact set until roadmap P2.1 adds `camera-api`.
+ * and pins the artifact set (`camera-api` and `common-plugin-api` since roadmap P2.1).
  * zh-CN: 宿主 API 锁文件, 暂存的 AAR 与人读记录描述同一份字节 (路线图 4.5, P0.1). Gradle 在配置阶段强制锁文件; 本测试
- * 保证 `libs/README.md` 与 `THIRD_PARTY_NOTICES.md` 如实记录, 并在路线图 P2.1 加入 `camera-api` 之前固定产物集合.
+ * 保证 `libs/README.md` 与 `THIRD_PARTY_NOTICES.md` 如实记录, 并固定产物集合 (自路线图 P2.1 起为 `camera-api` 与 `common-plugin-api`).
  */
 class HostApiAarLockTest {
 
@@ -22,7 +22,7 @@ class HostApiAarLockTest {
 
     @Test
     fun `the lock lists the staged host AARs with matching digests`() {
-        assertEquals(setOf("common-plugin-api"), ids)
+        assertEquals(setOf("camera-api", "common-plugin-api"), ids)
         assertEquals(setOf("format") + ids.flatMap { listOf("$it.file", "$it.sha256") }, lock.keys)
         ids.forEach { id ->
             val file = lock.getValue("$id.file")

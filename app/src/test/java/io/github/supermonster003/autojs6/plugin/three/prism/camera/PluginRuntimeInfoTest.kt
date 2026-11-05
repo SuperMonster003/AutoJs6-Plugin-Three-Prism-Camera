@@ -1,7 +1,7 @@
 package io.github.supermonster003.autojs6.plugin.three.prism.camera
 
+import org.autojs.plugin.camera.api.CameraPluginIds
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -14,7 +14,7 @@ import org.junit.Test
 class PluginRuntimeInfoTest {
 
     @Test
-    fun `runtime fields keep the identity, the package version, no ABI and the camera capabilities`() {
+    fun `runtime fields keep the identity, the package version, the package ABIs and the camera capabilities`() {
         val fields = pluginRuntimeFields(
             name = "3-Prism Camera",
             description = "Camera",
@@ -25,6 +25,8 @@ class PluginRuntimeInfoTest {
             versionName = "1.0.0",
             versionCode = 2L,
             versionDate = "Nov 5, 2026",
+            supportedAbis = listOf("arm64-v8a"),
+            features = listOf("preview"),
         )
         assertEquals("3-Prism Camera", fields.name)
         assertEquals("Camera", fields.description)
@@ -37,13 +39,14 @@ class PluginRuntimeInfoTest {
         assertEquals("1.0.0", fields.versionName)
         assertEquals(2L, fields.versionCode)
         assertEquals("Nov 5, 2026", fields.versionDate)
-        // Roadmap D22: one universal APK, so it reports no ABI list even though CameraX and Compose bundle native helpers.
-        assertEquals(emptyList<String>(), fields.supportedAbis)
-        // Roadmap D39: the temporary floor is the host build of 2026-11-05; P5.4 sets the build that ships the contract.
-        assertEquals(6640L, fields.requiredHostVersion)
+        // Roadmap D22, appendix D Q8 = (b): the ABIs of the installed split, as NativeLibraryInventory finds them.
+        assertEquals(listOf("arm64-v8a"), fields.supportedAbis)
+        // Roadmap D39, appendix D Q9 = (a): the first host build after the public 6.8.0; P5.4 sets the build that ships the contract.
+        assertEquals(6641L, fields.requiredHostVersion)
         assertEquals(ThreePrismCameraContract.REQUIRED_HOST_VERSION, fields.requiredHostVersion)
+        assertEquals(CameraPluginIds.REQUIRED_HOST_VERSION_CODE, fields.requiredHostVersion)
         assertEquals(1, fields.contractVersion)
-        assertEquals("the skeleton advertises no feature yet (roadmap D42)", emptyList<String>(), fields.features)
+        assertEquals(listOf("preview"), fields.features)
     }
 
     @Test
@@ -56,13 +59,12 @@ class PluginRuntimeInfoTest {
         assertEquals("org.autojs.plugin.CAMERA", ThreePrismCameraContract.SERVICE_ACTION)
         assertEquals("camera", ThreePrismCameraContract.SERVICE_CATEGORY)
         assertEquals("org.autojs.plugin.camera.api.ICameraPlugin", ThreePrismCameraContract.CAPABILITY_DESCRIPTOR)
-        assertEquals("cameraContractVersion", ThreePrismCameraContract.CAPABILITY_CONTRACT_VERSION)
-        assertEquals("cameraFeatures", ThreePrismCameraContract.CAPABILITY_FEATURES)
         assertEquals(1, ThreePrismCameraContract.CONTRACT_VERSION)
+        assertEquals(CameraPluginIds.OFFICIAL_PACKAGE_NAME, PACKAGE_NAME)
     }
 
     @Test
-    fun `the build publishes the same identity as the constants and builds one APK`() {
+    fun `the build publishes the same identity as the constants and splits the APK per ABI`() {
         val build = RepositoryFiles.text("app/build.gradle.kts")
         assertTrue(build.contains("val globalApplicationId = \"$PACKAGE_NAME\""))
         assertTrue(build.contains("namespace = globalApplicationId"))
@@ -76,18 +78,17 @@ class PluginRuntimeInfoTest {
         assertTrue(build.contains("resValue(\"string\", \"plugin_requires_host_version\", \"\$requiredHostVersion\")"))
         // The minimum host build is changed in the build script, the constant and the README sources together.
         assertTrue(build.contains("val requiredHostVersion = ${ThreePrismCameraContract.REQUIRED_HOST_VERSION}\n"))
-        // Roadmap D22 (amended in P0.2): one APK, no ABI splits, and the release task accepts exactly the CameraX and
-        // Compose native helpers for the four ABIs, stored and 16 KB aligned.
-        assertFalse("no ABI splits (roadmap D22)", build.contains("splits {") || build.contains("abi {"))
+        // Roadmap D22, appendix D Q8 = (b): one APK per ABI plus the universal APK, and the release task accepts exactly the
+        // CameraX and Compose native helpers of each package's ABIs, stored and 16 KB aligned. The runtime inventory uses
+        // the same ABI and library lists.
+        assertTrue(build.contains("splits {\n        abi {\n            isEnable = true\n            reset()\n            include(*nativeAbis.toTypedArray())\n            isUniversalApk = true\n"))
         assertTrue(build.contains("register(\"appendDigestToReleasedFiles\")"))
-        assertTrue(build.contains("val nativeAbis = listOf(\"arm64-v8a\", \"armeabi-v7a\", \"x86_64\", \"x86\")"))
-        assertTrue(
-            build.contains(
-                "val allowedNativeLibraries = listOf(\"libandroidx.graphics.path.so\", \"libimage_processing_util_jni.so\", \"libsurface_util_jni.so\")",
-            ),
-        )
+        val abis = ThreePrismCameraContract.NATIVE_ABIS.joinToString(", ") { "\"$it\"" }
+        assertTrue(build.contains("val nativeAbis = listOf($abis)"))
+        val libraries = ThreePrismCameraContract.NATIVE_LIBRARIES.joinToString(", ") { "\"$it\"" }
+        assertTrue(build.contains("val allowedNativeLibraries = listOf($libraries)"))
         assertTrue(build.contains("val nativePageAlignment = 16384L"))
-        assertTrue(build.contains("            verifyNativeLibraries(apk)\n"))
+        assertTrue(build.contains("verifyNativeLibraries(apk, if (abi == \"universal\") nativeAbis else listOf(abi))"))
         assertTrue(build.contains("ApkVerifier.Builder(apk).build().verify()"))
 
         val settings = RepositoryFiles.text("settings.gradle.kts")

@@ -12,13 +12,15 @@ process and needs the AIDL stubs and constants at run time.
 
 | File | Host module | Content | SHA-256 |
 | --- | --- | --- | --- |
-| `common-plugin-api.aar` | `plugin-api/common-plugin-api` | `PluginInfo`, `IPluginInfoProvider`, `PluginActions`, `PluginCapabilityKeys`, `AutoJs6HostSettingsContract` | `9eaba785db6128f9a0ded272ab976f37835e9fa17a49cc250a6a75ddf76cf769` |
+| `camera-api.aar` | `plugin-api/camera-api` | `ICameraPlugin`, `ICameraSession` and the three callback AIDL interfaces, `CameraContract`, `CameraOptionKeys`, `CameraResultKeys`, `CameraFrameKeys`, `CameraLimits`, `CameraErrorCodes`, `CameraCapabilityKeys`, `CameraPluginActions`, `CameraPluginIds` | `bd3d074a958de5a3a5f188136174951c94c764e984e693b3622c573987ff3a63` |
+| `common-plugin-api.aar` | `plugin-api/common-plugin-api` | `PluginInfo`, `IPluginInfoProvider`, `PluginActions`, `PluginCapabilityKeys`, `AutoJs6HostSettingsContract` | `9849b15091dcb255cd1c47140790081eebc074aec2e3e9b28c18f12bf9ef4a6a` |
 
-Provenance (2026-11-05): byte-identical to the artifact 3-Chime Alarm and 3-Stamp Mail stage, a release
-build of the host 6.8.0 (build 5697). P0 only needs `PluginInfo`, `IPluginInfoProvider` and the capability
-keys for the INFO service. The camera contract `camera-api.aar` joins in roadmap P2.1, built from the host
-commit that introduces `plugin-api/camera-api` (roadmap P1.1); `common-plugin-api.aar` is then restaged from
-the same commit because `camera-api` refers to its `PluginInfo` parcelable.
+Provenance (2026-11-05, roadmap P2.1): both AARs are `assembleRelease` outputs of one host commit, master
+`2a5bafc67a`, built in the isolated clone `E:/.cache/autojs6-prism-host` (its `version.properties` set to
+`VERSION_BUILD=6641`, not committed; appendix D Q9). `camera-api.aar` is the camera contract module of roadmap P1.1
+(the only host commit that touches `plugin-api/camera-api` is `4a10154c44`); `common-plugin-api.aar` is restaged from
+the same commit because `camera-api` refers to its `PluginInfo` parcelable. The P0 copy (13220 bytes, host 6.8.0
+build 5697) is superseded.
 
 Do not commit locally assembled debug AARs or rename debug outputs to bypass this policy.
 

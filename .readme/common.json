@@ -16,7 +16,7 @@
   "discovery_action": "org.autojs.plugin.CAMERA",
   "discovery_category": "camera",
   "wake_action": "org.autojs.plugin.action.WAKE",
-  "required_host_version_code": "6640",
+  "required_host_version_code": "6641",
   "required_host_version_name": "6.8.1",
   "android_min_sdk": "24",
   "android_target_sdk": "37",

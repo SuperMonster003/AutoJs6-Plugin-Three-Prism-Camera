@@ -67,11 +67,11 @@ The plugin owns the camera and talks to AutoJs6 over Binder: live frames travel 
 
 ******
 
-1. Download the APK from [Releases](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/releases) and install it. There is a single package for every device.
+1. Download the APK that matches the device ABI from [Releases](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/releases) and install it: most phones need `arm64-v8a`; if unsure, choose `universal`, which works on every device but is larger.
 2. Open the plugin and grant the camera permission when asked; scripts can also call `camera.requestPermission()` to open the permission screen.
-3. To use the `camera` module in scripts, update AutoJs6 to build 6640 (6.8.1) or later and enable this plugin in the Plugin Center.
+3. To use the `camera` module in scripts, update AutoJs6 to build 6641 (6.8.1) or later and enable this plugin in the Plugin Center.
 
-> The plugin supports devices running Android 7.0 (API 24) or later. There is a single APK for every device; the few native libraries that come with CameraX and Compose (about 200 KB in total) are aligned to 16 KB memory pages, so newer devices with 16 KB pages install it as well.
+> The plugin supports devices running Android 7.0 (API 24) or later. There is one package per ABI and a `universal` package for every device; the few native libraries that come with CameraX and Compose (about 50 KB per ABI) are aligned to 16 KB memory pages, so newer devices with 16 KB pages install it as well.
 
 ******
 
@@ -154,8 +154,8 @@ variant: default
 info service: org.autojs.plugin.INFO (category three-prism-camera)
 capability service: org.autojs.plugin.CAMERA (category camera)
 wake action: org.autojs.plugin.action.WAKE
-minimum host build: 6640
-native libraries: libimage_processing_util_jni.so, libsurface_util_jni.so (CameraX), libandroidx.graphics.path.so (Compose); one APK for every ABI, stored uncompressed and 16 KB page-aligned
+minimum host build: 6641
+native libraries: libimage_processing_util_jni.so, libsurface_util_jni.so (CameraX), libandroidx.graphics.path.so (Compose); one APK per ABI plus a universal APK, stored uncompressed and 16 KB page-aligned
 ```
 
 ******
@@ -179,7 +179,7 @@ Plans, design decisions and progress are tracked as a checklist in ROADMAP.md. U
 _2026/11/05_
 
 - `Hint` Development preview: the AutoJs6 Plugin Center can discover the plugin; photo capture, live frames, the viewfinder, the capture screen and the camera script module are not delivered yet
-- `Hint` Requires AutoJs6 6.8.1 (6640) or later (the exact minimum build will be filled in once the host changes land)
+- `Hint` Requires AutoJs6 6.8.1 (6641) or later (the exact minimum build will be filled in once the host changes land)
 - `Hint` The current icon is a candidate design and may still change
 - `Feature` Plugin skeleton: Wake activation protocol, Plugin Center identity service and camera capability service (placeholder)
 - `Feature` A single APK for every device; the native libraries that come with CameraX and Compose are aligned to 16 KB memory pages

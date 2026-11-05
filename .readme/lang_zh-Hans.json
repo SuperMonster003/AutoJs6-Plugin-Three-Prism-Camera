@@ -34,11 +34,11 @@
     "后台可用: 会话打开期间运行相机前台服务, 脚本切到后台或熄屏后仍可取帧; 脚本退出或 AutoJs6 被结束时自动释放相机."
   ],
   "usage_steps": [
-    "从 [Releases]({{ repo_url }}/releases) 下载 APK 并安装. 安装包只有一个, 适用于全部设备.",
+    "从 [Releases]({{ repo_url }}/releases) 下载与设备 ABI 对应的 APK 并安装: 大多数手机选择 `arm64-v8a`, 不确定时选择适用于全部设备但体积更大的 `universal`.",
     "打开插件, 按提示授予相机权限; 脚本也可以调用 `camera.requestPermission()` 打开授权页.",
     "要在脚本中使用 `camera` 模块, 请将 AutoJs6 升级到内部版本号 {{ required_host_version_code }} ({{ required_host_version_name }}) 或更高版本, 并在插件中心启用本插件."
   ],
-  "p_usage_note": "插件支持 Android {{ min_android_version }} (API {{ android_min_sdk }}) 及以上的设备. 只有一个适用于全部设备的安装包; CameraX 与 Compose 自带的少量原生库 (共约 200 KB) 已按 16 KB 内存页对齐, 采用 16 KB 内存页的新设备也能正常安装.",
+  "p_usage_note": "插件支持 Android {{ min_android_version }} (API {{ android_min_sdk }}) 及以上的设备. 每种 ABI 各有一个安装包, 另有适用于全部设备的 `universal` 安装包; CameraX 与 Compose 自带的少量原生库 (每种 ABI 约 50 KB) 已按 16 KB 内存页对齐, 采用 16 KB 内存页的新设备也能正常安装.",
   "p_script_api_intro": "脚本通过全局模块 `camera` (也可写作 `$camera`) 使用这些能力 (1.0.0 设计草案, 以发布版本的文档为准)",
   "api_points": [
     "`camera.capture(options)` 一步完成打开, 拍照与关闭; `camera.open(options)` 打开独占会话, 会话对象提供 `preview`, `analyze`, `capture`, `torch`, `zoom`, `exposure`, `focusAt`, `state` 与 `close`.",

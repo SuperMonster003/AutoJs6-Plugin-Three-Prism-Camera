@@ -44,48 +44,20 @@ jobs:
         run: |
           python .python/check_repository.py
           python .python/generate_markdown.py --check
-          python -m py_compile .python/device_smoke.py .python/ci_connected_tests.py
+          python -m py_compile .python/device_smoke.py .python/ci_connected_tests.py .python/release_sums.py
 
       - name: Run unit tests, assemble APKs and lint
         run: |
           chmod +x gradlew
-          # The release APK is built explicitly: R8 and resource shrinking failures only surface there. It stays unsigned
+          # The release APKs are built explicitly: R8 and resource shrinking failures only surface there. They stay unsigned
           # on CI; the signed collection task (appendDigestToReleasedFiles) and device_smoke.py run locally.
           ./gradlew :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest :app:assembleRelease :app:lintDebug -Pautojs.gradle.build.number.auto.increment.enabled=false -Pautojs.gradle.build.time.update.enabled=false --console=plain --stacktrace
 
-      # Roadmap D22 (amended in P0.2): exactly one release APK whose native libraries are exactly the CameraX and Compose
-      # helpers for the four ABIs, stored, ELF PT_LOAD and zip data offset 16 KB aligned (the rule appendDigestToReleasedFiles
-      # enforces locally).
-      - name: Check the release artifact
-        shell: python
-        run: |
-          import pathlib, struct, sys, zipfile
-          abis = ["arm64-v8a", "armeabi-v7a", "x86_64", "x86"]
-          libraries = ["libandroidx.graphics.path.so", "libimage_processing_util_jni.so", "libsurface_util_jni.so"]
-          expected = {f"lib/{abi}/{name}" for abi in abis for name in libraries}
-          apks = sorted(pathlib.Path("app/build/outputs/apk/release").glob("*.apk"))
-          if len(apks) != 1:
-              sys.exit(f"expected exactly one release APK, found {[apk.name for apk in apks]}")
-          problems = []
-          with zipfile.ZipFile(apks[0]) as archive, open(apks[0], "rb") as raw:
-              natives = [info for info in archive.infolist() if info.filename.startswith("lib/") or info.filename.endswith(".so")]
-              if {info.filename for info in natives} != expected:
-                  problems.append(f"native set {sorted(info.filename for info in natives)}")
-              for info in natives:
-                  raw.seek(info.header_offset)
-                  header = raw.read(30)
-                  offset = info.header_offset + 30 + struct.unpack_from("<H", header, 26)[0] + struct.unpack_from("<H", header, 28)[0]
-                  data = archive.read(info)
-                  is64 = data[4] == 2
-                  phoff = struct.unpack_from("<Q" if is64 else "<I", data, 0x20 if is64 else 0x1C)[0]
-                  size, count = struct.unpack_from("<HH", data, 0x36 if is64 else 0x2A)
-                  aligns = [struct.unpack_from("<Q" if is64 else "<I", data, phoff + i * size + (48 if is64 else 28))[0]
-                            for i in range(count) if struct.unpack_from("<I", data, phoff + i * size)[0] == 1]
-                  if info.compress_type != zipfile.ZIP_STORED or offset % 16384 or not aligns or min(aligns) < 16384:
-                      problems.append(f"{info.filename}: method {info.compress_type}, offset {offset}, PT_LOAD {aligns}")
-          if problems:
-              sys.exit(f"{apks[0].name}: " + "; ".join(problems))
-          print(f"RELEASE_OK {apks[0].name} {apks[0].stat().st_size} bytes, {len(natives)} native libraries stored and 16 KB aligned")
+      # Roadmap D22, appendix D Q8 = (b): one release APK per ABI plus the universal APK, each carrying exactly the
+      # CameraX and Compose helpers of its ABIs, stored, ELF PT_LOAD and zip data offset 16 KB aligned (the rule
+      # appendDigestToReleasedFiles enforces locally on the signed APKs).
+      - name: Check the release artifacts
+        run: python .python/release_sums.py --artifacts app/build/outputs/apk/release
 
       - name: Upload debug, release and test APKs
         uses: actions/upload-artifact@v7

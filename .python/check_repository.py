@@ -77,6 +77,17 @@ def check(root, pending_commit=False):
         require(not re.search(r'[.!?;,:]$', values.get('plugin_description','')), 'Description punctuation: ' + locale)
         if locale == 'values': english = values
         elif locale == 'values-en': require(values == english, 'Default and explicit English differ')
+    # Roadmap D22: the release and device tools use the ABI and native library whitelists of the build script.
+    def listed(text, name):
+        match = re.search(name + r'\s*=\s*(?:listOf\(|\[|\()([^\])]*)', text)
+        return re.findall(r'"([^"]+)"', match[1]) if match else None
+    build = (root/'app/build.gradle.kts').read_text(encoding='utf-8-sig')
+    abis, libraries = listed(build, 'val nativeAbis'), listed(build, 'val allowedNativeLibraries')
+    require(abis and libraries, 'nativeAbis / allowedNativeLibraries missing from app/build.gradle.kts')
+    for tool in ['.python/release_sums.py', '.python/device_smoke.py']:
+        text = (root/tool).read_text(encoding='utf-8-sig')
+        require(listed(text, 'NATIVE_ABIS') == abis and listed(text, 'NATIVE_LIBRARIES') == libraries,
+                'Native whitelist differs from app/build.gradle.kts: ' + tool)
     require('简体中文' in (root/'README.md').read_text(encoding='utf-8-sig'), 'Root README must identify Simplified Chinese')
     require(not list((root/'.changelog').glob('*.md')) or all(p.name.startswith('template') for p in (root/'.changelog').glob('*.md')), 'Generated changelogs must not live in .changelog')
     return errors

@@ -1,12 +1,14 @@
 """Skeleton smoke run of 3-Prism Camera on one device (roadmap P0.4; roadmap P4.1 and P5 extend it to the 1.0.0 checks).
 
-    py .python/device_smoke.py <serial> [--apk <file>] [--no-install] [--screenshot <dir>]
+    py .python/device_smoke.py <serial> [--apk <file> | --abi <abi>] [--no-install] [--screenshot <dir>]
 
 1. host: the AutoJs6 versionCode, compared with requiresHostVersion (reported only: the INFO service answers any host,
    the `camera` module of roadmap P1.4 needs the required build).
-2. install: `adb install -r` of the APK, by default the newest debug APK of app/build/outputs/apk/debug, else the newest
-   APK of releases/ (debug and release builds share the signing key, so the update keeps data). ColorOS and MIUI /
-   HyperOS show a confirmation screen for USB installs: the maintainer confirms it on the phone.
+2. install: `adb install -r` of the APK. One APK per ABI plus a universal APK (roadmap D22, appendix D Q8 = (b)): by
+   default the debug APK of app/build/outputs/apk/debug for the first ABI of the device's `ro.product.cpu.abilist` that
+   has one (--abi picks another, such as arm64-v8a on an x86_64 emulator with the native bridge), else the universal debug
+   APK, else the newest matching APK of releases/ (debug and release builds share the signing key, so the update keeps
+   data). ColorOS and MIUI / HyperOS show a confirmation screen for USB installs: the maintainer confirms it on the phone.
 3. discovery: `cmd package query-services` resolves exactly one service of the plugin for org.autojs.plugin.INFO /
    three-prism-camera and for org.autojs.plugin.CAMERA / camera.
 4. CameraX probe (roadmap P0.2): the enabled launcher alias opens the capture screen, whose CameraController logs
@@ -14,6 +16,7 @@
    dialog appears. A device without a camera passes with a count of 0 only under --allow-no-camera.
 5. activation and getInfo: an AutoJs6 script (RunIntentActivity, as in 3-Macaw Speech) starts the Wake activity (it
    needs org.autojs.permission.PLUGIN, which the shell lacks), binds the INFO service explicitly and calls getInfo(),
+   whose supportedAbis must equal the ABIs whose whitelisted native libraries the installed APK carries,
    then binds the CAMERA service and checks the placeholder ICameraPlugin descriptor (roadmap P2.1 replaces it). The
    Wake start is confirmed from the ActivityManager log lines since the step began (device clock, logcat -t).
 6. --screenshot <dir>: the script opens AutoJs6's Plugin Center and the screen is saved as
@@ -32,6 +35,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import zipfile
 from pathlib import Path
 
 HOST = "org.autojs.autojs6"
@@ -46,6 +50,8 @@ DISCOVERY = (
 PROBE_TAG = "PrismCamera"
 CAPABILITY_DESCRIPTOR = "org.autojs.plugin.camera.api.ICameraPlugin"
 PLUGIN_CENTER = "org.autojs.autojs.core.plugin.center.PluginCenterActivity"
+NATIVE_ABIS = ("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
+NATIVE_LIBRARIES = ("libandroidx.graphics.path.so", "libimage_processing_util_jni.so", "libsurface_util_jni.so")
 
 SCRIPT = """
 var out = "%(out)s";
@@ -103,7 +109,7 @@ attempt("info", function () {
         ms: Date.now() - t, descriptor: descriptor, name: String(info.name), id: String(info.id), engine: String(info.engine),
         variant: String(info.variant), versionName: String(info.versionName), versionCode: Number(info.versionCode),
         versionDate: String(info.versionDate), descriptionChars: info.description == null ? -1 : String(info.description).length,
-        abis: info.supportedAbis == null ? -1 : info.supportedAbis.length, capabilityKeys: keys.join(","),
+        abis: info.supportedAbis == null ? "null" : String(java.util.Arrays.toString(info.supportedAbis)), capabilityKeys: keys.join(","),
         requiresHostVersion: caps == null ? -1 : Number(caps.getLong("requiresHostVersion", -1)),
         contractVersion: caps == null ? -1 : caps.getInt("cameraContractVersion", -1),
         features: caps == null || caps.getStringArray("cameraFeatures") == null ? -1 : caps.getStringArray("cameraFeatures").length
@@ -150,14 +156,34 @@ def required_host_version():
     return int(match.group(1))
 
 
-def pick_apk(given):
+def apk_abis(apk):
+    """The ABIs whose whitelisted native libraries the APK carries, as NativeLibraryInventory reports them."""
+    with zipfile.ZipFile(apk) as archive:
+        names = set(archive.namelist())
+    return [abi for abi in NATIVE_ABIS if all(f"lib/{abi}/{library}" in names for library in NATIVE_LIBRARIES)]
+
+
+def pick_apk(serial, given, abi):
+    """The APK for the device (roadmap D22, appendix D Q8 = (b)): the debug APK of its first supported ABI, else the
+    universal debug APK, else the newest release APK of that ABI or the universal one."""
     if given:
         return Path(given)
-    for folder, pattern in ((ROOT / "app" / "build" / "outputs" / "apk" / "debug", "*.apk"), (ROOT / "releases", "*.apk")):
-        apks = sorted(folder.glob(pattern), key=lambda path: path.stat().st_mtime, reverse=True)
+    device_abis = [abi] if abi else [item for item in adb(serial, "shell", "getprop", "ro.product.cpu.abilist").split(",") if item in NATIVE_ABIS]
+    debug = ROOT / "app" / "build" / "outputs" / "apk" / "debug"
+    for candidate in [*device_abis, "universal"]:
+        apk = debug / f"autojs6-plugin-three-prism-camera-v{version_name()}-{candidate}.apk"
+        if apk.is_file():
+            return apk
+    for candidate in [*device_abis, "universal"]:
+        apks = sorted((ROOT / "releases").glob(f"*-v*-{candidate}-*.apk"), key=lambda path: path.stat().st_mtime, reverse=True)
         if apks:
             return apks[0]
-    raise SystemExit("no APK: build with :app:assembleDebug or pass --apk")
+    raise SystemExit(f"no APK for {device_abis or 'this device'}: build with :app:assembleDebug or pass --apk")
+
+
+def version_name():
+    properties = (ROOT / "version.properties").read_text(encoding="utf-8")
+    return re.search(r"^VERSION_NAME=(.+)$", properties, re.M).group(1).strip()
 
 
 def installed_version(serial, package):
@@ -265,7 +291,8 @@ def run(serial, args):
     if not host:
         print(f"{name}: SMOKE FAIL (AutoJs6 is not installed)")
         return False
-    apk = pick_apk(args.apk)
+    apk = pick_apk(serial, args.apk, args.abi)
+    expected_abis = "[" + ", ".join(apk_abis(apk)) + "]"
     if args.no_install:
         print(f"    install: SKIPPED (--no-install), installed versionCode {installed_version(serial, PLUGIN)}")
     else:
@@ -295,9 +322,9 @@ def run(serial, args):
            f"Wake activity start {'logged' if wake_started else 'not found in the log'} {wake.get('error') or ''}".rstrip())
     info = steps.get("info", {})
     expected_info = info.get("id") == PLUGIN_ID and info.get("engine") == "camera" and info.get("variant") == "default"
-    report("getInfo", not info.get("error") and expected_info and info.get("abis") == 0 and info.get("requiresHostVersion") == required,
+    report("getInfo", not info.get("error") and expected_info and info.get("abis") == expected_abis and info.get("requiresHostVersion") == required,
            f"{info.get('name')} {info.get('id')} / {info.get('engine')} / {info.get('variant')}, {info.get('versionName')} ({info.get('versionCode')}, "
-           f"{info.get('versionDate')}), description {info.get('descriptionChars')} chars, ABIs {info.get('abis')}, requiresHostVersion "
+           f"{info.get('versionDate')}), description {info.get('descriptionChars')} chars, ABIs {info.get('abis')} (APK {expected_abis}), requiresHostVersion "
            f"{info.get('requiresHostVersion')}, contract {info.get('contractVersion')}, features {info.get('features')}, capability keys "
            f"[{info.get('capabilityKeys')}], {info.get('ms')} ms {info.get('error') or ''}".rstrip())
     camera = steps.get("camera", {})
@@ -321,7 +348,8 @@ def run(serial, args):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("serial")
-    parser.add_argument("--apk", help="APK to install (default: the newest debug APK, else the newest release)")
+    parser.add_argument("--apk", help="APK to install (default: the debug APK of the device's ABI, else the universal one, else a release)")
+    parser.add_argument("--abi", choices=NATIVE_ABIS, help="install the APK of this ABI instead of the device's first one")
     parser.add_argument("--no-install", action="store_true", help="keep the installed build")
     parser.add_argument("--screenshot", metavar="DIR", help="open the Plugin Center afterwards and save the screen into DIR")
     parser.add_argument("--allow-no-camera", action="store_true", help="accept availableCameraInfos=0 (a device or AVD without cameras)")

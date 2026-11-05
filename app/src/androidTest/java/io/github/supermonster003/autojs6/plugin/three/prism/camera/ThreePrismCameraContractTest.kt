@@ -13,6 +13,7 @@ import android.os.Parcel
 import android.os.Parcelable
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import org.autojs.plugin.camera.api.CameraCapabilityKeys
 import org.autojs.plugin.common.api.IPluginInfoProvider
 import org.autojs.plugin.common.api.PluginCapabilityKeys
 import org.autojs.plugin.common.api.PluginInfo
@@ -80,13 +81,13 @@ class ThreePrismCameraContractTest {
             assertIdentity(info)
             val capabilities = requireNotNull(info.capabilities)
             assertEquals(
-                setOf(PluginCapabilityKeys.REQUIRES_HOST_VERSION, ThreePrismCameraContract.CAPABILITY_CONTRACT_VERSION, ThreePrismCameraContract.CAPABILITY_FEATURES),
+                setOf(CameraCapabilityKeys.REQUIRES_HOST_VERSION, CameraCapabilityKeys.CONTRACT_VERSION, CameraCapabilityKeys.FEATURES),
                 capabilities.keySet(),
             )
             assertEquals(ThreePrismCameraContract.REQUIRED_HOST_VERSION, capabilities.getLong(PluginCapabilityKeys.REQUIRES_HOST_VERSION))
-            assertEquals(1, capabilities.getInt(ThreePrismCameraContract.CAPABILITY_CONTRACT_VERSION))
-            // Roadmap D42: the skeleton advertises no feature, so the host calls nothing yet.
-            assertArrayEquals(emptyArray<String>(), capabilities.getStringArray(ThreePrismCameraContract.CAPABILITY_FEATURES))
+            assertEquals(1, capabilities.getInt(CameraCapabilityKeys.CONTRACT_VERSION))
+            // Roadmap D42: exactly the features this build implements on this API level.
+            assertArrayEquals(ThreePrismCameraContract.features().toTypedArray(), capabilities.getStringArray(CameraCapabilityKeys.FEATURES))
         }
     }
 
@@ -143,8 +144,13 @@ class ThreePrismCameraContractTest {
         }
         assertEquals(versionCode, info.versionCode)
         assertEquals(context.getString(R.string.plugin_version_date), info.versionDate)
-        // Roadmap D22: one universal APK despite the CameraX and Compose native helpers, so an explicit empty array (never null).
-        assertArrayEquals(emptyArray<String>(), requireNotNull(info.supportedAbis))
+        // Roadmap D22, appendix D Q8 = (b): the installed split reports its single ABI, which the device supports; the
+        // universal APK reports all four.
+        val abis = requireNotNull(info.supportedAbis).toList()
+        assertTrue(
+            "supportedAbis $abis must be one device ABI or all of ${ThreePrismCameraContract.NATIVE_ABIS}",
+            abis == ThreePrismCameraContract.NATIVE_ABIS || (abis.size == 1 && abis.single() in Build.SUPPORTED_ABIS),
+        )
     }
 
     /** `getInfo()` is the first transaction of IPluginInfoProvider. */

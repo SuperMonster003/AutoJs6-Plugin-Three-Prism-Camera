@@ -123,7 +123,7 @@ info service: {{ info_action }} (category {{ info_category }})
 capability service: {{ discovery_action }} (category {{ discovery_category }})
 wake action: {{ wake_action }}
 minimum host build: {{ required_host_version_code }}
-native libraries: libimage_processing_util_jni.so, libsurface_util_jni.so (CameraX), libandroidx.graphics.path.so (Compose); one APK for every ABI, stored uncompressed and 16 KB page-aligned
+native libraries: libimage_processing_util_jni.so, libsurface_util_jni.so (CameraX), libandroidx.graphics.path.so (Compose); one APK per ABI plus a universal APK, stored uncompressed and 16 KB page-aligned
 ```
 
 ******

@@ -67,11 +67,11 @@
 
 ******
 
-1. Скачайте APK из [Releases](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/releases) и установите его. Один пакет подходит для всех устройств.
+1. Скачайте из [Releases](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/releases) APK для ABI устройства и установите его: большинству телефонов нужен `arm64-v8a`; если не уверены, выберите `universal`, он подходит для всех устройств, но больше по размеру.
 2. Откройте плагин и выдайте разрешение на камеру по запросу; скрипты также могут вызвать `camera.requestPermission()`, чтобы открыть экран разрешений.
-3. Чтобы использовать модуль `camera` в скриптах, обновите AutoJs6 до сборки 6640 (6.8.1) или новее и включите этот плагин в центре плагинов.
+3. Чтобы использовать модуль `camera` в скриптах, обновите AutoJs6 до сборки 6641 (6.8.1) или новее и включите этот плагин в центре плагинов.
 
-> Плагин поддерживает устройства с Android 7.0 (API 24) и новее. Для всех устройств есть один APK; несколько нативных библиотек, входящих в CameraX и Compose (всего около 200 KB), выровнены по страницам памяти 16 KB, поэтому плагин устанавливается и на новые устройства со страницами 16 KB.
+> Плагин поддерживает устройства с Android 7.0 (API 24) и новее. Для каждого ABI есть свой APK, а также пакет `universal` для всех устройств; несколько нативных библиотек, входящих в CameraX и Compose (около 50 KB на ABI), выровнены по страницам памяти 16 KB, поэтому плагин устанавливается и на новые устройства со страницами 16 KB.
 
 ******
 
@@ -154,8 +154,8 @@ variant: default
 info service: org.autojs.plugin.INFO (category three-prism-camera)
 capability service: org.autojs.plugin.CAMERA (category camera)
 wake action: org.autojs.plugin.action.WAKE
-minimum host build: 6640
-native libraries: libimage_processing_util_jni.so, libsurface_util_jni.so (CameraX), libandroidx.graphics.path.so (Compose); one APK for every ABI, stored uncompressed and 16 KB page-aligned
+minimum host build: 6641
+native libraries: libimage_processing_util_jni.so, libsurface_util_jni.so (CameraX), libandroidx.graphics.path.so (Compose); one APK per ABI plus a universal APK, stored uncompressed and 16 KB page-aligned
 ```
 
 ******
@@ -179,7 +179,7 @@ native libraries: libimage_processing_util_jni.so, libsurface_util_jni.so (Camer
 _2026/11/05_
 
 - `Подсказка` Предварительная версия для разработки: центр плагинов AutoJs6 может обнаружить плагин; фотосъёмка, живые кадры, видоискатель, экран съёмки и модуль скриптов camera ещё не готовы
-- `Подсказка` Требуется AutoJs6 6.8.1 (6640) или новее (точная минимальная версия будет указана после внесения изменений в хост)
+- `Подсказка` Требуется AutoJs6 6.8.1 (6641) или новее (точная минимальная версия будет указана после внесения изменений в хост)
 - `Подсказка` Текущий значок - вариант-кандидат и ещё может измениться
 - `Функция` Каркас плагина: протокол активации Wake, служба идентификации для центра плагинов и служба возможностей камеры (заготовка)
 - `Функция` Один APK для всех устройств; нативные библиотеки, входящие в CameraX и Compose, выровнены по страницам памяти 16 KB

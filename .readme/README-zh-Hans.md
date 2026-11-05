@@ -67,11 +67,11 @@
 
 ******
 
-1. 从 [Releases](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/releases) 下载 APK 并安装. 安装包只有一个, 适用于全部设备.
+1. 从 [Releases](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/releases) 下载与设备 ABI 对应的 APK 并安装: 大多数手机选择 `arm64-v8a`, 不确定时选择适用于全部设备但体积更大的 `universal`.
 2. 打开插件, 按提示授予相机权限; 脚本也可以调用 `camera.requestPermission()` 打开授权页.
-3. 要在脚本中使用 `camera` 模块, 请将 AutoJs6 升级到内部版本号 6640 (6.8.1) 或更高版本, 并在插件中心启用本插件.
+3. 要在脚本中使用 `camera` 模块, 请将 AutoJs6 升级到内部版本号 6641 (6.8.1) 或更高版本, 并在插件中心启用本插件.
 
-> 插件支持 Android 7.0 (API 24) 及以上的设备. 只有一个适用于全部设备的安装包; CameraX 与 Compose 自带的少量原生库 (共约 200 KB) 已按 16 KB 内存页对齐, 采用 16 KB 内存页的新设备也能正常安装.
+> 插件支持 Android 7.0 (API 24) 及以上的设备. 每种 ABI 各有一个安装包, 另有适用于全部设备的 `universal` 安装包; CameraX 与 Compose 自带的少量原生库 (每种 ABI 约 50 KB) 已按 16 KB 内存页对齐, 采用 16 KB 内存页的新设备也能正常安装.
 
 ******
 
@@ -154,8 +154,8 @@ variant: default
 info service: org.autojs.plugin.INFO (category three-prism-camera)
 capability service: org.autojs.plugin.CAMERA (category camera)
 wake action: org.autojs.plugin.action.WAKE
-minimum host build: 6640
-native libraries: libimage_processing_util_jni.so, libsurface_util_jni.so (CameraX), libandroidx.graphics.path.so (Compose); one APK for every ABI, stored uncompressed and 16 KB page-aligned
+minimum host build: 6641
+native libraries: libimage_processing_util_jni.so, libsurface_util_jni.so (CameraX), libandroidx.graphics.path.so (Compose); one APK per ABI plus a universal APK, stored uncompressed and 16 KB page-aligned
 ```
 
 ******
@@ -179,10 +179,10 @@ native libraries: libimage_processing_util_jni.so, libsurface_util_jni.so (Camer
 _2026/11/05_
 
 - `提示` 开发预览: 插件可以被 AutoJs6 插件中心识别, 拍照, 连续取帧, 取景预览, 拍摄页与 camera 脚本模块尚未交付
-- `提示` 需要 AutoJs6 6.8.1 (6640) 或更高版本 (准确的最低版本号待宿主侧改动落地后回填)
+- `提示` 需要 AutoJs6 6.8.1 (6641) 或更高版本 (准确的最低版本号待宿主侧改动落地后回填)
 - `提示` 当前图标为候选图案, 之后可能更换
 - `新增` 插件骨架: Wake 激活协议, 插件中心身份服务与相机能力服务 (占位)
-- `新增` 只有一个适用于全部设备的 APK, CameraX 与 Compose 自带的原生库已按 16 KB 内存页对齐
+- `新增` 按 ABI 分别提供安装包 (arm64-v8a, armeabi-v7a, x86_64, x86), 另有适用于全部设备的 universal 安装包; CameraX 与 Compose 自带的原生库已按 16 KB 内存页对齐
 - `新增` 10 种语言的 README, 插件中心说明与更新日志, 由 JSON 源文件统一生成
 - `依赖` 附加 Jetpack CameraX 版本 1.6.2 (打开相机, 拍照, 取帧与取景)
 - `依赖` 附加 Jetpack Compose BOM 版本 2026.09.00 (插件界面)

@@ -8,10 +8,10 @@ build (`:app:dependencies --configuration releaseRuntimeClasspath`); R8 removes 
 
 | Artifact | Source | License |
 | --- | --- | --- |
+| `libs/camera-api.aar` | AutoJs6 host module `plugin-api/camera-api` (https://github.com/SuperMonster003/AutoJs6) | MPL-2.0 |
 | `libs/common-plugin-api.aar` | AutoJs6 host module `plugin-api/common-plugin-api` (https://github.com/SuperMonster003/AutoJs6) | MPL-2.0 |
 
-Provenance and SHA-256 digests are recorded in `locks/host-api-aars.lock` and `libs/README.md`. The camera contract
-(`libs/camera-api.aar`) joins in roadmap P2.1.
+Provenance and SHA-256 digests are recorded in `locks/host-api-aars.lock` and `libs/README.md`.
 
 ## Jetpack CameraX (Maven)
 
@@ -54,8 +54,9 @@ Provenance and SHA-256 digests are recorded in `locks/host-api-aars.lock` and `l
 
 ## Native libraries
 
-The plugin has no native code of its own. The APK carries the native helpers of the libraries above for the four
-Android ABIs (`arm64-v8a`, `armeabi-v7a`, `x86`, `x86_64`), stored uncompressed and 16 KB page-aligned (roadmap D22):
+The plugin has no native code of its own. Each APK carries the native helpers of the libraries above for its ABI
+(`arm64-v8a`, `armeabi-v7a`, `x86`, `x86_64`; the universal APK carries all four), stored uncompressed and 16 KB
+page-aligned (roadmap D22):
 
 | Library file | From | License |
 | --- | --- | --- |

@@ -67,11 +67,11 @@
 
 ******
 
-1. 從 [Releases](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/releases) 下載 APK 並安裝. 安裝包只有一個, 適用於全部裝置.
+1. 從 [Releases](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/releases) 下載與裝置 ABI 對應的 APK 並安裝: 大多數手機選擇 `arm64-v8a`, 不確定時選擇適用於全部裝置但體積較大的 `universal`.
 2. 開啟插件, 按提示授予相機權限; 腳本也可以呼叫 `camera.requestPermission()` 開啟授權頁.
-3. 如要在腳本中使用 `camera` 模組, 請將 AutoJs6 升級到內部版本號 6640 (6.8.1) 或更高版本, 並在插件中心啟用本插件.
+3. 如要在腳本中使用 `camera` 模組, 請將 AutoJs6 升級到內部版本號 6641 (6.8.1) 或更高版本, 並在插件中心啟用本插件.
 
-> 插件支援 Android 7.0 (API 24) 或以上的裝置. 只有一個適用於全部裝置的安裝包; CameraX 與 Compose 自帶的少量原生庫 (共約 200 KB) 已按 16 KB 記憶體分頁對齊, 採用 16 KB 記憶體分頁的新裝置亦能正常安裝.
+> 插件支援 Android 7.0 (API 24) 或以上的裝置. 每種 ABI 各有一個安裝包, 另有適用於全部裝置的 `universal` 安裝包; CameraX 與 Compose 自帶的少量原生庫 (每種 ABI 約 50 KB) 已按 16 KB 記憶體分頁對齊, 採用 16 KB 記憶體分頁的新裝置亦能正常安裝.
 
 ******
 
@@ -154,8 +154,8 @@ variant: default
 info service: org.autojs.plugin.INFO (category three-prism-camera)
 capability service: org.autojs.plugin.CAMERA (category camera)
 wake action: org.autojs.plugin.action.WAKE
-minimum host build: 6640
-native libraries: libimage_processing_util_jni.so, libsurface_util_jni.so (CameraX), libandroidx.graphics.path.so (Compose); one APK for every ABI, stored uncompressed and 16 KB page-aligned
+minimum host build: 6641
+native libraries: libimage_processing_util_jni.so, libsurface_util_jni.so (CameraX), libandroidx.graphics.path.so (Compose); one APK per ABI plus a universal APK, stored uncompressed and 16 KB page-aligned
 ```
 
 ******
@@ -179,7 +179,7 @@ native libraries: libimage_processing_util_jni.so, libsurface_util_jni.so (Camer
 _2026/11/05_
 
 - `提示` 開發預覽: 插件可以被 AutoJs6 插件中心識別, 拍照, 連續取幀, 取景預覽, 拍攝頁與 camera 腳本模組尚未交付
-- `提示` 需要 AutoJs6 6.8.1 (6640) 或更高版本 (準確的最低版本號待宿主側改動落地後回填)
+- `提示` 需要 AutoJs6 6.8.1 (6641) 或更高版本 (準確的最低版本號待宿主側改動落地後回填)
 - `提示` 目前圖標為候選圖案, 之後可能更換
 - `新增` 插件骨架: Wake 啟動協議, 插件中心身份服務與相機能力服務 (佔位)
 - `新增` 只有一個適用於全部裝置的 APK, CameraX 與 Compose 自帶的原生庫已按 16 KB 記憶體分頁對齊

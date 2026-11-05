@@ -67,11 +67,11 @@ El complemento controla la cámara y se comunica con AutoJs6 por Binder: los fot
 
 ******
 
-1. Descargue el APK desde [Releases](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/releases) e instálelo. Hay un único paquete para todos los dispositivos.
+1. Descargue desde [Releases](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/releases) el APK que corresponde a la ABI del dispositivo e instálelo: la mayoría de los teléfonos necesitan `arm64-v8a`; si no está seguro, elija `universal`, que funciona en todos los dispositivos pero ocupa más.
 2. Abra el complemento y conceda el permiso de cámara cuando se solicite; los scripts también pueden llamar a `camera.requestPermission()` para abrir la pantalla de permisos.
-3. Para usar el módulo `camera` en scripts, actualice AutoJs6 a la versión interna 6640 (6.8.1) o posterior y active este complemento en el centro de complementos.
+3. Para usar el módulo `camera` en scripts, actualice AutoJs6 a la versión interna 6641 (6.8.1) o posterior y active este complemento en el centro de complementos.
 
-> El complemento es compatible con dispositivos con Android 7.0 (API 24) o posterior. Hay un único APK para todos los dispositivos; las pocas bibliotecas nativas que incluyen CameraX y Compose (unos 200 KB en total) están alineadas a páginas de memoria de 16 KB, por lo que los dispositivos nuevos con páginas de 16 KB también lo instalan.
+> El complemento es compatible con dispositivos con Android 7.0 (API 24) o posterior. Hay un APK por ABI y un paquete `universal` para todos los dispositivos; las pocas bibliotecas nativas que incluyen CameraX y Compose (unos 50 KB por ABI) están alineadas a páginas de memoria de 16 KB, por lo que los dispositivos nuevos con páginas de 16 KB también lo instalan.
 
 ******
 
@@ -154,8 +154,8 @@ variant: default
 info service: org.autojs.plugin.INFO (category three-prism-camera)
 capability service: org.autojs.plugin.CAMERA (category camera)
 wake action: org.autojs.plugin.action.WAKE
-minimum host build: 6640
-native libraries: libimage_processing_util_jni.so, libsurface_util_jni.so (CameraX), libandroidx.graphics.path.so (Compose); one APK for every ABI, stored uncompressed and 16 KB page-aligned
+minimum host build: 6641
+native libraries: libimage_processing_util_jni.so, libsurface_util_jni.so (CameraX), libandroidx.graphics.path.so (Compose); one APK per ABI plus a universal APK, stored uncompressed and 16 KB page-aligned
 ```
 
 ******
@@ -179,7 +179,7 @@ Los planes, las decisiones de diseño y el progreso se registran como lista de v
 _2026/11/05_
 
 - `Aviso` Versión preliminar de desarrollo: el centro de complementos de AutoJs6 puede detectar el complemento; la captura de fotos, los fotogramas en vivo, el visor, la pantalla de captura y el módulo de script camera aún no están disponibles
-- `Aviso` Requiere AutoJs6 6.8.1 (6640) o posterior (la versión mínima exacta se indicará cuando se integren los cambios del anfitrión)
+- `Aviso` Requiere AutoJs6 6.8.1 (6641) o posterior (la versión mínima exacta se indicará cuando se integren los cambios del anfitrión)
 - `Aviso` El icono actual es un diseño candidato y aún puede cambiar
 - `Función` Esqueleto del complemento: protocolo de activación Wake, servicio de identidad del centro de complementos y servicio de capacidad de cámara (provisional)
 - `Función` Un único APK para todos los dispositivos; las bibliotecas nativas que incluyen CameraX y Compose están alineadas a páginas de memoria de 16 KB

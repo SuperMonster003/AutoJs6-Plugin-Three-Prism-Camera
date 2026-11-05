@@ -9,7 +9,7 @@
 ###### 2026/11/05
 
 * `Note` Préversion de développement: le centre des plugins d'AutoJs6 peut détecter le plugin; la prise de photos, les images en direct, le viseur, l'écran de prise de vue et le module de script camera ne sont pas encore livrés
-* `Note` Nécessite AutoJs6 6.8.1 (6640) ou ultérieur (la version minimale exacte sera renseignée une fois les modifications de l'hôte intégrées)
+* `Note` Nécessite AutoJs6 6.8.1 (6641) ou ultérieur (la version minimale exacte sera renseignée une fois les modifications de l'hôte intégrées)
 * `Note` L'icône actuelle est une proposition et peut encore changer
 * `Fonctionnalité` Squelette du plugin: protocole d'activation Wake, service d'identité du centre des plugins et service de capacité caméra (provisoire)
 * `Fonctionnalité` Un seul APK pour tous les appareils; les bibliothèques natives fournies avec CameraX et Compose sont alignées sur des pages mémoire de 16 KB

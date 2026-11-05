@@ -67,11 +67,11 @@ Le plugin détient la caméra et communique avec AutoJs6 par Binder: les images 
 
 ******
 
-1. Téléchargez l'APK depuis [Releases](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/releases) et installez-le. Un seul paquet convient à tous les appareils.
+1. Téléchargez depuis [Releases](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/releases) l'APK qui correspond à l'ABI de l'appareil et installez-le: la plupart des téléphones utilisent `arm64-v8a`; en cas de doute, choisissez `universal`, qui convient à tous les appareils mais est plus volumineux.
 2. Ouvrez le plugin et accordez l'autorisation caméra quand elle est demandée; les scripts peuvent aussi appeler `camera.requestPermission()` pour ouvrir l'écran d'autorisation.
-3. Pour utiliser le module `camera` dans les scripts, mettez AutoJs6 à jour vers la version interne 6640 (6.8.1) ou ultérieure et activez ce plugin dans le centre de plugins.
+3. Pour utiliser le module `camera` dans les scripts, mettez AutoJs6 à jour vers la version interne 6641 (6.8.1) ou ultérieure et activez ce plugin dans le centre de plugins.
 
-> Le plugin prend en charge les appareils sous Android 7.0 (API 24) ou ultérieur. Un seul APK convient à tous les appareils; les quelques bibliothèques natives fournies avec CameraX et Compose (environ 200 KB au total) sont alignées sur des pages mémoire de 16 KB, si bien que les appareils récents à pages de 16 KB l'installent aussi.
+> Le plugin prend en charge les appareils sous Android 7.0 (API 24) ou ultérieur. Il existe un APK par ABI et un paquet `universal` pour tous les appareils; les quelques bibliothèques natives fournies avec CameraX et Compose (environ 50 KB par ABI) sont alignées sur des pages mémoire de 16 KB, si bien que les appareils récents à pages de 16 KB l'installent aussi.
 
 ******
 
@@ -154,8 +154,8 @@ variant: default
 info service: org.autojs.plugin.INFO (category three-prism-camera)
 capability service: org.autojs.plugin.CAMERA (category camera)
 wake action: org.autojs.plugin.action.WAKE
-minimum host build: 6640
-native libraries: libimage_processing_util_jni.so, libsurface_util_jni.so (CameraX), libandroidx.graphics.path.so (Compose); one APK for every ABI, stored uncompressed and 16 KB page-aligned
+minimum host build: 6641
+native libraries: libimage_processing_util_jni.so, libsurface_util_jni.so (CameraX), libandroidx.graphics.path.so (Compose); one APK per ABI plus a universal APK, stored uncompressed and 16 KB page-aligned
 ```
 
 ******
@@ -179,7 +179,7 @@ Les plans, décisions de conception et l'avancement sont suivis sous forme de li
 _2026/11/05_
 
 - `Note` Préversion de développement: le centre des plugins d'AutoJs6 peut détecter le plugin; la prise de photos, les images en direct, le viseur, l'écran de prise de vue et le module de script camera ne sont pas encore livrés
-- `Note` Nécessite AutoJs6 6.8.1 (6640) ou ultérieur (la version minimale exacte sera renseignée une fois les modifications de l'hôte intégrées)
+- `Note` Nécessite AutoJs6 6.8.1 (6641) ou ultérieur (la version minimale exacte sera renseignée une fois les modifications de l'hôte intégrées)
 - `Note` L'icône actuelle est une proposition et peut encore changer
 - `Fonctionnalité` Squelette du plugin: protocole d'activation Wake, service d'identité du centre des plugins et service de capacité caméra (provisoire)
 - `Fonctionnalité` Un seul APK pour tous les appareils; les bibliothèques natives fournies avec CameraX et Compose sont alignées sur des pages mémoire de 16 KB
