@@ -168,14 +168,12 @@ internal class CameraPluginBinder(context: Context) : ICameraPlugin.Stub() {
 
     /**
      * Starts the viewfinder for one picture (protocol "Capture", roadmap D15, D31). The viewfinder screen is roadmap P3.1
-     * (appendix D Q3 = (b)); until `captureUi` is advertised the call answers `UNSUPPORTED`, as the host refuses it first.
-     * zh-CN: 为一张照片启动取景页 (协议 "Capture" 一节, 路线图 D15, D31). 取景页属于路线图 P3.1 (附录 D Q3 = (b)); 在声明 `captureUi` 之前该调用返回
-     * `UNSUPPORTED`, 宿主也会先行拒绝.
+     * (appendix D Q3 = (b)): until `captureUi` is advertised the host refuses the call for scripts, while the plugin still
+     * answers it with the skeleton screen, so the registry and the callback path can be checked on a device.
+     * zh-CN: 为一张照片启动取景页 (协议 "Capture" 一节, 路线图 D15, D31). 取景页属于路线图 P3.1 (附录 D Q3 = (b)): 在声明 `captureUi` 之前宿主
+     * 替脚本拒绝该调用, 插件仍以骨架界面应答, 以便在设备上检查登记表与回调路径.
      */
     override fun openCaptureUi(request: Bundle?, callback: ICameraCaptureCallback?): Bundle = guarded(request, TAG) { requestVersion ->
-        if (CameraContract.FEATURE_CAPTURE_UI !in ThreePrismCameraContract.features()) {
-            throw CameraFailure(CameraErrorCodes.UNSUPPORTED, "the viewfinder is not available in this build")
-        }
         callback ?: throw CameraFailure(CameraErrorCodes.INVALID_ARGUMENT, "the capture callback is null")
         val captureUi = CameraRequests.captureUi(BundleOptions(request))
         requirePermission()

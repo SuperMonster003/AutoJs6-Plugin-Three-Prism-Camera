@@ -1,5 +1,6 @@
 package io.github.supermonster003.autojs6.plugin.three.prism.camera.ui
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -54,9 +55,32 @@ class ThreePrismCameraCaptureActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * The activity is `singleTask`: an `openCaptureUi` while the screen is already open (from the launcher or an earlier
+     * call) arrives here, and its token replaces the earlier one, which is cancelled if it is still pending.
+     * zh-CN: 本 Activity 为 `singleTask`: 界面已打开 (来自启动器或之前的调用) 时的 `openCaptureUi` 到达此处, 其令牌取代之前的令牌,
+     * 之前的令牌若仍待返回则取消.
+     */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val token = intent.getStringExtra(CaptureUiRegistry.EXTRA_TOKEN) ?: return
+        captureToken?.takeIf { it != token }?.let(CaptureUiRegistry::cancel)
+        captureToken = token
+    }
+
+    override fun onPause() {
+        // A rotation recreates the activity; only a real close cancels the pending result. The answer goes out here
+        // because on API 24 `onDestroy` of a finished activity can wait about 10 seconds for the next activity to idle.
+        // zh-CN: 旋转会重建 Activity; 只有真正关闭时才取消待返回的结果. 应答在此发出, 因为在 API 24 上已结束的 Activity 的
+        // `onDestroy` 可能要等下一个 Activity 空闲约 10 秒.
+        if (isFinishing) captureToken?.let(CaptureUiRegistry::cancel)
+        super.onPause()
+    }
+
     override fun onDestroy() {
-        // A rotation recreates the activity; only a real close cancels the pending result.
-        // zh-CN: 旋转会重建 Activity; 只有真正关闭时才取消待返回的结果.
+        // A fallback for a close that skipped `onPause`; a token that was already answered is ignored.
+        // zh-CN: 作为未经过 `onPause` 的关闭的兜底; 已应答的令牌会被忽略.
         if (isFinishing) captureToken?.let(CaptureUiRegistry::cancel)
         super.onDestroy()
     }

@@ -1,11 +1,14 @@
 package io.github.supermonster003.autojs6.plugin.three.prism.camera.session
 
 import android.content.Context
+import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CaptureRequest as Camera2Request
+import android.hardware.camera2.TotalCaptureResult
 import android.hardware.display.DisplayManager
 import android.os.Bundle
 import android.os.IBinder
 import android.os.RemoteException
+import android.os.SystemClock
 import android.util.Log
 import android.util.Range
 import android.util.Size
@@ -121,6 +124,8 @@ internal class CameraSession(
     private var captureConfig: CaptureConfig? = null
     private val captures = ArrayDeque<CaptureJob>()
     private var captureInFlight: CaptureJob? = null
+    private var captureStartedAt = 0L
+    private var reboundAt = 0L
     private var lastErrorCode: Int? = null
     private var lastStateType: CameraState.Type? = null
     private var displayRotation = Surface.ROTATION_0
@@ -250,6 +255,7 @@ internal class CameraSession(
 
     /** Main thread: binds [useCase] next to the bound ones and reapplies the controls. zh-CN: 主线程: 在已绑定用例之外绑定 [useCase] 并重新应用控制. */
     private fun bind(useCase: UseCase) {
+        reboundAt = SystemClock.elapsedRealtime()
         camera = try {
             provider.bindToLifecycle(this, selector, useCase)
         } catch (e: IllegalArgumentException) {
@@ -262,6 +268,7 @@ internal class CameraSession(
 
     private fun unbind(useCase: UseCase?) {
         useCase ?: return
+        reboundAt = SystemClock.elapsedRealtime()
         runCatching { provider.unbind(useCase) }.onFailure { Log.w(TAG, "unbind failed: $it") }
         if (preview == null && analysis == null && capture == null) camera = null
     }
@@ -322,7 +329,7 @@ internal class CameraSession(
      * still experimental in CameraX 1.6.
      * zh-CN: 主线程. 前置镜头的预览镜像 (路线图 D19, 附录 D Q6 = (b)); `Preview` 的 `setMirrorMode` 在 CameraX 1.6 中仍属实验 API.
      */
-    @OptIn(ExperimentalMirrorMode::class)
+    @OptIn(ExperimentalMirrorMode::class, ExperimentalCamera2Interop::class)
     fun startPreview(surface: Surface, request: PreviewRequest): Bundle {
         requireOpen()
         if (!surface.isValid) {
@@ -332,11 +339,12 @@ internal class CameraSession(
         stopPreviewOnMain()
         val target = PreviewTarget(surface, request.surfaceRotation)
         val rotation = request.surfaceRotation ?: displayRotation
-        val useCase = Preview.Builder()
+        val builder = Preview.Builder()
             .setTargetRotation(rotation)
             .setMirrorMode(MirrorMode.MIRROR_MODE_ON_FRONT_ONLY)
             .setResolutionSelector(ResolutionSelector.Builder().setAspectRatioStrategy(aspectOf(request.surfaceWidth, request.surfaceHeight)).build())
-            .build()
+        Camera2Interop.Extender(builder).setSessionCaptureCallback(PreviewLossWatch(target))
+        val useCase = builder.build()
         useCase.setSurfaceProvider(ContextCompat.getMainExecutor(appContext)) { surfaceRequest -> provide(target, surfaceRequest) }
         previewTarget = target
         preview = useCase
@@ -370,6 +378,85 @@ internal class CameraSession(
                 sendState()
             }
             target.releaseIfUnused()
+        }
+    }
+
+    /**
+     * Notices a preview consumer that went away while the host's `stopPreview` is late or never comes (protocol
+     * "Lifetimes": the host calls it from `surfaceDestroyed`). `Surface.isValid` stays true on the plugin's parcelled
+     * copy, so the camera tells it. A HAL3 device loses the preview buffer of every frame while the other streams go on:
+     * [LOSS_BURST] losses within [LOSS_WINDOW_MILLIS] stop the preview. The legacy camera2 shim (LEGACY devices, the
+     * API 24 - 26 emulators) loses no buffer through this callback; it drops the repeating request instead, so its
+     * sequence ends and every stream stalls. A sequence that ends (or a single lost buffer) arms a check: no completed
+     * frame for [STALL_MILLIS] stops the preview, so analysis and capture go on. A replaced repeating request (controls,
+     * captures, rebinding) ends its sequence too, but frames follow; rebinding gets [REBIND_GRACE_MILLIS], a capture
+     * [STALL_MILLIS] from its start, a camera that is not open is not judged, and the check gives up after
+     * [STALL_GIVE_UP_MILLIS]. Camera threads; the checks and the stop run on the main thread.
+     * zh-CN: 宿主的 `stopPreview` 迟到或不来时 (协议 "Lifetimes" 一节: 宿主在 `surfaceDestroyed` 中调用), 发现已失去消费者的预览. 插件持有的
+     * Surface 副本 `isValid` 仍为 true, 因此由镜头告知. HAL3 设备每帧都丢失预览缓冲而其他流照常: [LOSS_WINDOW_MILLIS] 内丢失 [LOSS_BURST] 次即停止
+     * 预览. 旧版 camera2 兼容层 (LEGACY 设备, API 24 - 26 模拟器) 不经此回调报告丢失, 而是丢弃重复请求, 其序列结束后所有流停滞. 序列结束 (或单次
+     * 丢失) 后开始检查: [STALL_MILLIS] 内没有完成的帧即停止预览, 使分析与拍照继续. 替换重复请求 (控制, 拍照, 重新绑定) 也会结束序列, 但随后有帧;
+     * 重新绑定另给 [REBIND_GRACE_MILLIS], 拍照从开始时起算 [STALL_MILLIS], 镜头未打开时不判断, 超过 [STALL_GIVE_UP_MILLIS] 放弃. 回调运行于镜头线程,
+     * 检查与停止在主线程执行.
+     */
+    private inner class PreviewLossWatch(private val target: PreviewTarget) : CameraCaptureSession.CaptureCallback() {
+        private val losses = ArrayDeque<Long>()
+
+        @Volatile
+        private var lastCompleted = 0L
+
+        override fun onCaptureCompleted(session: CameraCaptureSession, request: Camera2Request, result: TotalCaptureResult) {
+            lastCompleted = SystemClock.elapsedRealtime()
+        }
+
+        override fun onCaptureBufferLost(session: CameraCaptureSession, request: Camera2Request, surface: Surface, frameNumber: Long) {
+            if (surface !== target.surface || target.stopped) return
+            val now = SystemClock.elapsedRealtime()
+            val burst = synchronized(losses) {
+                losses.addLast(now)
+                while (now - losses.first() > LOSS_WINDOW_MILLIS) losses.removeFirst()
+                losses.size >= LOSS_BURST
+            }
+            if (burst) {
+                MainThread.post { stop("$LOSS_BURST lost buffers within $LOSS_WINDOW_MILLIS ms") }
+            } else {
+                watch(now, "a lost buffer")
+            }
+        }
+
+        override fun onCaptureSequenceCompleted(session: CameraCaptureSession, sequenceId: Int, frameNumber: Long) {
+            if (!target.stopped) watch(SystemClock.elapsedRealtime(), "the end of a capture sequence")
+        }
+
+        override fun onCaptureSequenceAborted(session: CameraCaptureSession, sequenceId: Int) {
+            if (!target.stopped) watch(SystemClock.elapsedRealtime(), "an aborted capture sequence")
+        }
+
+        private fun watch(since: Long, cause: String) {
+            MainThread.handler.postDelayed({ checkStall(since, cause) }, STALL_MILLIS)
+        }
+
+        /** Main thread. zh-CN: 主线程. */
+        private fun checkStall(since: Long, cause: String) {
+            // The last frame of an ended sequence often completes in the same millisecond, so only a later one counts.
+            // zh-CN: 已结束序列的最后一帧常在同一毫秒内完成, 因此只有更晚的帧才算.
+            if (target.stopped || previewTarget !== target || closed.get() || lastCompleted > since) return
+            val now = SystemClock.elapsedRealtime()
+            val settled = lastStateType == CameraState.Type.OPEN &&
+                now - reboundAt >= REBIND_GRACE_MILLIS &&
+                (captureInFlight == null || now - captureStartedAt >= STALL_MILLIS)
+            when {
+                settled -> stop("no frame completed within ${now - since} ms of $cause")
+                now - since < STALL_GIVE_UP_MILLIS -> MainThread.handler.postDelayed({ checkStall(since, cause) }, STALL_MILLIS)
+            }
+        }
+
+        /** Main thread. zh-CN: 主线程. */
+        private fun stop(reason: String) {
+            if (target.stopped || previewTarget !== target || closed.get()) return
+            Log.w(TAG, "The preview surface is gone ($reason); stopping the preview")
+            stopPreviewOnMain()
+            sendState()
         }
     }
 
@@ -504,6 +591,7 @@ internal class CameraSession(
         if (captureInFlight != null || closed.get()) return
         val job = captures.removeFirstOrNull() ?: return
         captureInFlight = job
+        captureStartedAt = SystemClock.elapsedRealtime()
         try {
             val useCase = captureUseCase(CaptureConfig(job.request.quality, job.request.width, job.request.height))
             useCase.flashMode = flashModeOf(job.request.flashMode ?: flashMode)
@@ -811,6 +899,21 @@ internal class CameraSession(
          * zh-CN: 插件自带的状态键 (附录 D Q11): 预览是否镜像 (前置镜头, `MIRROR_MODE_ON_FRONT_ONLY`).
          */
         const val KEY_PREVIEW_MIRRORED = "previewMirrored"
+
+        /** [PreviewLossWatch]: lost preview buffers within [LOSS_WINDOW_MILLIS] that stop the preview. zh-CN: 停止预览所需的丢失次数. */
+        const val LOSS_BURST = 3
+        const val LOSS_WINDOW_MILLIS = 1000L
+
+        /**
+         * [PreviewLossWatch]: how long the frames may stall after a sequence end or a lost buffer. zh-CN: 序列结束或丢失缓冲后允许无帧的时长.
+         */
+        const val STALL_MILLIS = 1000L
+
+        /** [PreviewLossWatch]: extra time after binding or unbinding a use case. zh-CN: 绑定或解绑用例后额外给出的时长. */
+        const val REBIND_GRACE_MILLIS = 3000L
+
+        /** [PreviewLossWatch]: a stall that does not settle by then is left alone. zh-CN: 到此仍未稳定的停滞不再处理. */
+        const val STALL_GIVE_UP_MILLIS = 10_000L
 
         /** Removes pictures and frame files a killed process left behind. zh-CN: 删除被杀进程遗留的照片与帧文件. */
         fun cleanStaleFiles(context: Context) {
