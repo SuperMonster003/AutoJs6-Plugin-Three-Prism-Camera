@@ -1,0 +1,73 @@
+{
+  "$name": "繁體中文 (台灣)",
+  "text_current_lowercase": "目前",
+  "text_plugin_synopsis": "透過 CameraX 拍照, 連續擷取影格與取景預覽, 影格可直接交給 OCR, 條碼與 YOLO 等辨識模組",
+  "h3_languages_with_ascii": "語言 (Languages)",
+  "p_languages_all_supported_for_readme": "目前 README.md 支援以下語言",
+  "h3_introduction": "簡介",
+  "h3_features": "功能亮點",
+  "h3_usage": "使用方法",
+  "h3_script_api": "腳本 API",
+  "h3_faq": "常見問題",
+  "h3_security": "權限與安全",
+  "h3_plugin_interface": "外掛介面",
+  "p_plugin_interface": "以下資訊面向 AutoJs6 主程式與外掛開發者, 主程式透過這些識別碼發現外掛並完成能力協商",
+  "h3_roadmap": "開發路線圖",
+  "text_link_roadmap": "檢視 ROADMAP.md",
+  "h3_release_history": "發行歷史",
+  "h5_for_more_release_history": "更多發行歷史可參閱",
+  "h3_build": "建置",
+  "p_build_intro": "本節面向希望從原始碼建置外掛的開發者.",
+  "h3_license": "授權",
+  "h3_links": "相關連結",
+  "text_link_autojs6": "AutoJs6 專案",
+  "p_roadmap": "功能規劃, 設計決策與完成情況以可勾選清單維護在 ROADMAP.md 中. 未勾選的項目表示規劃意向, 不代表目前版本的能力.",
+  "p_introduction_what": "3-Prism Camera 是 AutoJs6 的相機外掛, 基於 Jetpack CameraX 為指令碼提供拍照, 連續影格分析與取景預覽. 連續影格以 AutoJs6 的 `ImageWrapper` 交給指令碼, 指令碼可以直接把它交給 `ocr`, `barcode` 或 `yolo` 等現有模組, 實現即時掃碼, 文字辨識與物件偵測.",
+  "p_introduction_how": "外掛持有相機並透過 Binder 與 AutoJs6 通訊: 連續影格經共用記憶體環狀緩衝傳給 AutoJs6 (Android 7.0 - 8.0 改用暫存檔), 相片以 JPEG 交給 AutoJs6 解碼或原樣儲存, 預覽直接算繪到指令碼介面中的 `SurfaceView`, 像素不經過 Binder. 工作階段開啟期間外掛執行相機前景服務, 指令碼在背景或螢幕關閉時也能繼續擷取影格.",
+  "p_status_note": "目前為開發預覽版: 外掛可以被 AutoJs6 外掛中心識別, 但拍照, 連續影格, 預覽, 取景頁與 `camera` 指令碼模組尚未交付. 下文描述的是 1.0.0 的設計目標, 進度見開發路線圖.",
+  "features": [
+    "拍照: 傳回依 EXIF 方向轉正的 `ImageWrapper`, 也可以把原始 JPEG (含 EXIF) 儲存到指定路徑; 可設定閃光模式, 畫質與解析度.",
+    "連續影格: RGBA 影格預設 640x480, 最高 1920x1080, 預設依螢幕方向轉正; 處理不及時自動捨棄影格並計數, 不會排隊積壓.",
+    "預覽: 把 ui 指令碼或懸浮視窗中的 `SurfaceView` 交給工作階段即可顯示取景畫面, 可與連續影格和拍照同時進行.",
+    "控制: 鏡頭選擇, 解析度, 目標影格率, 手電筒, 閃光模式, 變焦, 曝光補償與輕觸對焦, 並可讀取各項範圍與目前狀態.",
+    "取景頁: `camera.capture({ ui: true })` 開啟外掛內建的取景頁, 使用者按下快門後指令碼取得相片, 取消時傳回 `null`.",
+    "背景可用: 工作階段開啟期間執行相機前景服務, 指令碼切到背景或螢幕關閉後仍可擷取影格; 指令碼結束或 AutoJs6 被終止時自動釋放相機."
+  ],
+  "usage_steps": [
+    "從 [Releases]({{ repo_url }}/releases) 下載 APK 並安裝. 安裝檔只有一個, 適用於全部裝置.",
+    "開啟外掛, 依提示授予相機權限; 指令碼也可以呼叫 `camera.requestPermission()` 開啟授權頁.",
+    "如要在指令碼中使用 `camera` 模組, 請將 AutoJs6 升級到內部版本號 {{ required_host_version_code }} ({{ required_host_version_name }}) 或更高版本, 並在外掛中心啟用本外掛."
+  ],
+  "p_usage_note": "外掛支援 Android {{ min_android_version }} (API {{ android_min_sdk }}) 以上的裝置. 只有一個適用於所有裝置的安裝包; CameraX 與 Compose 內建的少量原生程式庫 (共約 200 KB) 已按 16 KB 記憶體分頁對齊, 採用 16 KB 記憶體分頁的新裝置也能正常安裝.",
+  "p_script_api_intro": "指令碼透過全域模組 `camera` (也可寫作 `$camera`) 使用這些能力 (1.0.0 設計草案, 以發布版本的文件為準)",
+  "api_points": [
+    "`camera.capture(options)` 一步完成開啟, 拍照與關閉; `camera.open(options)` 開啟獨占工作階段, 工作階段物件提供 `preview`, `analyze`, `capture`, `torch`, `zoom`, `exposure`, `focusAt`, `state` 與 `close`.",
+    "影格的生命週期: `analyze` 回呼中的 `img` 只在回呼執行期間有效, 回呼傳回後立即回收; 如要在回呼之外使用, 請呼叫 `img.clone()`, 並在用完後自行 `recycle()`.",
+    "`camera.list()` 列出鏡頭及其解析度, 變焦與曝光範圍; `camera.capabilities()` 傳回契約版本, 功能清單與授權狀態.",
+    "同一時間只有一個工作階段: 再次 `open` 會報 `CAMERA_BUSY` 並說明占用者; 指令碼結束時工作階段自動關閉."
+  ],
+  "faq": [
+    {
+      "q": "為什麼相機做成外掛, 而不是內建在 AutoJs6 中?",
+      "a": "相機依賴 CameraX 與前景服務權限. 做成外掛後, 不需要相機的使用者不必承擔這部分體積與權限, 外掛也可以獨立於 AutoJs6 更新."
+    },
+    {
+      "q": "指令碼在背景還能擷取影格嗎?",
+      "a": "能. 工作階段開啟期間外掛執行相機前景服務, 通知欄會顯示相機正在使用. 部分廠商系統會額外限制背景相機, 相容情況見開發路線圖中的裝置矩陣."
+    },
+    {
+      "q": "外掛會把相片存進相簿嗎?",
+      "a": "不會. 外掛不申請儲存權限, 也不寫入系統相簿; 只有指令碼傳入 `path` 時, AutoJs6 才把相片寫到該路徑."
+    }
+  ],
+  "p_security_intro": "外掛在設計上盡量縮小權限範圍:",
+  "security_points": [
+    "受保護的入口: 能力服務與啟動入口受 AutoJs6 外掛權限 (`org.autojs.permission.PLUGIN`) 保護, 其他應用程式無法直接呼叫; 前景服務與透明啟動頁不匯出.",
+    "相機: 只申請 `CAMERA` 與相機類前景服務權限; 相機只在工作階段開啟期間使用, 工作階段關閉, 指令碼結束或 AutoJs6 被終止時立即釋放.",
+    "網路與儲存: 不申請網路與儲存權限, 影格與相片只在外掛和 AutoJs6 之間傳遞, 不寫入系統相簿.",
+    "獨占: 同一時間只有一個工作階段 (指令碼或外掛取景頁), 占用者會寫在錯誤訊息中."
+  ],
+  "p_license": "專案程式碼使用 [Mozilla Public License 2.0]({{ license_url }}). 第三方元件的授權見第三方聲明.",
+  "text_link_third_party": "第三方聲明 (THIRD_PARTY_NOTICES.md)",
+  "p_instruction_docs": "開發進度與設計見 [專案首頁]({{ repo_url }})."
+}

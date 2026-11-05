@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Window theme of the plugin's Compose screens (roadmap D41): no action bar; Compose draws everything else with
+        Material 3. Roadmap P3.1 adds the palette of the standalone settings specification.
+    -->
+    <style name="Theme.ThreePrismCamera" parent="@android:style/Theme.Material.Light.NoActionBar" />
+
+    <!--
+        The start entry of the camera foreground service (roadmap D25): a transparent window that finishes at once, with no
+        dim and no animation of its own.
+    -->
+    <style name="Theme.ThreePrismCamera.Transparent">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+</resources>

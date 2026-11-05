@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="capture_camera_count">사용 가능한 카메라: %1$d</string>
+    <string name="capture_camera_unavailable">카메라를 초기화할 수 없습니다</string>
+    <string name="capture_skeleton_note">촬영, 연속 프레임 분석, 뷰파인더 화면은 이후 버전에서 제공됩니다</string>
+    <string name="notification_camera_in_use_text">스크립트가 카메라를 사용 중입니다</string>
+    <string name="notification_camera_in_use_title">카메라 사용 중</string>
+    <string name="notification_channel_camera_description">스크립트가 카메라 세션을 열어 둔 동안 표시됩니다</string>
+    <string name="notification_channel_camera_name">카메라</string>
+    <string name="plugin_description">CameraX 기반 사진 촬영, 연속 프레임 분석, 뷰파인더 미리보기, 프레임을 OCR, 바코드, YOLO 등 인식 모듈에 바로 전달 가능</string>
+</resources>

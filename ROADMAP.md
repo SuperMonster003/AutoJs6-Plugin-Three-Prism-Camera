@@ -1,10 +1,10 @@
 # 3-Prism Camera Roadmap
 
-更新日期: 2026-10-22
+更新日期: 2026-11-05
 
 本文是 `AutoJs6-Plugin-Three-Prism-Camera` (显示名 `3-Prism Camera`; 基于 Jetpack CameraX 为 AutoJs6 脚本提供拍照, 连续帧分析与取景预览, 帧以宿主 `ImageWrapper` 交给脚本, 由脚本自行组合 OCR / 条码 / YOLO 等识别模块) 的开发路线图. 立项来源: 2026-10-15 插件选题分析 (记忆 `plugin-gap-analysis-2026-10`) 中优先级 2 的 "相机" 方向: 宿主没有任何脚本可用的相机能力, 条码等识别插件只收图片不能实时扫码, 相机是 "最便宜的空白".
 
-以 2026-10-22 的宿主本地代码快照 (`AutoJs6 master@63d1cb259`, `VERSION_NAME=6.8.0` 尚未发布, `VERSION_BUILD=4183` + `VERSION_CODE_OFFSET=1652`, 即 versionCode 5835; 宿主 `speech-api` 契约, `AidlPluginHost` 的 `BIND_INCLUDE_CAPABILITIES` / `allowActivityStarts` 绑定路径与 OCR 的 `SharedMemory` 传图代码均已在库) 与平台版本插件 `1.9.1` 为基线. 插件只做 CameraX 的 Android 集成, 前台服务, 帧传输与宿主契约, 不自带识别模型, 不做滤镜与相册管理.
+以 2026-10-22 的宿主本地代码快照 (`AutoJs6 master@63d1cb259`, `VERSION_NAME=6.8.0` 尚未发布, `VERSION_BUILD=4183` + `VERSION_CODE_OFFSET=1652`, 即 versionCode 5835; 宿主 `speech-api` 契约, `AidlPluginHost` 的 `BIND_INCLUDE_CAPABILITIES` / `allowActivityStarts` 绑定路径与 OCR 的 `SharedMemory` 传图代码均已在库) 与平台版本插件 `1.9.1` 为基线. 2026-11-05 P0 起基线改为宿主 `master@3ce52d2fd7` (`VERSION_NAME=6.8.1`, `VERSION_BUILD=6640`; 6.8.0 已于 2026-11-03 公开并重写公开历史, `63d1cb259` 等旧 hash 失效; 重写后 versionCode = `VERSION_BUILD`, 不再加 1652), 见附录 F. 插件只做 CameraX 的 Android 集成, 前台服务, 帧传输与宿主契约, 不自带识别模型, 不做滤镜与相册管理.
 
 使用方式:
 
@@ -53,8 +53,8 @@ D21-D45 据第 1 节派生, 进入对应阶段前可推翻 (推翻点见各条),
 
 | 编号 | 决策 | 含义 | 推翻点 |
 | --- | --- | --- | --- |
-| D21 | CameraX `1.6.2` | `androidx.camera:camera-core` / `camera-camera2` / `camera-lifecycle` / `camera-view` 固定 `1.6.2` (Android Developers 发布页 2026-10-21 更新; 同日 `1.7.0-rc01`, 不采用 rc). 1.0.0 不引入 `camera-video` (1.1.0), `camera-extensions`, `camera-mlkit-vision`. Google Maven 坐标直接引用, 不入 `libs/`; 本地 Gradle 缓存 (`E:/.gradle`, `C:/Users/wu2du/.gradle`) 尚无 CameraX, P0.2 首次下载. 1.6 线用 CameraPipe 实现, `camera-camera2` 仍为默认后端. | P0.2 |
-| D22 | 单 APK, 不拆 ABI | CameraX 不含原生库, 插件完全由 ABI 无关的 bytecode 与资源构成 (`AUTOJS6_PLUGIN_NEW_REPO_AGENTS.md` 5.5 的例外条件; 3-Block Compose D22 先例). `PluginInfo.supportedAbis = emptyArray()` 显式声明; `appendDigestToReleasedFiles` 按单 APK 形态实现, 文件名 `autojs6-plugin-three-prism-camera-v{VERSION_NAME}-{CRC32}.apk`; P0.2 用 APK 内容验证 `lib/` 为空, 16 KB 页校验记录 "不适用". | P0.2 |
+| D21 | CameraX `1.6.2` | `androidx.camera:camera-core` / `camera-camera2` / `camera-lifecycle` / `camera-compose` 固定 `1.6.2` (Android Developers 发布页 2026-10-21 更新, 四者均为稳定版; 同日 `1.7.0-rc01`, 不采用 rc). 维护者 2026-11-05 Q3 = (b): 取景用 `camera-compose`, 不引入 `camera-view`, 不自行退回. 1.0.0 不引入 `camera-video` (1.1.0), `camera-extensions`, `camera-mlkit-vision`. Google Maven 坐标直接引用, 不入 `libs/`, 版本常量在 `gradle/libs.versions.toml`; 实际解析另带入同为 1.6.2 的 `camera-camera2-pipe`, `viewfinder-core` / `viewfinder-compose`, `featurecombinationquery` (见 `THIRD_PARTY_NOTICES.md`). 1.6 线用 CameraPipe 实现, `camera-camera2` 仍为默认后端. P0.2 实测 `camera-compose` 体积: release 骨架 +590 B (取景器尚未使用, R8 删去), 全部保留时上限 +82510 B; debug dex 未压缩 +185600 B. | P0.2 |
+| D22 | 单 APK, 不拆 ABI, 原生库白名单 | 立项时 "CameraX 不含原生库" 的前提经 P0.2 实测不成立: `camera-core` 1.6.2 自带 `libimage_processing_util_jni.so` 与 `libsurface_util_jni.so`, Compose `ui-graphics` 经 `androidx.graphics:graphics-path` 1.0.1 带入 `libandroidx.graphics.path.so`, 各 4 个 ABI 共 12 个文件 202140 B (debug 与 release 相同). 按附录 D Q8 (a) 先行: 仍出单 APK (拆成 4 个 ABI 包每包只省约 150 KB, 却要改索引清单与发布流程), `PluginInfo.supportedAbis = emptyArray()` 显式声明 (不限 ABI); `appendDigestToReleasedFiles` 按单 APK 形态实现, 文件名 `autojs6-plugin-three-prism-camera-v{VERSION_NAME}-{CRC32}.apk`, 任务内校验原生库集合与白名单完全一致 (4 ABI x 3 个库), STORED 不压缩, 数据偏移按 16384 对齐, ELF `PT_LOAD` 对齐 >= 16384 (16 KB 页设备可直接映射); CI `build.yml` 对 release 产物做同样校验. 插件自身不写原生代码; 依赖升级带入新库时白名单校验失败, 须先登记再放行. | P0.2 |
 | D23 | 契约模块 `plugin-api/camera-api` | 包 `org.autojs.plugin.camera.api`; 常量 `CameraPluginActions.CAMERA = "org.autojs.plugin.CAMERA"`, `SERVICE_CATEGORY = "camera"`, `CameraPluginIds` (官方 ID / 包名, `ENGINE = "camera"`, `CATEGORY = "camera"`, `REQUIRED_HOST_VERSION_CODE`), `CameraContract` (`CONTRACT_VERSION = 1`, 状态, 镜头朝向, 闪光模式, 帧格式, 关闭原因), `CameraCapabilityKeys`, `CameraLimits`, `CameraOptionKeys` / `CameraResultKeys` / `CameraFrameKeys` / `CameraErrorCodes`; AIDL `ICameraPlugin` (`getInfo` 居首), `ICameraSession`, oneway `ICameraFrameCallback` / `ICameraCaptureCallback` / `ICameraSessionCallback`; 请求与结果以 `Bundle` 传输, 不走 JSON 字符串; `SharedMemory` 与 `Surface` 作为 Parcelable 直接入参. 草案见附录 B. 事务顺序由 `CameraAidlOrderTest` 冻结 (speech 先例). | P1.1 |
 | D24 | 宿主绑定 `CameraPluginHost` | 基于 `core/plugin/AidlPluginHost.kt`, 包 `org.autojs.autojs.core.plugin.camera`; flags 与 `SpeechPluginHost` 相同 (`BIND_AUTO_CREATE` + `BIND_INCLUDE_CAPABILITIES` + `BIND_IMPORTANT`, API 34+ `allowActivityStarts = true`); 启用, 授权, 宿主版本门禁与缺插件文案复用既有逻辑; `linkToDeath` 两个方向. | P1.2 |
 | D25 | 插件前台服务与权限 | `ThreePrismCameraForegroundService` (`foregroundServiceType="camera"`), Manifest 声明 `CAMERA`, `FOREGROUND_SERVICE` (API 28+), `FOREGROUND_SERVICE_CAMERA` (API 34+), `uses-feature android.hardware.camera` `required=false`; 会话打开即 `startForeground`, 会话关闭 / 宿主死亡即停止; API 34+ 由透明 `ThreePrismCameraStartActivity` 在可见状态启动 (宿主绑定带 `BIND_ALLOW_ACTIVITY_STARTS`); 通知文案 10 语言. 插件未获 `CAMERA` 时 `open` 报 `PERMISSION_DENIED`, 脚本可调 `camera.requestPermission()` 打开插件授权页 (需宿主可见). | P2.1 |
@@ -71,9 +71,9 @@ D21-D45 据第 1 节派生, 进入对应阶段前可推翻 (推翻点见各条),
 | D36 | 设备矩阵 | 附录 F: API 24 AVD (回退路径), API 28 Sony G8441, API 31 Sony XQ-AT72, API 33 Sony XQ-DQ72 与 Redmi 22120RN86C, API 35 Xiaomi Pad 23046RP50C 与 OnePlus OPD2413 (ColorOS); 可租用 API 36 / 37 Samsung 按需. 每台记录: 安装, 授权, `list`, `open` + 10 帧, `capture` 到文件, torch, 后台 30 秒取帧, 熄屏 30 秒取帧, 取景页拍照. | P4.2 |
 | D37 | 文档与声明 | Documentation `api/camera.md` (10 语言目录按仓库惯例), 首屏 "帧的生命周期" 提示框 (D11); TypeScript 声明 `declarations/autojs6/aj6-int-camera.d.ts` 与 `declarations/autojs6-node/camera.d.ts` (JSDoc 写明回调期间有效); Ace Editor 与 Offline Docs 同步副本; 宿主 `docs/dev/camera-plugin-protocol-v1.md`. | P5.1 |
 | D38 | 安装向导分类 | `PluginInstallWizardCatalog` 新增 `entry(official("three.prism.camera"), "Three Prism Camera", <分类>)`, 分类待拍板 (附录 D Q1, 推荐 `IMAGE`, 与 OCR / 条码 / YOLO 同列). | P1.3 |
-| D39 | `requiresHostVersion` | 基线 5835 (宿主 `63d1cb259`); P1.3 写契约落地构建的 versionCode 为临时值 (`CameraPluginIds.REQUIRED_HOST_VERSION_CODE` 与插件 `requiredHostVersion` 一致), P5.4 回填为实际发布所依赖的宿主构建. | P1.3 |
+| D39 | `requiresHostVersion` | P0.1 临时值 6640 (宿主 6.8.1 `3ce52d2fd7`; 原基线 5835 / `63d1cb259` 随 6.8.0 公开时的历史重写失效); P1.3 写契约落地构建的 versionCode 为临时值 (`CameraPluginIds.REQUIRED_HOST_VERSION_CODE` 与插件 `requiredHostVersion` 一致), P5.4 回填为实际发布所依赖的宿主构建. | P1.3 |
 | D40 | 许可证 | 源码 MPL-2.0 (与 Three 系列一致); CameraX Apache-2.0, `THIRD_PARTY_NOTICES.md` 列出 CameraX 与 Compose; APK 无 GPL 组件. | P0.1 |
-| D41 | 插件界面技术 | Compose + Material 3 (BOM 与 Macaw 一致, P0.1 取当时稳定版), 取景页用 `camera-view` 的 `PreviewView` 包进 `AndroidView` (或 `camera-compose` 的 `CameraXViewfinder`, 附录 D Q3); 设置页按独立设置规范 (权限状态, 默认镜头, 默认分辨率, 前台服务通知说明, 诊断信息, 发行历史入口). | P3.1 |
+| D41 | 插件界面技术 | Compose + Material 3 (BOM 与 Macaw 一致, P0.1 取 `2026.09.00`, 即 Compose 1.12.1 / Material 3 1.4.0), 取景页用 `camera-compose` 的 `CameraXViewfinder` (维护者 2026-11-05 Q3 = (b), 不用 `camera-view` 的 `PreviewView`); 设置页按独立设置规范 (权限状态, 默认镜头, 默认分辨率, 前台服务通知说明, 诊断信息, 发行历史入口). | P3.1 |
 | D42 | `PluginInfo` 与能力键 | `getInfo` 返回包版本, 10 语言描述, ID, engine, variant, `supportedAbis = emptyArray()`, `requiresHostVersion`, 契约版本; `getCapabilities` 返回 `cameraContractVersion`, `cameraFeatures[]` (`preview`, `analysis`, `capture`, `torch`, `zoom`, `exposure`, `focus`, `flash`, `captureUi`, `sharedMemory`), `cameraPermissionGranted`, `cameraEngineVersion` (CameraX 版本), `cameraCount`. | P1.1 |
 | D43 | 限制值 `CameraLimits` | 分析分辨率 160x120 - 1920x1080 (1080p 每帧 8.3 MB, 3 块 25 MB), 目标帧率 1 - 60, 缓冲块数 3, 拍照 JPEG 上限 64 MB (与 Barcode 一致), `quality` 1 - 100 (默认 95), 会话数 1, 对焦超时 5 秒, `capture` 超时 15 秒, 取景页等待无上限 (用户操作). | P1.1 |
 | D44 | 图标生成 | 两张源图已入库 (D5); P0.3 用 Icon Studio 双源 `grayscale` 配方 (与 Macaw `recipe.json` 相同形态) 生成, `generate_icon_studio.py --check` 通过; Icon Studio 的 derived 色调模式 (内核 1.4.0, 本地提交) 可选但不依赖. | P0.3 |
@@ -122,7 +122,7 @@ D21-D45 据第 1 节派生, 进入对应阶段前可推翻 (推翻点见各条),
 - 宿主没有任何脚本可用的相机能力: 只有 `engine/RuntimeWebCameraRecording.kt` (camera2 + MediaRecorder, 仅供 WebView `getUserMedia`) 与 `RuntimeWebFileChooser.kt` (系统相机 Intent), 均不复用; 没有 `setTorchMode` 调用.
 - 没有 `camera-api` 契约模块, `CameraPluginHost`, `camera` 脚本模块, `RuntimeCameraBridge`, `strings_runtime_camera.xml`, 文档, d.ts 与离线文档; `InstalledPluginRepository` / 向导目录 / `<queries>` 均无条目.
 - 宿主没有 `SharedMemory` 作为 Parcelable 直接入参的先例 (OCR 用的是 fd 复制), P1.2 需验证 `Bundle.putParcelableArray(SharedMemory[])` 跨进程映射.
-- 本地 Gradle 缓存无 CameraX (P0.2 首次下载); 宿主与平台版本插件均无 CameraX 版本常量.
+- 立项时本地 Gradle 缓存无 CameraX (P0.2 已下载 1.6.2); 宿主与平台版本插件均无 CameraX 版本常量.
 - 本仓库尚不存在 (本次会话只落盘路线图与图标源图).
 
 ### 4.3 外部事实
@@ -221,7 +221,7 @@ docs/dev/camera-plugin-protocol-v1.md, .changelog (zh-Hans), 样例脚本
 | 宿主契约包 | `org.autojs.plugin.camera.api` |
 | 宿主桥接包 | `org.autojs.autojs.core.plugin.camera` |
 | 脚本 API | `camera` (`$camera` 同对象) |
-| `{REQUIRES_HOST_VERSION}` | 基线 5835 (宿主 `63d1cb259`), P1.3 写临时值, P5.4 回填 (D39) |
+| `{REQUIRES_HOST_VERSION}` | P0.1 临时值 6640 (宿主 6.8.1 `3ce52d2fd7`), P1.3 写契约落地构建的临时值, P5.4 回填 (D39) |
 | 向导目录 | `PluginInstallWizardCatalog` `official("three.prism.camera")`, 回退标题 `Three Prism Camera`, 分类见附录 D Q1 |
 | `plugin_description` (zh-Hans) | `通过 CameraX 拍照, 连续取帧与取景预览, 帧可直接交给 OCR, 条码与 YOLO 等识别模块` (句尾无点号, 不含 "AutoJs6"; P0.1 定稿, 10 语言见 `values*/strings.xml`) |
 | GitHub 仓库描述 | `Camera capture, live frame analysis and preview for AutoJs6 scripts, powered by CameraX` (功能性描述, 不复述名称) |
@@ -261,7 +261,7 @@ P0 (插件骨架)                      P1.1 - P1.3 (宿主契约, 绑定, 注册
 - R1 `version.properties` 的 `VERSION_NAME` 更新, `VERSION_BUILD` = 提交数 + 1; 10 种语言 `.changelog/lang_*.json` 补齐该版本的 `hint` / `feature` / `fix` / `improvement` / `dependency`, 日期为发布当日.
 - R2 `.readme/lang_*.json` (功能, 安装, 权限与后台说明, 脚本示例, 帧生命周期提示, 兼容性, 常见问题, 第三方致谢), `plugin_instruction` 10 语言, `strings.xml` 描述与 README 一致性校验通过; 界面有变化时重采 `docs/images/screenshots` (API 33 设备或模拟器, 1080 x 2340, 合成素材, 明暗背景可读).
 - R3 `py D:/idea-projects/prepush_check.py` 通过 (文档校验, `check_repository.py`, 构建号容差, Gradle 单元测试); 附录 F 设备矩阵中每台在线设备完成冒烟 (安装, 激活, 授权, `camera.list`, `open` + 10 帧, `capture` 到文件, torch 切换, 后台 30 秒取帧, 取景页拍照), 记录型号 / API / APK 摘要 / 实际分辨率与帧率.
-- R4 release APK 经 `appendDigestToReleasedFiles` 收集 (单 APK), APK 内无 `lib/` 目录, 生成 `SHA256SUMS`, 创建轻量 tag `vX.Y.Z` 与 GitHub Release (APK + SHA256SUMS), 复核下载产物哈希.
+- R4 release APK 经 `appendDigestToReleasedFiles` 收集 (单 APK), APK 内原生库与 D22 白名单一致 (4 ABI x 3, STORED, 16 KB 对齐), 生成 `SHA256SUMS`, 创建轻量 tag `vX.Y.Z` 与 GitHub Release (APK + SHA256SUMS), 复核下载产物哈希.
 - R5 官方索引: `official-repositories.json` 加入 `AutoJs6-Plugin-Three-Prism-Camera` (首次, 数量以索引仓库当前值 + 1 为准), `release-manifests/.../<versionCode>.json` 登记 (`supportedAbis` 空数组, `requiresHostVersion` 与实际一致), `catalog-icons` 图稿登记, 运行 `tools/generate_official_plugin_index.py` 与索引仓库的 `generate_markdown.py`.
 
 ---
@@ -272,15 +272,15 @@ P0 (插件骨架)                      P1.1 - P1.3 (宿主契约, 绑定, 注册
 
 ### P0.1 构建链与身份
 
-- [ ] (插件) 按 `AUTOJS6_PLUGIN_NEW_REPO_AGENTS.md` 第 2 节占位表生成骨架: `settings.gradle.kts`, `build-logic/`, `app/build.gradle.kts` (`globalApplicationId`, `requiredHostVersion` 临时值 5835, 无 `splits`), `version.properties` (`VERSION_NAME=1.0.0`, `VERSION_BUILD` = 提交数 + 1, SDK 37 / 24 / 37), `gradle.properties`, `AGENTS.md` 裁剪版, `LICENSE` (MPL-2.0), `THIRD_PARTY_NOTICES.md`, `.gitignore`, `.editorconfig`. 证据: 提交 hash, `gradlew assembleDebug` 通过.
+- [ ] (插件) 按 `AUTOJS6_PLUGIN_NEW_REPO_AGENTS.md` 第 2 节占位表生成骨架: `settings.gradle.kts`, `build-logic/`, `app/build.gradle.kts` (`globalApplicationId`, `requiredHostVersion` 临时值 6640, 无 `splits`), `version.properties` (`VERSION_NAME=1.0.0`, `VERSION_BUILD` = 提交数 + 1, SDK 37 / 24 / 37), `gradle.properties`, `AGENTS.md` 裁剪版, `LICENSE` (MPL-2.0), `THIRD_PARTY_NOTICES.md`, `.gitignore`, `.editorconfig`. 证据: 提交 hash, `gradlew assembleDebug` 通过.
 - [ ] (插件) Manifest: `ThreePrismCameraApplication`, `ThreePrismCameraInfoService` (`org.autojs.plugin.INFO` / `three-prism-camera`), `ThreePrismCameraService` (`org.autojs.plugin.CAMERA` / `camera`, `org.autojs.permission.PLUGIN`), `ThreePrismCameraForegroundService` (`camera` 类型, 不导出), `ThreePrismCameraStartActivity` (透明), 权限 `CAMERA` / `FOREGROUND_SERVICE` / `FOREGROUND_SERVICE_CAMERA`, `uses-feature camera required=false`, `<queries>` 宿主包. 证据: 提交 hash; 宿主插件中心列出插件并显示 10 语言描述 (任一设备).
 - [ ] (插件) 10 语言 `strings.xml` (`plugin_name` 资源不可翻译为 `3-Prism Camera`, `plugin_description`, `plugin_instruction`, 前台服务通知文案), `.readme/lang_*.json` 与 `.changelog/lang_*.json` 初始条目, `generate_markdown.py` 生成 README 10 语言; ASCII 标点, 阿拉伯语品牌名 FSI / PDI 包裹. 证据: `check_repository.py` 与 `check_markdown.bat` 通过.
 - [ ] (插件) `PluginInfo` 元数据映射与 JVM 测试 (名称, 描述, 作者, 三个身份字段, 包版本, 日期, `supportedAbis` 为显式空数组, 最低宿主版本, 契约版本). 证据: 测试类名与用例数.
 
 ### P0.2 CameraX 接入与单 APK 策略 (D21, D22)
 
-- [ ] (插件) 依赖 `androidx.camera:camera-core / camera-camera2 / camera-lifecycle / camera-view:1.6.2` (版本常量集中在 `build-logic` 或 `gradle/libs.versions.toml`), Compose BOM 与 Macaw 一致; `CameraController` 空壳能 `ProcessCameraProvider.getInstance` 成功. 证据: 提交 hash, debug 包在任一设备上日志打印 `availableCameraInfos` 数量.
-- [ ] (插件) 单 APK: `appendDigestToReleasedFiles` 按 3-Block Compose 形态实现 (`{ROOT_PROJECT_NAME}-v{VERSION_NAME}-{CRC32}.apk`), 任务内校验 APK 无 `lib/` 目录与无 `.so`; `PluginInfo.supportedAbis = emptyArray()`; `AGENTS.md` 与 README 记录 "无原生库, 不拆 ABI, 16 KB 页校验不适用". 证据: release APK 文件名与 `unzip -l` 结果.
+- [ ] (插件) 依赖 `androidx.camera:camera-core / camera-camera2 / camera-lifecycle / camera-compose:1.6.2` (Q3 = (b)) (版本常量集中在 `build-logic` 或 `gradle/libs.versions.toml`), Compose BOM 与 Macaw 一致; `CameraController` 空壳能 `ProcessCameraProvider.getInstance` 成功. 证据: 提交 hash, debug 包在任一设备上日志打印 `availableCameraInfos` 数量.
+- [ ] (插件) 单 APK: `appendDigestToReleasedFiles` 按 3-Block Compose 形态实现 (`{ROOT_PROJECT_NAME}-v{VERSION_NAME}-{CRC32}.apk`), 任务内校验原生库集合与 D22 白名单一致 (4 ABI x 3 个依赖自带库, STORED, 16 KB 对齐); `PluginInfo.supportedAbis = emptyArray()`; `AGENTS.md` 与 README 记录原生库来源与 "不拆 ABI" (附录 D Q8). 证据: release APK 文件名与原生库清单.
 
 ### P0.3 图标 (D5, D44)
 
@@ -636,13 +636,14 @@ oneway interface ICameraSessionCallback {
 
 | 编号 | 事项 | 选项 | 拍板时点 |
 | --- | --- | --- | --- |
-| Q1 | 安装向导分类 | (a) `IMAGE` (与 OCR / 条码 / YOLO 同列, 相机是它们的输入源, 宿主零枚举改动; 推荐); (b) `TOOLS` (与 3-Macaw Speech 同列); (c) 新分类 `CAMERA` 或 `MEDIA` (需宿主枚举, 10 语言标题, 插件中心分组) | P1.3 前 |
+| Q1 | 安装向导分类 | (a) `IMAGE` (与 OCR / 条码 / YOLO 同列, 相机是它们的输入源, 宿主零枚举改动; 推荐); (b) `TOOLS` (与 3-Macaw Speech 同列); (c) 新分类 `CAMERA` 或 `MEDIA` (需宿主枚举, 10 语言标题, 插件中心分组) | 已拍板 (2026-11-05): (a) `IMAGE`, P1.3 实施 |
 | Q2 | API 24-26 回退路径的覆盖范围 | (a) 只在 API 24 AVD 验证, 文档标注 "API 24-26 帧率受限" (推荐; 本地无 API 25 / 26 设备); (b) 另建 API 26 AVD 验证; (c) 最低宿主 API 改为 27, 放弃回退 (推翻 D9 一半, 插件 minSdk 与宿主 24 不一致) | P2.2 前 |
-| Q3 | 取景页技术 | (a) `camera-view` `PreviewView` 包进 `AndroidView` (推荐; 1.6.2 稳定, 文档多); (b) `camera-compose` `CameraXViewfinder` (纯 Compose, 需确认 1.6.2 内稳定且体积可接受) | P3.1 前 |
+| Q3 | 取景页技术 | (a) `camera-view` `PreviewView` 包进 `AndroidView` (推荐; 1.6.2 稳定, 文档多); (b) `camera-compose` `CameraXViewfinder` (纯 Compose, 需确认 1.6.2 内稳定且体积可接受) | 已拍板 (2026-11-05): (b) `CameraXViewfinder` (非推荐项, 维护者选定, 不自行退回); P0.2 实测 release +590 B, 上限 +82510 B (D21) |
 | Q4 | Node / Bun 连续帧不达标时的策略 | (a) 按 `fps` 限流到实测可承受值并在文档标注 (推荐); (b) Node / Bun 只提供 `capture` 与控制, 不提供连续帧; (c) 为运行时另开共享内存通道 (桥协议改动大) | P1.5 实测后 |
-| Q5 | 1.0.0 是否等宿主 6.8.0 公开 | (a) 不等, 宿主契约落本地 master 即发布插件, `requiresHostVersion` 指向该构建 (推荐; Macaw 1.0.0 先例, 维护者 2026-10-20 决定不等); (b) 等宿主公开后再发 | P5.4 前 |
+| Q5 | 1.0.0 是否等宿主 6.8.0 公开 | (a) 不等, 宿主契约落本地 master 即发布插件, `requiresHostVersion` 指向该构建 (推荐; Macaw 1.0.0 先例, 维护者 2026-10-20 决定不等); (b) 等宿主公开后再发 | 已拍板 (2026-11-05): (a) 不等宿主 6.8.1 公开即发布 (6.8.0 已于 2026-11-03 公开, 问题顺延到 6.8.1) |
 | Q6 | 前置镜头默认是否镜像 | (a) 不镜像 (推荐, D19 已按推荐先行; 与拍照一致, 识别不受影响); (b) 预览镜像但帧与拍照不镜像 (系统相机习惯, 需在预览路径单独处理); (c) 全部镜像 | P2.5 前 |
-| Q7 | 取景页 `CAMERA_BUSY` 时的行为 | (a) 显示 "脚本 xxx 正在使用相机" 并提供 "停止该脚本" 按钮 (推荐; 需宿主提供停止入口, 经 `ICameraSessionCallback.onClosed(PLUGIN_UI)` 通知脚本); (b) 只提示, 不提供按钮 | P3.1 前 |
+| Q7 | 取景页 `CAMERA_BUSY` 时的行为 | (a) 显示 "脚本 xxx 正在使用相机" 并提供 "停止该脚本" 按钮 (推荐; 需宿主提供停止入口, 经 `ICameraSessionCallback.onClosed(PLUGIN_UI)` 通知脚本); (b) 只提示, 不提供按钮 | 已拍板 (2026-11-05): (a) 取景页提示 + "停止该脚本" 按钮, 契约保留 `CLOSE_REASON_PLUGIN_UI` (P1.1 协议语义), 宿主停止动作在 P1.4 |
+| Q8 | 依赖自带原生库时的 APK 形态 (P0.2 发现 `camera-core` 与 Compose `graphics-path` 各带原生库, 4 ABI 共 12 个文件 202140 B) | (a) 单 APK, 白名单校验原生库集合 / STORED / 16 KB 对齐, `supportedAbis` 显式空数组 (推荐, 已按推荐先行); (b) 按 ABI 拆成 4 个 APK (每包约省 150 KB, 要改 `splits`, `supportedAbis`, 发布文件名, 索引清单与 CI 校验) | 已按推荐先行待确认 (2026-11-05); 影响 D22, P0.2, R4, P5.4, 附录 G; 改选 (b) 返工约半天 |
 
 ---
 
@@ -660,15 +661,15 @@ oneway interface ICameraSessionCallback {
 
 ## 附录 F. 基线快照与设备矩阵
 
-基线 (2026-10-22):
+基线 (2026-10-22, 宿主与 CameraX 两行于 2026-11-05 P0 更新):
 
 | 项 | 值 |
 | --- | --- |
-| 宿主 | `AutoJs6 master@63d1cb259`, `VERSION_NAME=6.8.0` (未发布), versionCode 5835; 工作区有其他会话的未提交改动 (9 个文件), 本插件的宿主提交只碰自己的文件 |
+| 宿主 | `AutoJs6 master@3ce52d2fd7`, `VERSION_NAME=6.8.1` (未发布), `VERSION_BUILD=6640` = versionCode (2026-11-05; 原基线 `63d1cb259` / 5835 随 6.8.0 公开时的历史重写失效); 工作区多会话共用, 本插件的宿主提交只碰自己的文件 |
 | 宿主相机相关 | Manifest 已有 `CAMERA` / `FLASHLIGHT`; 无脚本相机模块; `RuntimeWebCameraRecording` (WebView 专用) 不复用 |
 | 宿主绑定 | `AidlPluginHost` 已支持 `BIND_INCLUDE_CAPABILITIES` 与 `allowActivityStarts`; `SpeechPluginHost` 为模板 |
 | 跨进程传图 | OCR `SharedMemory` (fd 复制), YOLO 临时文件 fd, Barcode 压缩图 fd |
-| CameraX | `1.6.2` 稳定 (发布页 2026-10-21 更新), `1.7.0-rc01` 同日; 本地 Gradle 缓存无 CameraX |
+| CameraX | `1.6.2` 稳定 (发布页 2026-10-21 更新), `1.7.0-rc01` 同日; P0.2 已解析 `camera-core` / `camera-camera2` / `camera-camera2-pipe` / `camera-lifecycle` / `camera-compose` / `viewfinder-*` / `featurecombinationquery` 1.6.2 |
 | 平台版本插件 | `1.9.1` |
 | 参照插件 | 3-Macaw Speech (前台服务, 透明启动 Activity, CI 与脚本族), 3-Block Compose (单 APK, 跨进程预览页), 3-Maple Image (Compose, 独立设置, Icon Studio), MediaInfo (契约模板), Yolo NCNN (图像传输) |
 
@@ -707,6 +708,6 @@ oneway interface ICameraSessionCallback {
 | 默认不旋正只给 rotationDegrees | 用户忘记旋转时 OCR 几乎全错 (第五轮已否决, D19) |
 | 默认 1280x720 分析分辨率 | 每帧 3.7 MB, 低端机帧率明显下降 (第五轮已否决, D18) |
 | 契约 v1 预定义录像接口 | 未实现先冻结参数, 1.1.0 改签名要走破坏性升级 (第四轮已否决, D16) |
-| 4 ABI 拆分 | 无原生库, 五个包内容相同 (规则 5.5 例外, D22) |
+| 4 ABI 拆分 | 原生库只有依赖自带的 3 个 (4 ABI 共 202140 B), 拆分每包只省约 150 KB, 却要改索引清单与发布流程 (D22, 附录 D Q8 (a) 先行) |
 | 宿主自己用 camera2 实现 | 立项前提是插件化; 宿主只保留入口, 发现与降级 |
 | 1.0.0 录像 | 排 1.1.0 (第一轮已定, D2) |

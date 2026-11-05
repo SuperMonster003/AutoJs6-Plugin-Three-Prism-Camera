@@ -1,0 +1,28 @@
+{
+  "changelog_label_hint": "提示",
+  "changelog_label_feature": "新增",
+  "changelog_label_fix": "修复",
+  "changelog_label_improvement": "优化",
+  "changelog_label_dependency": "依赖",
+  "$data": {
+    "v1.0.0": {
+      "released_date": "2026/11/05",
+      "hint": [
+        "开发预览: 插件可以被 AutoJs6 插件中心识别, 拍照, 连续取帧, 取景预览, 拍摄页与 camera 脚本模块尚未交付",
+        "需要 AutoJs6 {{ required_host_version_name }} ({{ required_host_version_code }}) 或更高版本 (准确的最低版本号待宿主侧改动落地后回填)",
+        "当前图标为候选图案, 之后可能更换"
+      ],
+      "feature": [
+        "插件骨架: Wake 激活协议, 插件中心身份服务与相机能力服务 (占位)",
+        "只有一个适用于全部设备的 APK, CameraX 与 Compose 自带的原生库已按 16 KB 内存页对齐",
+        "10 种语言的 README, 插件中心说明与更新日志, 由 JSON 源文件统一生成"
+      ],
+      "dependency": [
+        "附加 Jetpack CameraX 版本 1.6.2 (打开相机, 拍照, 取帧与取景)",
+        "附加 Jetpack Compose BOM 版本 2026.09.00 (插件界面)",
+        "附加 AndroidX Activity Compose 版本 1.12.2",
+        "附加 AndroidX Core KTX 版本 1.16.0"
+      ]
+    }
+  }
+}

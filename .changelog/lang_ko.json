@@ -1,0 +1,28 @@
+{
+  "changelog_label_hint": "힌트",
+  "changelog_label_feature": "기능",
+  "changelog_label_fix": "수정",
+  "changelog_label_improvement": "개선",
+  "changelog_label_dependency": "의존성",
+  "$data": {
+    "v1.0.0": {
+      "released_date": "2026/11/05",
+      "hint": [
+        "개발 미리보기: AutoJs6 플러그인 센터가 플러그인을 인식할 수 있습니다. 사진 촬영, 실시간 프레임, 뷰파인더, 촬영 화면, camera 스크립트 모듈은 아직 제공되지 않습니다",
+        "AutoJs6 {{ required_host_version_name }} ({{ required_host_version_code }}) 이상이 필요합니다 (정확한 최소 버전은 호스트 쪽 변경이 반영된 뒤 기입됩니다)",
+        "현재 아이콘은 후보 디자인이며 이후 바뀔 수 있습니다"
+      ],
+      "feature": [
+        "플러그인 골격: Wake 활성화 프로토콜, 플러그인 센터 식별 서비스, 카메라 기능 서비스 (임시)",
+        "모든 기기에 쓰는 APK 하나만 제공되며, CameraX와 Compose에 딸린 네이티브 라이브러리는 16 KB 메모리 페이지에 맞춰 정렬되어 있습니다",
+        "10개 언어의 README, 플러그인 센터 안내, 변경 기록을 JSON 원본에서 일괄 생성"
+      ],
+      "dependency": [
+        "Jetpack CameraX 1.6.2 추가 (카메라 열기, 사진 촬영, 프레임과 뷰파인더 제공)",
+        "Jetpack Compose BOM 2026.09.00 추가 (플러그인 화면)",
+        "AndroidX Activity Compose 1.12.2 추가",
+        "AndroidX Core KTX 1.16.0 추가"
+      ]
+    }
+  }
+}

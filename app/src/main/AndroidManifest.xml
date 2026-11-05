@@ -1,0 +1,163 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="org.autojs.permission.PLUGIN" />
+
+    <!--
+        Roadmap D25 (appendix B.2): the camera, and the camera foreground service that keeps an open session alive while
+        the script runs in the background (FOREGROUND_SERVICE from API 28, FOREGROUND_SERVICE_CAMERA from API 34). The
+        camera is optional hardware, so the plugin also installs on devices without one.
+    -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
+
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
+    <!-- The host (bindings and the activation entry, roadmap P1). -->
+    <queries>
+        <package android:name="org.autojs.autojs6" />
+    </queries>
+
+    <application
+        android:name=".ThreePrismCameraApplication"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="false"
+        android:label="@string/app_name"
+        android:enableOnBackInvokedCallback="true"
+        android:supportsRtl="true"
+        android:icon="@mipmap/ic_icon_studio_application"
+        android:roundIcon="@mipmap/ic_icon_studio_application"
+        android:theme="@style/Theme.ThreePrismCamera"
+        tools:targetApi="33">
+
+        <meta-data
+            android:name="org.autojs.plugin.WAKE_ACTIVITY"
+            android:value=".WakeActivity" />
+
+        <meta-data
+            android:name="org.autojs.plugin.info.AUTHOR"
+            android:value="@string/plugin_author" />
+
+        <activity
+            android:name=".WakeActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:finishOnTaskLaunch="true"
+            android:permission="org.autojs.permission.PLUGIN"
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="org.autojs.plugin.action.WAKE" />
+            </intent-filter>
+        </activity>
+
+        <!--
+            The capture screen is the launcher target (roadmap D7, D31, P3.1; a skeleton until then). The launcher entry is
+            one of four fixed aliases that persist the icon choice as component state (icon specification section 4); only
+            the automatic alias is enabled by default, and the settings screen of roadmap P3 offers the choice.
+        -->
+        <activity
+            android:name=".ui.ThreePrismCameraCaptureActivity"
+            android:exported="false"
+            android:launchMode="singleTask" />
+        <activity-alias
+            android:name=".launcher.AdaptiveLightIconAlias"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_system_light"
+            android:roundIcon="@mipmap/ic_launcher_system_light"
+            android:targetActivity=".ui.ThreePrismCameraCaptureActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".launcher.AdaptiveDarkIconAlias"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_system"
+            android:roundIcon="@mipmap/ic_launcher_system"
+            android:targetActivity=".ui.ThreePrismCameraCaptureActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".launcher.AdaptiveAutoIconAlias"
+            android:enabled="true"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_system_auto"
+            android:roundIcon="@mipmap/ic_launcher_system_auto"
+            android:targetActivity=".ui.ThreePrismCameraCaptureActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".launcher.TransparentIconAlias"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:roundIcon="@mipmap/ic_launcher"
+            android:targetActivity=".ui.ThreePrismCameraCaptureActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <!--
+            Transparent start entry of the camera foreground service (roadmap D25): on API 34+ the service may only start
+            while the plugin is visible. Not exported; the plugin starts it itself (roadmap P2.1).
+        -->
+        <activity
+            android:name=".ThreePrismCameraStartActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:theme="@style/Theme.ThreePrismCamera.Transparent" />
+
+        <!-- Camera foreground service (roadmap D25): not exported, started for an open session (roadmap P2.1). -->
+        <service
+            android:name=".ThreePrismCameraForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="camera"
+            tools:targetApi="29" />
+
+        <!-- Plugin Center identity (roadmap 5.5, category three-prism-camera, engine camera). -->
+        <service
+            android:name=".ThreePrismCameraInfoService"
+            android:exported="true"
+            android:permission="org.autojs.permission.PLUGIN">
+            <meta-data
+                android:name="requiresHostVersion"
+                android:value="@string/plugin_requires_host_version" />
+            <intent-filter>
+                <action android:name="org.autojs.plugin.INFO" />
+                <category android:name="three-prism-camera" />
+            </intent-filter>
+        </service>
+
+        <!-- Camera capability service (roadmap D23, appendix B.2): a placeholder Binder until roadmap P2.1 stages the host contract. -->
+        <service
+            android:name=".ThreePrismCameraService"
+            android:exported="true"
+            android:permission="org.autojs.permission.PLUGIN">
+            <meta-data
+                android:name="requiresHostVersion"
+                android:value="@string/plugin_requires_host_version" />
+            <intent-filter>
+                <action android:name="org.autojs.plugin.CAMERA" />
+                <category android:name="camera" />
+            </intent-filter>
+        </service>
+
+    </application>
+
+</manifest>

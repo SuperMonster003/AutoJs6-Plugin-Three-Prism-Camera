@@ -1,0 +1,8 @@
+# Host API release AARs (roadmap 5.5; camera-api joins in roadmap P2.1, built from the host contract module of P1.1).
+# common-plugin-api: byte-identical to the artifact 3-Chime Alarm and 3-Stamp Mail stage (a release build of the host 6.8.0,
+#   build 5697). It carries PluginInfo, IPluginInfoProvider and the capability keys the INFO service needs in P0. When
+#   camera-api is staged, restage both from the same host commit (camera-api refers to the PluginInfo parcelable).
+#   See libs/README.md.
+format=1
+common-plugin-api.file=common-plugin-api.aar
+common-plugin-api.sha256=9eaba785db6128f9a0ded272ab976f37835e9fa17a49cc250a6a75ddf76cf769

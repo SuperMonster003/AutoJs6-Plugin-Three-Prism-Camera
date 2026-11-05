@@ -1,0 +1,228 @@
+<!--suppress HtmlDeprecatedAttribute, HttpUrlsUsage -->
+
+<div align="center">
+  <p>
+    <picture>
+      <source srcset="https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/blob/master/app/src/main/res/mipmap-night/ic_launcher.png?raw=true" media="(prefers-color-scheme: dark)" />
+      <img src="https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/blob/master/app/src/main/res/mipmap/ic_launcher.png?raw=true" alt="autojs6-plugin-three-prism-camera-ic-launcher" border="0" width="128" />
+    </picture>
+  </p>
+
+  <p>CameraX による写真撮影, 連続フレーム解析, ファインダープレビューを提供し, フレームを OCR, バーコード, YOLO などの認識モジュールへ直接渡せます</p>
+
+  <p>
+    <a href="https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/releases"><img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera?label=Release"/></a>
+    <a href="https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/issues"><img alt="GitHub closed issues" src="https://img.shields.io/github/issues/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera?color=A24232&label=Issues"/></a>
+    <a href="https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/blob/master/LICENSE"><img alt="GitHub License" src="https://img.shields.io/github/license/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera?color=534BAE&label=License"/></a>
+  </p>
+</div>
+
+******
+
+### 言語 (Languages)
+
+******
+
+現在の README.md は次の言語に対応しています:
+
+- [简体中文 [zh-Hans]](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/blob/master/.readme/README-zh-Hans.md)
+- [繁體中文 (香港) [zh-Hant-HK]](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/blob/master/.readme/README-zh-Hant-HK.md)
+- [繁體中文 (台灣) [zh-Hant-TW]](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/blob/master/.readme/README-zh-Hant-TW.md)
+- [English [en]](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/blob/master/.readme/README-en.md)
+- [Français [fr]](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/blob/master/.readme/README-fr.md)
+- [Español [es]](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/blob/master/.readme/README-es.md)
+- 日本語 [ja] # 現在
+- [한국어 [ko]](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/blob/master/.readme/README-ko.md)
+- [Русский [ru]](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/blob/master/.readme/README-ru.md)
+- [العربية [ar]](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/blob/master/.readme/README-ar.md)
+
+******
+
+### 概要
+
+******
+
+3-Prism Camera は AutoJs6 のカメラプラグインです. Jetpack CameraX を基盤に, スクリプトへ写真撮影, 連続フレーム解析, ファインダープレビューを提供します. ライブフレームは AutoJs6 の `ImageWrapper` としてスクリプトに届くため, `ocr`, `barcode`, `yolo` などの既存モジュールにそのまま渡して, リアルタイムのコード読み取り, 文字認識, 物体検出を実現できます.
+
+プラグインがカメラを保持し, Binder で AutoJs6 と通信します: ライブフレームは共有メモリのリングバッファで渡され (Android 7.0 - 8.0 では一時ファイル), 写真は JPEG として AutoJs6 に渡ってデコードまたはそのまま保存され, プレビューはスクリプト画面の `SurfaceView` に直接描画されるため, 画素は Binder を通りません. セッションが開いている間はカメラのフォアグラウンドサービスが動作するので, スクリプトがバックグラウンドにあっても画面オフでもフレームを受け取り続けられます.
+
+> 現在は開発プレビュー版です: AutoJs6 のプラグインセンターはプラグインを認識しますが, 写真撮影, ライブフレーム, プレビュー, 撮影画面, `camera` スクリプトモジュールはまだ提供されていません. 以下は 1.0.0 の設計目標であり, 進捗はロードマップを参照してください.
+
+******
+
+### 機能ハイライト
+
+******
+
+- 写真: EXIF の向きに合わせて正立させた `ImageWrapper` を返すほか, 元の JPEG (EXIF 付き) を指定のパスに保存できます; フラッシュモード, 画質, 解像度を設定できます.
+- ライブフレーム: RGBA フレームは既定 640x480, 最大 1920x1080 で, 既定で画面の向きに合わせて正立します; 処理が追いつかない場合はフレームを破棄して数え, 溜め込みません.
+- プレビュー: ui スクリプトまたはフローティングウィンドウの `SurfaceView` をセッションに渡すとファインダーが表示され, ライブフレームや写真撮影と同時に使えます.
+- 操作: レンズ選択, 解像度, 目標フレームレート, ライト, フラッシュモード, ズーム, 露出補正, タップフォーカスに対応し, 各範囲と現在の状態を読み取れます.
+- 撮影画面: `camera.capture({ ui: true })` でプラグイン自身の撮影画面を開き, ユーザーがシャッターを押すとスクリプトが写真を受け取ります; キャンセル時は `null` を返します.
+- バックグラウンド対応: セッション中はカメラのフォアグラウンドサービスが動作し, バックグラウンドや画面オフでもフレームが届きます; スクリプトの終了時や AutoJs6 の停止時にはカメラを自動で解放します.
+
+******
+
+### 使用方法
+
+******
+
+1. [Releases](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/releases) から APK をダウンロードしてインストールします. パッケージは 1 つで, すべての端末で使えます.
+2. プラグインを開き, 案内に従ってカメラの権限を許可します; スクリプトから `camera.requestPermission()` を呼んで許可画面を開くこともできます.
+3. スクリプトで `camera` モジュールを使うには, AutoJs6 を内部バージョン 6640 (6.8.1) 以降に更新し, プラグインセンターで本プラグインを有効にしてください.
+
+> プラグインは Android 7.0 (API 24) 以降の端末に対応しています. APK はすべての端末で共通の 1 つだけです; CameraX と Compose に付属する少量のネイティブライブラリ (合計約 200 KB) は 16 KB メモリページに揃えてあるため, 16 KB メモリページを採用した新しい端末にもインストールできます.
+
+******
+
+### スクリプト API
+
+******
+
+スクリプトはグローバルモジュール `camera` (`$camera` とも書けます) からこれらの機能を使います (1.0.0 の設計草案です. 正式な仕様はリリース版のドキュメントに従います):
+
+```javascript
+// Take one photo and keep the original JPEG.
+let photo = camera.capture({ path: files.join(files.getSdcardPath(), "prism.jpg") });
+toastLog(photo.getWidth() + "x" + photo.getHeight());
+photo.recycle();
+
+// Scan barcodes from live frames; a frame is valid only inside the callback.
+let session = camera.open({ resolution: "1280x720" });
+session.analyze((img, meta) => {
+    let codes = barcode.detect(img);
+    if (codes.length > 0) {
+        toastLog(codes[0].rawValue);
+        session.close();
+    }
+});
+events.on("exit", () => session.close());
+
+// Let the user take the picture on the plugin's capture screen; cancelling returns null.
+let shot = camera.capture({ ui: true });
+```
+
+- `camera.capture(options)` は開く, 撮影, 閉じるを一度に行います; `camera.open(options)` は排他的なセッションを開き, セッションオブジェクトは `preview`, `analyze`, `capture`, `torch`, `zoom`, `exposure`, `focusAt`, `state`, `close` を提供します.
+- フレームの寿命: `analyze` コールバックの `img` はコールバックの実行中だけ有効で, 戻るとすぐに回収されます; コールバックの外で使うには `img.clone()` を呼び, 使い終わったら自分で `recycle()` してください.
+- `camera.list()` はレンズとその解像度, ズーム範囲, 露出範囲を一覧にします; `camera.capabilities()` は契約バージョン, 機能一覧, 権限の状態を返します.
+- セッションは同時に 1 つだけです: 2 回目の `open` は `CAMERA_BUSY` で失敗し, 使用中の相手を示します; スクリプトの終了時にセッションは自動で閉じます.
+
+******
+
+### よくある質問
+
+******
+
+#### なぜカメラは AutoJs6 本体ではなくプラグインなのですか?
+
+カメラには CameraX とフォアグラウンドサービスの権限が必要です. プラグインにすることで, カメラを使わないユーザーはその容量も権限も負担せずに済み, プラグインは AutoJs6 とは別に更新できます.
+
+#### スクリプトはバックグラウンドでもフレームを受け取れますか?
+
+はい. セッション中はカメラのフォアグラウンドサービスが動作し, 通知でカメラの使用中を示します. 一部のメーカーのシステムはバックグラウンドのカメラをさらに制限するため, 対応状況はロードマップの端末一覧を参照してください.
+
+#### プラグインは写真をギャラリーに保存しますか?
+
+いいえ. プラグインはストレージの権限を要求せず, システムのギャラリーにも書き込みません; スクリプトが `path` を渡したときだけ, AutoJs6 がそのパスに写真を書き込みます.
+
+******
+
+### 権限とセキュリティ
+
+******
+
+プラグインは必要な権限をできるだけ少なくしています:
+
+- 保護された入口: 機能サービスと起動入口は AutoJs6 のプラグイン権限 (`org.autojs.permission.PLUGIN`) で保護され, 他のアプリからは直接呼び出せません; フォアグラウンドサービスと透明な起動画面はエクスポートされません.
+- カメラ: 要求するのは `CAMERA` とカメラ種別のフォアグラウンドサービス権限だけです; カメラはセッション中だけ使用し, セッションの終了, スクリプトの終了, AutoJs6 の停止のいずれでもすぐに解放します.
+- ネットワークとストレージ: ネットワークとストレージの権限は要求しません; フレームと写真はプラグインと AutoJs6 の間だけでやり取りされ, システムのギャラリーには書き込まれません.
+- 排他利用: セッションは同時に 1 つだけで (スクリプトまたはプラグインの撮影画面), 使用中の相手はエラーメッセージに記載されます.
+
+******
+
+### プラグインインターフェース
+
+******
+
+以下の情報は AutoJs6 ホストとプラグイン開発者向けです. ホストはこれらの識別子でプラグインを検出し, 機能ネゴシエーションを行います:
+
+```text
+application id: io.github.supermonster003.autojs6.plugin.three.prism.camera
+plugin id: three-prism-camera
+engine: camera
+variant: default
+info service: org.autojs.plugin.INFO (category three-prism-camera)
+capability service: org.autojs.plugin.CAMERA (category camera)
+wake action: org.autojs.plugin.action.WAKE
+minimum host build: 6640
+native libraries: libimage_processing_util_jni.so, libsurface_util_jni.so (CameraX), libandroidx.graphics.path.so (Compose); one APK for every ABI, stored uncompressed and 16 KB page-aligned
+```
+
+******
+
+### 開発ロードマップ
+
+******
+
+計画, 設計上の決定, 進捗は ROADMAP.md のチェックリストで管理しています. 未チェックの項目は計画であり, 現在のバージョンの機能ではありません.
+
+- [ROADMAP.md を見る](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/blob/master/ROADMAP.md)
+
+******
+
+### リリース履歴
+
+******
+
+#### v1.0.0
+
+_2026/11/05_
+
+- `ヒント` 開発プレビュー: AutoJs6 のプラグインセンターはプラグインを検出できます. 写真撮影, ライブフレーム, ファインダー, 撮影画面, camera スクリプトモジュールはまだ提供されていません
+- `ヒント` AutoJs6 6.8.1 (6640) 以降が必要です (正確な最低バージョンはホスト側の変更が反映された後に記入されます)
+- `ヒント` 現在のアイコンは候補のデザインで, 今後変わる可能性があります
+- `機能` プラグインの骨組み: Wake 有効化プロトコル, プラグインセンターの識別サービス, カメラ機能サービス (仮実装)
+- `機能` すべての端末で使える APK は 1 つだけです. CameraX と Compose に付属するネイティブライブラリは 16 KB メモリページに揃えてあります
+- `機能` 10 言語の README, プラグインセンターの説明, 変更履歴を JSON ソースから一括生成
+- `依存関係` Jetpack CameraX 1.6.2 を追加 (カメラの起動, 写真撮影, フレームとファインダーの提供)
+- `依存関係` Jetpack Compose BOM 2026.09.00 を追加 (プラグイン画面)
+- `依存関係` AndroidX Activity Compose 1.12.2 を追加
+- `依存関係` AndroidX Core KTX 1.16.0 を追加
+
+##### その他のリリース履歴は以下を参照
+
+* [CHANGELOG.md](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/blob/master/app/src/main/assets/doc/CHANGELOG-ja.md)
+
+******
+
+### ビルド
+
+******
+
+この節はソースからプラグインをビルドしたい開発者向けです.
+
+```powershell
+.\gradlew.bat :app:assembleDebug :app:testDebugUnitTest
+.\gradlew.bat :app:appendDigestToReleasedFiles
+py .python\generate_markdown.py --check
+py .python\generate_icon_studio.py --check
+py .python\check_repository.py
+```
+
+******
+
+### ライセンス
+
+******
+
+プロジェクトのコードは [Mozilla Public License 2.0](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/blob/master/LICENSE) で提供されます. サードパーティ製コンポーネントのライセンスはサードパーティ通知を参照してください.
+
+- [サードパーティの表示 (THIRD_PARTY_NOTICES.md)](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/blob/master/THIRD_PARTY_NOTICES.md)
+
+******
+
+### 関連リンク
+
+******
+
+- AutoJs6 プロジェクト: https://github.com/SuperMonster003/AutoJs6

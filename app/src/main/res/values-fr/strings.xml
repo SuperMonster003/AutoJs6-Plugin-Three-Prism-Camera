@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="capture_camera_count">Caméras disponibles: %1$d</string>
+    <string name="capture_camera_unavailable">Impossible d\'initialiser la caméra</string>
+    <string name="capture_skeleton_note">La prise de vue, l\'analyse d\'images et le viseur arrivent dans une version ultérieure</string>
+    <string name="notification_camera_in_use_text">Un script utilise la caméra</string>
+    <string name="notification_camera_in_use_title">Caméra en cours d\'utilisation</string>
+    <string name="notification_channel_camera_description">Affichée tant qu\'un script garde une session caméra ouverte</string>
+    <string name="notification_channel_camera_name">Caméra</string>
+    <string name="plugin_description">Prise de photos, analyse continue des images et aperçu du viseur via CameraX, avec des images prêtes pour les modules de reconnaissance OCR, codes-barres, YOLO et autres</string>
+</resources>

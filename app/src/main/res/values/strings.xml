@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="capture_camera_count">Cameras available: %1$d</string>
+    <string name="capture_camera_unavailable">The camera could not be initialized</string>
+    <string name="capture_skeleton_note">Capture, frame analysis and the viewfinder arrive in a later version</string>
+    <string name="notification_camera_in_use_text">A script is using the camera</string>
+    <string name="notification_camera_in_use_title">Camera in use</string>
+    <string name="notification_channel_camera_description">Shown while a script keeps a camera session open</string>
+    <string name="notification_channel_camera_name">Camera</string>
+    <string name="plugin_description">Photo capture, continuous frame analysis and viewfinder preview through CameraX, with frames ready for OCR, barcode, YOLO and other recognition modules</string>
+</resources>

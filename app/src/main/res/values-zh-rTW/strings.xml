@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="capture_camera_count">可用鏡頭: %1$d</string>
+    <string name="capture_camera_unavailable">無法初始化相機</string>
+    <string name="capture_skeleton_note">拍照, 連續擷取影格與取景頁將在後續版本中提供</string>
+    <string name="notification_camera_in_use_text">指令碼正在使用相機</string>
+    <string name="notification_camera_in_use_title">相機使用中</string>
+    <string name="notification_channel_camera_description">指令碼保持相機工作階段開啟期間顯示</string>
+    <string name="notification_channel_camera_name">相機</string>
+    <string name="plugin_description">透過 CameraX 拍照, 連續擷取影格與取景預覽, 影格可直接交給 OCR, 條碼與 YOLO 等辨識模組</string>
+</resources>

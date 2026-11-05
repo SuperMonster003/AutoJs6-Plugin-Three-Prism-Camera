@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="capture_camera_count">利用可能なカメラ: %1$d</string>
+    <string name="capture_camera_unavailable">カメラを初期化できません</string>
+    <string name="capture_skeleton_note">撮影, 連続フレーム解析, ファインダー画面は今後のバージョンで提供されます</string>
+    <string name="notification_camera_in_use_text">スクリプトがカメラを使用中です</string>
+    <string name="notification_camera_in_use_title">カメラ使用中</string>
+    <string name="notification_channel_camera_description">スクリプトがカメラセッションを開いている間に表示されます</string>
+    <string name="notification_channel_camera_name">カメラ</string>
+    <string name="plugin_description">CameraX による写真撮影, 連続フレーム解析, ファインダープレビューを提供し, フレームを OCR, バーコード, YOLO などの認識モジュールへ直接渡せます</string>
+</resources>

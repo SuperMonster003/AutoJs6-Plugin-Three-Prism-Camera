@@ -1,0 +1,73 @@
+{
+  "$name": "Español",
+  "text_current_lowercase": "actual",
+  "text_plugin_synopsis": "Captura de fotos, análisis continuo de fotogramas y vista previa del visor con CameraX, con fotogramas listos para módulos de reconocimiento OCR, de códigos de barras, YOLO y otros",
+  "h3_languages_with_ascii": "Idiomas (Languages)",
+  "p_languages_all_supported_for_readme": "El README.md actual admite los siguientes idiomas",
+  "h3_introduction": "Introducción",
+  "h3_features": "Funciones Destacadas",
+  "h3_usage": "Uso",
+  "h3_script_api": "API De Script",
+  "h3_faq": "Preguntas Frecuentes",
+  "h3_security": "Permisos Y Seguridad",
+  "h3_plugin_interface": "Interfaz Del Plugin",
+  "p_plugin_interface": "La siguiente información está dirigida a los desarrolladores del host AutoJs6 y de plugins; el host usa estos identificadores para descubrir el plugin y negociar capacidades",
+  "h3_roadmap": "Hoja De Ruta",
+  "text_link_roadmap": "Ver ROADMAP.md",
+  "h3_release_history": "Historial De Versiones",
+  "h5_for_more_release_history": "Para más historial de versiones",
+  "h3_build": "Compilación",
+  "p_build_intro": "Esta sección está dirigida a desarrolladores que quieran compilar el plugin desde el código fuente.",
+  "h3_license": "Licencia",
+  "h3_links": "Enlaces",
+  "text_link_autojs6": "Proyecto AutoJs6",
+  "p_roadmap": "Los planes, las decisiones de diseño y el progreso se registran como lista de verificación en ROADMAP.md. Los elementos sin marcar son planes, no funciones de la versión actual.",
+  "p_introduction_what": "3-Prism Camera es el complemento de cámara de AutoJs6. Basado en Jetpack CameraX, ofrece a los scripts captura de fotos, análisis continuo de fotogramas y vista previa del visor. Los fotogramas en vivo llegan al script como objetos `ImageWrapper` de AutoJs6, de modo que el script puede pasarlos directamente a módulos existentes como `ocr`, `barcode` o `yolo` para escanear códigos en vivo, reconocer texto y detectar objetos.",
+  "p_introduction_how": "El complemento controla la cámara y se comunica con AutoJs6 por Binder: los fotogramas en vivo viajan por un búfer circular de memoria compartida (archivos temporales en Android 7.0 - 8.0), las fotos llegan a AutoJs6 en JPEG para decodificarlas o guardarlas sin cambios, y la vista previa se dibuja directamente en un `SurfaceView` de la interfaz del script, sin que ningún píxel pase por Binder. Mientras una sesión está abierta, el complemento ejecuta un servicio en primer plano de cámara, así que los scripts siguen recibiendo fotogramas en segundo plano o con la pantalla apagada.",
+  "p_status_note": "Esta es una versión preliminar de desarrollo: el centro de complementos de AutoJs6 reconoce el complemento, pero la captura de fotos, los fotogramas en vivo, la vista previa, la pantalla de captura y el módulo de script `camera` aún no están disponibles. Las secciones siguientes describen los objetivos de diseño de la 1.0.0; consulte la hoja de ruta para ver el progreso.",
+  "features": [
+    "Fotos: devuelve un `ImageWrapper` enderezado según la orientación EXIF, o guarda el JPEG original (con EXIF) en la ruta que elija; el modo de flash, la calidad y la resolución son configurables.",
+    "Fotogramas en vivo: fotogramas RGBA de 640x480 por defecto y hasta 1920x1080, enderezados según la pantalla por defecto; cuando un script se retrasa, los fotogramas se descartan y se cuentan en lugar de acumularse.",
+    "Vista previa: entregue a la sesión un `SurfaceView` de un script ui o de una ventana flotante para mostrar el visor, junto con los fotogramas en vivo y la captura de fotos.",
+    "Controles: selección de lente, resolución, velocidad de fotogramas objetivo, linterna, modo de flash, zoom, compensación de exposición y enfoque al tocar, con rangos y estado actual legibles.",
+    "Pantalla de captura: `camera.capture({ ui: true })` abre la pantalla de captura propia del complemento; el script recibe la foto cuando el usuario pulsa el obturador, o `null` si cancela.",
+    "Funciona en segundo plano: un servicio en primer plano de cámara se ejecuta mientras hay una sesión abierta, así que los fotogramas siguen llegando en segundo plano o con la pantalla apagada; la cámara se libera cuando el script termina o AutoJs6 se detiene."
+  ],
+  "usage_steps": [
+    "Descargue el APK desde [Releases]({{ repo_url }}/releases) e instálelo. Hay un único paquete para todos los dispositivos.",
+    "Abra el complemento y conceda el permiso de cámara cuando se solicite; los scripts también pueden llamar a `camera.requestPermission()` para abrir la pantalla de permisos.",
+    "Para usar el módulo `camera` en scripts, actualice AutoJs6 a la versión interna {{ required_host_version_code }} ({{ required_host_version_name }}) o posterior y active este complemento en el centro de complementos."
+  ],
+  "p_usage_note": "El complemento es compatible con dispositivos con Android {{ min_android_version }} (API {{ android_min_sdk }}) o posterior. Hay un único APK para todos los dispositivos; las pocas bibliotecas nativas que incluyen CameraX y Compose (unos 200 KB en total) están alineadas a páginas de memoria de 16 KB, por lo que los dispositivos nuevos con páginas de 16 KB también lo instalan.",
+  "p_script_api_intro": "Los scripts usan estas funciones a través del módulo global `camera` (también disponible como `$camera`; borrador de diseño de la 1.0.0, la documentación publicada es la referencia)",
+  "api_points": [
+    "`camera.capture(options)` abre, captura y cierra en un solo paso; `camera.open(options)` abre una sesión exclusiva cuyo objeto ofrece `preview`, `analyze`, `capture`, `torch`, `zoom`, `exposure`, `focusAt`, `state` y `close`.",
+    "Vida de los fotogramas: el `img` de un callback de `analyze` solo es válido mientras se ejecuta el callback y se recicla en cuanto este regresa; para usarlo después, llame a `img.clone()` y haga `recycle()` de la copia usted mismo.",
+    "`camera.list()` enumera las lentes con sus resoluciones y sus rangos de zoom y exposición; `camera.capabilities()` devuelve la versión del contrato, la lista de funciones y el estado del permiso.",
+    "Una sesión a la vez: un segundo `open` falla con `CAMERA_BUSY` e indica quién la ocupa; la sesión se cierra cuando el script termina."
+  ],
+  "faq": [
+    {
+      "q": "Por qué la cámara es un complemento y no parte de AutoJs6?",
+      "a": "La cámara necesita CameraX y los permisos de servicio en primer plano. Como complemento, los usuarios que no la necesitan no cargan ni con el tamaño ni con los permisos, y el complemento puede actualizarse de forma independiente de AutoJs6."
+    },
+    {
+      "q": "Pueden los scripts recibir fotogramas en segundo plano?",
+      "a": "Sí. Mientras una sesión está abierta, el complemento ejecuta un servicio en primer plano de cámara y la notificación indica que la cámara está en uso. Algunos sistemas de fabricantes restringen aún más la cámara en segundo plano; consulte la matriz de dispositivos en la hoja de ruta."
+    },
+    {
+      "q": "El complemento guarda las fotos en la galería?",
+      "a": "No. El complemento no solicita permisos de almacenamiento y nunca escribe en la galería del sistema; AutoJs6 solo escribe una foto en la `path` que pasa el script."
+    }
+  ],
+  "p_security_intro": "El complemento reduce al máximo sus permisos:",
+  "security_points": [
+    "Puntos de entrada protegidos: el servicio de capacidades y el punto de activación requieren el permiso de complemento de AutoJs6 (`org.autojs.permission.PLUGIN`), por lo que otras aplicaciones no pueden llamarlos; el servicio en primer plano y la pantalla de inicio transparente no se exportan.",
+    "Cámara: solo se solicitan `CAMERA` y los permisos de servicio en primer plano de cámara; la cámara solo se usa mientras hay una sesión abierta y se libera en cuanto la sesión se cierra, el script termina o AutoJs6 se detiene.",
+    "Red y almacenamiento: sin permisos de red ni de almacenamiento; los fotogramas y las fotos solo pasan entre el complemento y AutoJs6 y nunca llegan a la galería del sistema.",
+    "Uso exclusivo: una sesión a la vez (un script o la pantalla de captura del complemento), y el mensaje de error indica quién la ocupa."
+  ],
+  "p_license": "El código del proyecto se distribuye bajo la [Mozilla Public License 2.0]({{ license_url }}). Las licencias de los componentes de terceros figuran en los avisos de terceros.",
+  "text_link_third_party": "Avisos de terceros (THIRD_PARTY_NOTICES.md)",
+  "p_instruction_docs": "El progreso y el diseño están disponibles en la [página del proyecto]({{ repo_url }})."
+}

@@ -1,0 +1,73 @@
+{
+  "$name": "Français",
+  "text_current_lowercase": "actuel",
+  "text_plugin_synopsis": "Prise de photos, analyse continue des images et aperçu du viseur via CameraX, avec des images prêtes pour les modules de reconnaissance OCR, codes-barres, YOLO et autres",
+  "h3_languages_with_ascii": "Langues (Languages)",
+  "p_languages_all_supported_for_readme": "Le README.md actuel prend en charge les langues suivantes",
+  "h3_introduction": "Introduction",
+  "h3_features": "Points Forts",
+  "h3_usage": "Utilisation",
+  "h3_script_api": "API De Script",
+  "h3_faq": "FAQ",
+  "h3_security": "Permissions Et Sécurité",
+  "h3_plugin_interface": "Interface Du Plugin",
+  "p_plugin_interface": "Les informations suivantes s'adressent aux développeurs de l'hôte AutoJs6 et de plugins; l'hôte utilise ces identifiants pour découvrir le plugin et négocier les capacités",
+  "h3_roadmap": "Feuille De Route",
+  "text_link_roadmap": "Voir ROADMAP.md",
+  "h3_release_history": "Historique Des Versions",
+  "h5_for_more_release_history": "Pour plus d'historique des versions",
+  "h3_build": "Compilation",
+  "p_build_intro": "Cette section s'adresse aux développeurs souhaitant compiler le plugin depuis les sources.",
+  "h3_license": "Licence",
+  "h3_links": "Liens",
+  "text_link_autojs6": "Projet AutoJs6",
+  "p_roadmap": "Les plans, décisions de conception et l'avancement sont suivis sous forme de liste à cocher dans ROADMAP.md. Les éléments non cochés sont des intentions, pas des fonctionnalités de la version actuelle.",
+  "p_introduction_what": "3-Prism Camera est le plugin caméra d'AutoJs6. Basé sur Jetpack CameraX, il offre aux scripts la prise de photos, l'analyse continue des images et l'aperçu du viseur. Les images en direct arrivent dans le script sous forme d'objets `ImageWrapper` d'AutoJs6, que le script peut transmettre directement aux modules existants comme `ocr`, `barcode` ou `yolo` pour la lecture de codes en direct, la reconnaissance de texte et la détection d'objets.",
+  "p_introduction_how": "Le plugin détient la caméra et communique avec AutoJs6 par Binder: les images en direct passent par un tampon circulaire en mémoire partagée (des fichiers temporaires sous Android 7.0 - 8.0), les photos arrivent dans AutoJs6 en JPEG pour être décodées ou enregistrées telles quelles, et l'aperçu s'affiche directement dans une `SurfaceView` de l'interface du script, sans faire passer de pixels par Binder. Tant qu'une session est ouverte, le plugin exécute un service de premier plan caméra, si bien que les scripts continuent de recevoir des images en arrière-plan ou écran éteint.",
+  "p_status_note": "Ceci est une préversion de développement: le centre de plugins d'AutoJs6 reconnaît le plugin, mais la prise de photos, les images en direct, l'aperçu, l'écran de prise de vue et le module de script `camera` ne sont pas encore livrés. Les sections suivantes décrivent les objectifs de conception de la 1.0.0; consultez la feuille de route pour l'avancement.",
+  "features": [
+    "Photos: renvoie un `ImageWrapper` redressé selon l'orientation EXIF, ou enregistre le JPEG d'origine (avec EXIF) au chemin choisi; le mode flash, la qualité et la résolution sont réglables.",
+    "Images en direct: images RGBA en 640x480 par défaut et jusqu'à 1920x1080, redressées selon l'écran par défaut; quand un script prend du retard, les images sont abandonnées et comptées au lieu de s'accumuler.",
+    "Aperçu: confiez à la session une `SurfaceView` d'un script ui ou d'une fenêtre flottante pour afficher le viseur, en parallèle des images en direct et de la prise de photos.",
+    "Commandes: choix de l'objectif, résolution, fréquence d'images cible, lampe, mode flash, zoom, compensation d'exposition et mise au point au toucher, avec lecture des plages et de l'état courant.",
+    "Écran de prise de vue: `camera.capture({ ui: true })` ouvre l'écran de prise de vue du plugin; le script reçoit la photo quand l'utilisateur appuie sur le déclencheur, ou `null` s'il annule.",
+    "Fonctionne en arrière-plan: un service de premier plan caméra tourne tant qu'une session est ouverte, les images continuent donc d'arriver en arrière-plan ou écran éteint; la caméra est libérée quand le script se termine ou qu'AutoJs6 est arrêté."
+  ],
+  "usage_steps": [
+    "Téléchargez l'APK depuis [Releases]({{ repo_url }}/releases) et installez-le. Un seul paquet convient à tous les appareils.",
+    "Ouvrez le plugin et accordez l'autorisation caméra quand elle est demandée; les scripts peuvent aussi appeler `camera.requestPermission()` pour ouvrir l'écran d'autorisation.",
+    "Pour utiliser le module `camera` dans les scripts, mettez AutoJs6 à jour vers la version interne {{ required_host_version_code }} ({{ required_host_version_name }}) ou ultérieure et activez ce plugin dans le centre de plugins."
+  ],
+  "p_usage_note": "Le plugin prend en charge les appareils sous Android {{ min_android_version }} (API {{ android_min_sdk }}) ou ultérieur. Un seul APK convient à tous les appareils; les quelques bibliothèques natives fournies avec CameraX et Compose (environ 200 KB au total) sont alignées sur des pages mémoire de 16 KB, si bien que les appareils récents à pages de 16 KB l'installent aussi.",
+  "p_script_api_intro": "Les scripts utilisent ces fonctions via le module global `camera` (aussi disponible sous `$camera`; projet de conception de la 1.0.0, la documentation publiée fait foi)",
+  "api_points": [
+    "`camera.capture(options)` ouvre, photographie et ferme en une étape; `camera.open(options)` ouvre une session exclusive dont l'objet propose `preview`, `analyze`, `capture`, `torch`, `zoom`, `exposure`, `focusAt`, `state` et `close`.",
+    "Durée de vie des images: l'`img` d'un rappel `analyze` n'est valide que pendant l'exécution du rappel et est recyclée dès son retour; pour l'utiliser ensuite, appelez `img.clone()` puis `recycle()` sur la copie vous-même.",
+    "`camera.list()` liste les objectifs avec leurs résolutions et leurs plages de zoom et d'exposition; `camera.capabilities()` renvoie la version du contrat, la liste des fonctions et l'état de l'autorisation.",
+    "Une session à la fois: un second `open` échoue avec `CAMERA_BUSY` et indique le détenteur; la session se ferme quand le script se termine."
+  ],
+  "faq": [
+    {
+      "q": "Pourquoi la caméra est-elle un plugin plutôt qu'une partie d'AutoJs6?",
+      "a": "La caméra nécessite CameraX et les autorisations de service de premier plan. Sous forme de plugin, les utilisateurs qui n'en ont pas besoin n'en supportent ni la taille ni les autorisations, et le plugin peut être mis à jour indépendamment d'AutoJs6."
+    },
+    {
+      "q": "Les scripts reçoivent-ils des images en arrière-plan?",
+      "a": "Oui. Tant qu'une session est ouverte, le plugin exécute un service de premier plan caméra et la notification indique que la caméra est utilisée. Certains systèmes de constructeurs restreignent davantage la caméra en arrière-plan; consultez la matrice des appareils dans la feuille de route."
+    },
+    {
+      "q": "Le plugin enregistre-t-il les photos dans la galerie?",
+      "a": "Non. Le plugin ne demande aucune autorisation de stockage et n'écrit jamais dans la galerie du système; AutoJs6 n'écrit une photo qu'au `path` transmis par le script."
+    }
+  ],
+  "p_security_intro": "Le plugin réduit autant que possible ses autorisations:",
+  "security_points": [
+    "Points d'entrée protégés: le service de capacités et le point d'activation exigent l'autorisation de plugin d'AutoJs6 (`org.autojs.permission.PLUGIN`), les autres applications ne peuvent donc pas les appeler; le service de premier plan et l'écran de démarrage transparent ne sont pas exportés.",
+    "Caméra: seules les autorisations `CAMERA` et de service de premier plan caméra sont demandées; la caméra n'est utilisée que pendant une session ouverte et est libérée dès que la session se ferme, que le script se termine ou qu'AutoJs6 est arrêté.",
+    "Réseau et stockage: aucune autorisation réseau ni stockage; les images et les photos ne circulent qu'entre le plugin et AutoJs6 et n'atteignent jamais la galerie du système.",
+    "Usage exclusif: une session à la fois (un script ou l'écran de prise de vue du plugin), et le message d'erreur indique le détenteur."
+  ],
+  "p_license": "Le code du projet est distribué sous [Mozilla Public License 2.0]({{ license_url }}). Les licences des composants tiers figurent dans les mentions tierces.",
+  "text_link_third_party": "Mentions tierces (THIRD_PARTY_NOTICES.md)",
+  "p_instruction_docs": "L'avancement et la conception sont disponibles sur la [page du projet]({{ repo_url }})."
+}
