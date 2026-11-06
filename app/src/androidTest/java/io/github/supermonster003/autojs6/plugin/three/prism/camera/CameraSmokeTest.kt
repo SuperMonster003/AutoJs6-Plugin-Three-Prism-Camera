@@ -115,10 +115,15 @@ class CameraSmokeTest {
 
     /** Collects [count] frames as (`seq`, `bufferIndex`), reading and releasing each one like the host. */
     private fun analyze(session: ICameraSession, count: Int): List<Pair<Long, Int>> {
-        val queue = LinkedBlockingQueue<Bundle>()
+        // A frame with the size of its frame file (-1 without one). The plugin closes its frame descriptor when onFrame
+        // returns, and in one process no binder copy is made, so the descriptor is read here and not on the test thread.
+        // zh-CN: 帧及其帧文件大小 (无帧文件为 -1). 插件在 onFrame 返回时关闭帧描述符, 同进程内没有 binder 副本, 因此在这里读取, 不在测试线程读取.
+        val queue = LinkedBlockingQueue<Pair<Bundle, Long>>()
         val callback = object : ICameraFrameCallback.Stub() {
             override fun onFrame(frame: Bundle) {
-                queue.add(frame)
+                @Suppress("DEPRECATION")
+                val fileSize = frame.getParcelable<ParcelFileDescriptor>(CameraFrameKeys.FRAME_FD)?.statSize ?: -1L
+                queue.add(frame to fileSize)
             }
 
             override fun onDropped(info: Bundle) = Unit
@@ -143,7 +148,7 @@ class CameraSmokeTest {
         val seen = ArrayList<Pair<Long, Int>>()
         try {
             while (seen.size < count) {
-                val frame = assertNotNull(queue.poll(10, TimeUnit.SECONDS), "frame ${seen.size + 1} within 10 s")
+                val (frame, fileSize) = requireWithin(queue.poll(10, TimeUnit.SECONDS), "frame ${seen.size + 1} within 10 s")
                 val seq = frame.getLong(CameraFrameKeys.SEQ)
                 val index = frame.getInt(CameraFrameKeys.BUFFER_INDEX)
                 assertEquals(width, frame.getInt(CameraFrameKeys.WIDTH))
@@ -152,9 +157,7 @@ class CameraSmokeTest {
                     assertTrue("block $index holds a frame", buffers[index].capacity() >= frameBytes)
                     buffers[index].get(0)
                 } else {
-                    @Suppress("DEPRECATION")
-                    val fd = requireNotNull(frame.getParcelable<ParcelFileDescriptor>(CameraFrameKeys.FRAME_FD)) { "below API 27 frames carry frameFd" }
-                    fd.use { assertTrue("frame file holds a frame", it.statSize >= frameBytes) }
+                    assertTrue("below API 27 a frame carries a frameFd of at least $frameBytes bytes, got $fileSize", fileSize >= frameBytes)
                 }
                 seen += seq to index
                 session.releaseFrame(index, seq)
@@ -210,7 +213,8 @@ class CameraSmokeTest {
         putInt(CameraOptionKeys.HEIGHT, CameraLimits.DEFAULT_ANALYSIS_HEIGHT)
     }
 
-    private fun <T> assertNotNull(value: T?, message: String): T {
+    /** [value] or a failure with [message]; named apart from JUnit's assertNotNull, whose arguments come the other way. */
+    private fun <T> requireWithin(value: T?, message: String): T {
         assertTrue(message, value != null)
         return value!!
     }

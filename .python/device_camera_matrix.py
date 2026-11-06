@@ -410,6 +410,15 @@ def main():
     phases = [p.strip() for p in args.phases.split(",") if p.strip()]
     if not wait_unlocked(device):
         return 1
+
+    def unlocked(name):
+        # The background phase turns the screen off; a phase run behind the keyguard afterwards is not valid.
+        # zh-CN: background 阶段会熄屏; 之后在锁屏之下运行的阶段无效.
+        if wait_unlocked(device):
+            return True
+        print("%s SKIP the device is still locked" % name, flush=True)
+        return False
+
     try:
         if "smoke" in phases:
             run_phase(device, "smoke", common + SMOKE, 120)
@@ -443,9 +452,9 @@ def main():
                     wait_unlocked(device)
 
             run_phase(device, "background", common + fill(BACKGROUND, seconds=args.seconds), 2 * args.seconds + 60, on_background)
-        if "bgopen" in phases:
+        if "bgopen" in phases and unlocked("bgopen"):
             run_phase(device, "bgopen", common + BGOPEN, 60, lambda line: line == "step:home" and device.shell("input keyevent 3"))
-        if "kill" in phases:
+        if "kill" in phases and unlocked("kill"):
             def on_kill(line):
                 if line != "step:kill":
                     return
@@ -474,25 +483,48 @@ def main():
                 # The plugin's own CameraX close counts as well (chatty hides it on some releases); read 2 s after the kill.
                 # zh-CN: 插件自身的 CameraX 关闭行同样计入 (部分系统被 chatty 折叠); 击杀 2 秒后读取.
                 time.sleep(max(0.0, 2.0 - (time.time() - t0)))
-                released = None
+                # Times come from the log: the kill is ActivityManager's "Killing <pid>:<host>" or "Force stopping <host>"
+                # line (the device clock read after the command returns is late by one adb round trip), the release is
+                # the camera service side of the disconnect (Camera2ClientBase "Closed Camera" of the plugin, or
+                # "Camera3-Device: disconnect: X" on API 28, where nothing else names the client); the plugin's
+                # "Closed Camera2CameraController" only starts the close and is reported apart.
+                # zh-CN: 时间取自日志: 击杀时刻为 ActivityManager 的 "Killing <pid>:<宿主>" 或 "Force stopping <宿主>" 行 (命令返回后再读设备时钟会晚一次
+                # adb 往返); 释放时刻为相机服务侧的断开 (插件的 Camera2ClientBase "Closed Camera", 或 API 28 上不带客户端名的
+                # "Camera3-Device: disconnect: X"); 插件的 "Closed Camera2CameraController" 只是开始关闭, 单独报告.
+                kill_at = released_at = close_started_at = None
                 for line in device.shell("logcat -d -v epoch -b main,system").splitlines():
-                    if re.search(r"(Camera2ClientBase|CameraService|CameraDeviceClient).*(Closed|[Dd]isconnect)", line) or (
-                            " %s " % plugin_pid in line and "Closed Camera2CameraController" in line):
-                        stamp = re.match(r"\s*(\d+\.\d+)", line)
-                        if stamp and killed_at:
-                            released = float(stamp.group(1)) - killed_at
-                            break
-                ok = gone is not None and gone <= 1.0 and released is not None and released <= 1.0
-                print("kill %s %s; %s; notification gone after %s s (one dumpsys pair per poll); camera closed %s s after the kill (camera service log)" % (
+                    stamp = re.match(r"\s*(\d+\.\d+)", line)
+                    if not stamp:
+                        continue
+                    t = float(stamp.group(1))
+                    if kill_at is None and re.search(r"ActivityManager: (Killing %s:%s/|Force stopping %s )" % (host_pid, re.escape(HOST), re.escape(HOST)), line):
+                        kill_at = t
+                    elif close_started_at is None and (" %s " % plugin_pid) in line and "Closed Camera2CameraController" in line:
+                        close_started_at = t
+                    elif released_at is None and (re.search(r"Camera2ClientBase.*Closed Camera.*" + re.escape(PLUGIN), line)
+                                                  or re.search(r"CameraService.*Disconnected client .* PID %s\b" % plugin_pid, line)
+                                                  or "Camera3-Device: disconnect: X" in line):
+                        released_at = t
+                kill_at = kill_at or killed_at
+                released = released_at - kill_at if released_at and kill_at else None
+                started = close_started_at - kill_at if close_started_at and kill_at else None
+                # A release before the kill means the camera was lost earlier (for example behind the keyguard): that
+                # run proves nothing about the kill.
+                # zh-CN: 击杀前就释放说明相机更早就丢了 (例如锁屏之下), 该次运行不能证明击杀后的释放.
+                early = released is not None and released < 0
+                ok = gone is not None and gone <= 1.0 and released is not None and not early and released <= 1.0
+                print("kill %s %s; %s; notification gone after %s s (one dumpsys pair per poll); plugin close started %s s, camera released %s s after the kill (log times)%s" % (
                     "PASS" if ok else "FAIL", before, how, "%.2f" % gone if gone is not None else ">10",
-                    "%.2f" % released if released is not None else "-"), flush=True)
+                    "%.2f" % started if started is not None else "-",
+                    "%.2f" % released if released is not None else "- (no release line)",
+                    " BEFORE the kill" if early else ""), flush=True)
                 raise Done()
 
             try:
                 run_phase(device, "kill", common + KILL, 40, on_kill)
             except Done:
                 pass
-        if "coldstart" in phases:
+        if "coldstart" in phases and unlocked("coldstart"):
             launcher = device.plugin_launcher()
             times = []
             for _ in range(3):
@@ -503,12 +535,13 @@ def main():
                 answer = device.shell("am start -W -n " + launcher)
                 match = re.search(r"TotalTime:\s*(\d+)", answer) or re.search(r"WaitTime:\s*(\d+)", answer)
                 if match:
-                    times.append(int(match.group(1)))
+                    times.append("%s=%s" % (match.group(0).split(":")[0], match.group(1)))
                 time.sleep(3)
                 device.shell("input keyevent 4")
             device.shell("am force-stop " + PLUGIN)
-            print("coldstart %s TotalTime/WaitTime=%s median=%s ms" % ("PASS" if times else "FAIL", times, statistics.median(times) if times else "-"), flush=True)
-        if "recognize" in phases:
+            values = [int(t.split("=")[1]) for t in times]
+            print("coldstart %s %s median=%s ms" % ("PASS" if times else "FAIL", times, statistics.median(values) if values else "-"), flush=True)
+        if "recognize" in phases and unlocked("recognize"):
             model = DEVICE_DIR + "/models/yolo11n"
             if args.yolo_model:
                 device.shell("mkdir -p '%s'" % model)
@@ -516,7 +549,7 @@ def main():
                     device.run("push", str(pathlib.Path(args.yolo_model) / name), "%s/%s" % (model, name), check=True)
             run_phase(device, "recognize", common + fill(RECOGNIZE, limit=args.limit, model=model), 3 * (args.limit + 30) + 60,
                       lambda line: line.startswith("step:aim-") and print("AIM " + line[len("step:aim-"):], flush=True))
-        if "q41" in phases:
+        if "q41" in phases and unlocked("q41"):
             if not (device.emulator or args.allow_device_changes):
                 print("q41 SKIP needs an emulator or --allow-device-changes", flush=True)
             else:
