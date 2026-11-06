@@ -238,10 +238,10 @@ docs/dev/camera-plugin-protocol-v1.md, .changelog (zh-Hans), 样例脚本
 | --- | --- | --- | --- |
 | P0 | 1.0.0 | 仓库骨架: 构建链, CameraX 接入与按 ABI 拆包, 图标, 测试与 CI | 完成 (P0.2 按附录 D Q8 = (b) 由 prism-p2 返工) |
 | P1 | 宿主 6.8.0 | 宿主契约 `camera-api`, `CameraPluginHost` 与帧传输宿主端, 注册与协议文档, 脚本 API `camera`, Node / Bun 桥, 样例 | 完成 (最后一条 P1.6 由 prism-p3 于 2026-11-06 勾选) |
-| P2 | 1.0.0 | 相机核心: 会话与独占, 前台服务与权限, 连续帧环形缓冲, 拍照, 8 项控制, 预览 Surface, 契约一致性测试 | 进行中 (prism-p2) |
+| P2 | 1.0.0 | 相机核心: 会话与独占, 前台服务与权限, 连续帧环形缓冲, 拍照, 8 项控制, 预览 Surface, 契约一致性测试 | 完成 (prism-p2) |
 | P3 | 1.0.0 | 独立界面: 取景页 (含一键拍照), 设置页, 发行历史, 图标核对 | 完成 (prism-p3, `9cbbe98`; 附录 D Q41 = (b) / Q42 = (b) 2026-11-06 拍板后由插件构建 16 落实, 实施差异见 Q45 / Q46) |
 | P4 | 1.0.0 | 验证: CI 模拟器相机, 真机矩阵, 后台 / 熄屏 / 宿主被杀, 性能基线, 识别联动样例实测 | 未开始 |
-| P5 | 1.0.0 | 文档, 声明, 四仓库同步, README / changelog / 截图, 发布与索引登记 | 未开始 |
+| P5 | 1.0.0 | 文档, 声明, 四仓库同步, README / changelog / 截图, 发布与索引登记 | 进行中: P5.1 - P5.3 完成 (prism-p5, 2026-11-06; 截图见附录 D Q61), P5.4 待 P4 通过 |
 | P6 | 1.1.0 | 录像 (契约 v2) 与其他候选 | 未开始 |
 
 依赖顺序:
@@ -411,15 +411,15 @@ P0 (插件骨架)                      P1.1 - P1.3 (宿主契约, 绑定, 注册
 
 ### P5.1 文档 (AutoJs6-Documentation) (D11, D37)
 
-- [ ] (文档) `api/camera.md`: 模块方法, 会话对象, options, 事件, 错误码, 示例; 首屏 "帧的生命周期" 提示框 (回调期间有效, 返回即回收, 要保留就 `img.clone()`, 超时自动丢帧); 10 语言目录按仓库惯例. 证据: 文档仓库提交 hash (本地), 维护者确认提示框文案.
+- [x] (文档) `api/camera.md`: 模块方法, 会话对象, options, 事件, 错误码, 示例; 首屏 "帧的生命周期" 提示框 (回调期间有效, 返回即回收, 要保留就 `img.clone()`, 超时自动丢帧); 10 语言目录按仓库惯例. 证据: 文档仓库提交 hash (本地), 维护者确认提示框文案. 实施 (prism-p5, 2026-11-06): 文档仓库 `6eafe65` (新页 `api/camera.md`, 侧栏与目录, runtime-support 块 (矩阵 8 项), `api/changelog.md` 与 `.changelog` 10 种语言 v6.8.0 新增条目) + `1c4466d` (captureScreen 链接与回收说明) + 生成物 `c4ff881`; 文档站正文只有简体中文, 10 语言只涉及 changelog. 提示框文案维护者 2026-11-06 选定 A (四句段落, 置于页首引用块). 页面写明 Q41 (b) 省略参数按插件设置页默认值, Q42 (b) / Q45 (b) 网络权限只用于读官方索引检查更新, Q44 (b) UI 线程 open 立即返回并排队, Q52 (a) 连接期间读 zoomState / exposureState 报 INVALID_ARGUMENT, Q51 (b) / Q53 A 发现调用的 Promise / 回调 / 同步三种形式 (分写 Overload 1/2 与 2/2), Q6 (b) 镜像规则, CAMERA_BUSY 与 14 个错误码, 限制表. 检查: `normalize-markdown.py --check` changed=0, `generate_markdown.py --check` 通过, `auto-generate-for-autojs6.bat --verify-offline` 通过 (首轮发现 `images.captureScreen` 链到不存在的 images.html, 已改). runtime-support `--check` 另报 console.md / speech.md 两块过期, 属其他会话的宿主改动, 未动.
 
 ### P5.2 声明 (AutoJs6-TypeScript-Declarations, Ace Editor, Offline Docs)
 
-- [ ] (文档) `aj6-int-camera.d.ts` 与 `autojs6-node/camera.d.ts` (JSDoc 注明生命周期), Ace Editor 与 Offline Docs 同步副本. 证据: 各仓库提交 hash (本地).
+- [x] (文档) `aj6-int-camera.d.ts` 与 `autojs6-node/camera.d.ts` (JSDoc 注明生命周期), Ace Editor 与 Offline Docs 同步副本. 证据: 各仓库提交 hash (本地). 实施 (prism-p5, 2026-11-06, 均只本地): Node `6b46db11` (camera.d.ts 的 OpenOptions 注释改为 "省略时由插件设置页默认值补齐", HOST-API.md 同步; 只改注释, 未 bump) / Bun `aa7cf0f` (sync-camera.mjs 生成 host-client.d.mts, host-api.md; host-client 与 camera 测试 31 例通过; 未 bump); 声明仓库 `fb1f924` (sync-runtime-declarations 同步 Node / Bun 声明, 含其他会话已提交的 audio / video / speech) + `f979ec9` (新 `aj6-int-camera.d.ts`: 模块, CameraSession, 选项, 帧 meta, CameraError, 帧生命周期 JSDoc; 四个发现调用写出同步, `<R extends Promise<T>>()` Promise 与回调三种重载; init 声明 camera / $camera, smoke 用例, 4.88.0 changelog 10 种语言; `npm test` 8 组诊断 0); Ace Editor `d131901` (同步上述声明, `generateAutoJs6LspDeclarations`, 2.50.0 changelog 10 种语言); Offline Docs `365f45e` (见 P5.1, 构建 267).
 
 ### P5.3 README, changelog, 兼容矩阵与截图
 
-- [ ] (插件) R1 / R2 全部条目; README 的权限与后台章节解释前台服务通知; 兼容矩阵 (API 24 - 35, 无 ABI 限制). 证据: 提交 hash, `generate_markdown.py` 输出.
+- [x] (插件) R1 / R2 全部条目; README 的权限与后台章节解释前台服务通知; 兼容矩阵 (API 24 - 35, 无 ABI 限制). 证据: 提交 hash, `generate_markdown.py` 输出. 实施 (prism-p5, 2026-11-06): 插件 `f3d8822` (Q45 (b), 构建 22, README 安全一节与 changelog 改为 "官方插件索引") + `96dc228` (README 10 种语言新增 "兼容性" 一节: API 24 起不限 ABI, API 24 - 26 帧经文件传输, 脚本模块所需 AutoJs6 版本, 厂商后台限制见附录 F; 状态说明, 脚本 API 引言与插件中心说明改为指向文档站相机页; 1.0.0 changelog 第一条 hint 由 "开发预览" 改为文档链接). 权限与后台: README 安全一节与常见问题已说明相机前台服务通知, Android 13+ 通知权限与 INTERNET 只用于检查更新. 检查: `generate_markdown.py --check` MARKDOWN_OK languages=10 artifacts=36, `check_repository.py` errors=[], JVM 单测 108 例 0 失败 (含 `StringResourceParityTest`, `ApplicationTextPunctuationTest`). 留给 P5.4: R1 的版本日期 (发布当日) 与 hint 中 "最低版本号待回填", R2 截图见附录 D Q61.
 
 ### P5.4 1.0.0 发布
 
@@ -501,7 +501,7 @@ isClosed()
 - `analyze` 回调里的 `img` 只在回调执行期间有效; 回调返回后宿主立即回收它并把缓冲还给插件, 再访问会抛 "图像已回收".
 - 要在回调之外使用, 调 `img.clone()` 得到独立副本, 用完自己 `recycle()`.
 - 回调耗时超过帧间隔时, 新帧会被丢弃而不是排队; `session.state().dropped` 与 `"dropped"` 事件可以看到数量.
-- `capture` 返回的 `ImageWrapper` 不受此限制, 与 `images.captureScreen` 返回值相同, 由脚本或脚本退出时回收.
+- `capture` 返回的 `ImageWrapper` 不受此限制, 是普通图像, 由脚本调用 `recycle()` 回收 (与 `images.captureScreen` 返回的受截图模块管理的图像不同; prism-p5 2026-11-06 更正).
 
 ### A.4 错误
 
@@ -666,6 +666,7 @@ oneway interface ICameraSessionCallback {
 | Q46 | 自动检查更新的时机 (Q42 = (b) 实施发现: Macaw 在首页打开时自动检查, Prism 没有首页, 启动器入口是取景页) | (a) 打开设置页时自动检查, 每 12 小时最多一次, 设置页可关闭 (推荐, 已按推荐先行; 插件构建 16; 取景页不联网, 拍照入口保持即开即用); (b) 从启动器打开取景页时自动检查, 有新版时在取景页弹出提示 (约 30 分钟, 取景页要接入更新对话框); (c) 不自动检查, 只保留手动 "检查更新" (约 10 分钟, 去掉开关与相关文案) | 已按推荐先行待确认 (2026-11-06); 影响 P3.3; 改选 (b) 约 30 分钟, (c) 约 10 分钟 |
 | Q51 | `camera.list` / `capabilities` / `isAvailable` / `requestPermission` 在 UI 线程且插件尚未绑定时仍会卡住 (Q44 (b) 实施发现: 四者都经 `AidlPluginHost` 绑定插件, `isAvailable` 的探测也一样, 绑定回调与超时都投递到主线程, `CameraScriptCalls.call` 的 `runBlocking` 在 UI 线程上等不到; 同 Q44 根因, `open` 已解决) | 子会话原登记的选项 (保留作记录): (a) 这四个调用在 UI 线程且未绑定时报 `INVALID_ARGUMENT` (`isAvailable` 文档写明 "从不抛出", 改为返回 false) (推荐, 未先行; 宿主约 1 小时含测试与文档); (b) `AidlPluginHost` 改用带 Executor 的 `bindService` 让 UI 线程可等待 (仅 API 29+, API 24 - 28 仍需 (a) 或预先异步绑定; 影响全部插件, 约 3 - 4 小时并需回归全部插件); (c) 只靠文档 (现状, 误用仍 ANR). 调度会话出题时的 (b) (维护者所选的变体): 与 Q44 (b) 的 `open` 同机制, UI 线程未绑定时走后台线程绑定并排队, 不阻塞 UI 线程, 这四个调用的交付形式可改为异步 | 已拍板 (2026-11-06 13:05): (b) (非推荐项, 维护者选择), 指调度会话出题时的变体 (后台线程绑定并排队, 交付形式可改为异步), 不是原登记的 (b) "`AidlPluginHost` 改用带 Executor 的 `bindService`" (该方案不做, `AidlPluginHost` 保持不动, 与 Q44 (b) 一致). UI 线程上的同步返回值在插件未绑定时等不到, 交付形式涉及公开签名, 登记为 Q53 并由维护者拍板 (2026-11-06, AskUserQuestion): A 沿用 `dialogs` 惯例 (推荐; 其余选项: B 只在 UI 线程返回 Promise, C 只加回调参数且 UI 线程未绑定报 `INVALID_ARGUMENT`, D 新增 `xxxAsync` 方法). 宿主已落实 (prism-host-fixes, 2026-11-06): 宿主提交 e856c613f5, 只改宿主 camera 模块, `AidlPluginHost` 未动: UI 线程上不传回调时返回 Promise (以同步形式的值兑现, 失败以 `CameraError` 拒绝; `isAvailable` 只兑现); 任意线程上唯一参数为函数时立即返回 undefined, 在调用它的脚本线程上调用 `callback(value, null)` 或 `callback(null, error)` (与 `http` 一致); 其他线程不传回调时仍同步返回; 返回形式只取决于线程, 与是否已绑定无关; `undefined` / null 视为未传回调, 其他参数报 `INVALID_ARGUMENT`; `requestPermission` 在 UI 线程也可用 (Promise / 回调形式). 协议文档新增 "Discovery calls: on the UI thread and with a callback", 6.8.1 camera 功能条目 10 种语言补充说明. 附录 A.1 的四行与 P5.1 文档 / d.ts 须写明这两种形式. 证据: JVM CameraDiscoveryArgsTest 4 例, 克隆 camera / core.plugin.camera / RuntimeCameraBridgeTest 共 102 例 0 失败; `tools/camera/ui_thread_open_check.py` 新增 discovery 阶段 (先 force-stop 宿主, 首批调用遇到未绑定的插件), 克隆宿主 6641 (x86_64 md5 e9b672434411ef60594e5e3a2ad6a253) + 插件构建 16 在 `AVD_API_26_PRISM` 与 `AVD_API_33` 全部阶段 (discovery, starve, fps, repro, a5, uiopen, uifail, uiclose, thread) 通过: UI 线程上四个调用 23 - 55 ms 返回 Promise 并兑现 (API 33 插件冷启动 6.3 s 后兑现), 回调形式在 UI 线程与工作线程各回调一次且都在原线程, 工作线程同步形式不变, 4 种坏参数均为 `INVALID_ARGUMENT`, 50 ms UI 定时器最大间隔 134 ms, 无 ANR / 崩溃; API 33 只读 AVD 未装插件时的一次运行顺带验证失败路径 (Promise 以 `PLUGIN_NOT_INSTALLED` 拒绝, 回调收到 `(null, CameraError)`). |
 | Q52 | Q44 (b) 连接期间 UI 线程读 `zoomState` / `exposureState` 报 `INVALID_ARGUMENT` (两者要镜头应答, 连接期间没有可返回的值) | (a) 保持, 脚本在 `state().open` 为 true 后再读 (推荐, 已先行, 宿主 69c5528499); (b) 新增 `open` 事件 (宿主约 1 小时, 另需 d.ts / 文档 / Node / Bun facade 同步) | 已拍板 (2026-11-06 13:05): (a) 保持现状 (已实施, 69c5528499). 协议文档 "Open: on the UI thread" 已写明在 `state().open` 为 true 后读取 (宿主提交 e856c613f5); 影响附录 A.2 / A.5 与 P5.1 文档. |
+| Q61 | README 截图 (P5.3 发现: R2 写 "界面有变化时重采 `docs/images/screenshots`", 但仓库没有该目录, README 模板也没有截图位置; P3 的截图按约定未入库) | (a) 1.0.0 README 不放截图, R2 的截图项视为不适用, 发布后界面稳定再补 (推荐, 已先行; 零返工); (b) P5.4 前用 API 33 AVD 合成素材采取景页与设置页明暗各 1 张 (1080 x 2340) 放进 `docs/images/screenshots`, README 10 种语言加截图段 (约 1 - 1.5 小时, 需借 AVD) | 已按推荐先行待确认 (2026-11-06, prism-p5); 影响 P5.3 / P5.4 R2; 改选 (b) 约 1 - 1.5 小时 |
 
 ---
 
