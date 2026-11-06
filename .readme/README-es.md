@@ -46,7 +46,7 @@ El README.md actual admite los siguientes idiomas:
 
 El complemento controla la cámara y se comunica con AutoJs6 por Binder: los fotogramas en vivo viajan por un búfer circular de memoria compartida (archivos temporales en Android 7.0 - 8.0), las fotos llegan a AutoJs6 en JPEG para decodificarlas o guardarlas sin cambios, y la vista previa se dibuja directamente en un `SurfaceView` de la interfaz del script, sin que ningún píxel pase por Binder. Mientras una sesión está abierta, el complemento ejecuta un servicio en primer plano de cámara, así que los scripts siguen recibiendo fotogramas en segundo plano o con la pantalla apagada.
 
-> Esta es una versión preliminar de desarrollo: el centro de complementos de AutoJs6 reconoce el complemento, y el núcleo de cámara (abrir la cámara, fotogramas en vivo, captura de fotos, vista previa y los controles) y la pantalla de captura están terminados; el módulo de script `camera` necesita una versión de AutoJs6 que aún no se ha publicado. Las secciones siguientes describen los objetivos de diseño de la 1.0.0; consulte la hoja de ruta para ver el progreso.
+> El núcleo de la cámara, el visor y la página de ajustes de la 1.0.0 están terminados, y las comprobaciones de publicación están en curso. El módulo de script `camera` requiere AutoJs6 6.8.1 (versión interna 6641) o posterior.
 
 ******
 
@@ -75,11 +75,22 @@ El complemento controla la cámara y se comunica con AutoJs6 por Binder: los fot
 
 ******
 
+### Compatibilidad
+
+******
+
+- Android 7.0 (API 24) y posterior, sin restricción de ABI: arm64-v8a, armeabi-v7a, x86_64 y x86 tienen cada uno un paquete, y el paquete `universal` sirve para todos los dispositivos.
+- Android 7.0 - 8.0 (API 24 - 26) no tienen memoria compartida, así que los fotogramas llegan a AutoJs6 mediante archivos temporales y el flujo continuo tiene una frecuencia menor que en sistemas más nuevos.
+- El módulo de script `camera` requiere AutoJs6 6.8.1 (versión interna 6641) o posterior; las versiones anteriores no tienen el módulo, pero el visor del plugin se sigue abriendo desde el lanzador.
+- Algunos sistemas de fabricantes (por ejemplo ColorOS) restringen más la cámara para las apps en segundo plano; el apéndice F de la hoja de ruta registra los resultados por dispositivo.
+
+******
+
 ### API De Script
 
 ******
 
-Los scripts usan estas funciones a través del módulo global `camera` (también disponible como `$camera`; borrador de diseño de la 1.0.0, la documentación publicada es la referencia):
+Los scripts usan estas funciones mediante el módulo global `camera` (también disponible como `$camera`); la referencia completa está en [Documentación de AutoJs6 > Camera](https://docs.autojs6.com/#/camera):
 
 ```javascript
 // Take one photo and keep the original JPEG.
@@ -178,7 +189,7 @@ Los planes, las decisiones de diseño y el progreso se registran como lista de v
 
 _2026/11/05_
 
-- `Aviso` Versión preliminar de desarrollo: AutoJs6 ya puede usar el núcleo de cámara y el visor (abrir la cámara, fotogramas en vivo, captura de fotos, vista previa, los controles y la captura desde el visor); algunos detalles aún pueden cambiar antes de la publicación
+- `Aviso` API de script: [Documentación de AutoJs6 > Camera](https://docs.autojs6.com/#/camera)
 - `Aviso` Requiere AutoJs6 6.8.1 (6641) o posterior (la versión mínima exacta se indicará cuando se integren los cambios del anfitrión)
 - `Aviso` El icono actual es un diseño candidato y aún puede cambiar
 - `Función` Esqueleto del complemento: protocolo de activación Wake y servicio de identidad del centro de complementos

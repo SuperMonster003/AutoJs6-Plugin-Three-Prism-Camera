@@ -8,7 +8,7 @@
     "v1.0.0": {
       "released_date": "2026/11/05",
       "hint": [
-        "Versión preliminar de desarrollo: AutoJs6 ya puede usar el núcleo de cámara y el visor (abrir la cámara, fotogramas en vivo, captura de fotos, vista previa, los controles y la captura desde el visor); algunos detalles aún pueden cambiar antes de la publicación",
+        "API de script: [Documentación de AutoJs6 > Camera](https://docs.autojs6.com/#/camera)",
         "Requiere AutoJs6 {{ required_host_version_name }} ({{ required_host_version_code }}) o posterior (la versión mínima exacta se indicará cuando se integren los cambios del anfitrión)",
         "El icono actual es un diseño candidato y aún puede cambiar"
       ],

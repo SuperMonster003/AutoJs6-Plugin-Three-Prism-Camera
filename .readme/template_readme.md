@@ -59,6 +59,14 @@
 
 ******
 
+### {{ h3_compatibility }}
+
+******
+
+{{ placeholder_compatibility_points }}
+
+******
+
 ### {{ h3_script_api }}
 
 ******

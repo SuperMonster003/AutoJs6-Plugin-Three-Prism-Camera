@@ -1,6 +1,6 @@
 3-Prism Camera 是 AutoJs6 的相機外掛, 基於 Jetpack CameraX 為指令碼提供拍照, 連續影格分析與取景預覽. 連續影格以 AutoJs6 的 `ImageWrapper` 交給指令碼, 指令碼可以直接把它交給 `ocr`, `barcode` 或 `yolo` 等現有模組, 實現即時掃碼, 文字辨識與物件偵測.
 
-> 目前為開發預覽版: 外掛可以被 AutoJs6 外掛中心識別, 相機核心 (開啟相機, 連續影格, 拍照, 預覽與各項控制) 與取景頁已完成, 指令碼使用的 `camera` 模組需要尚未發布的 AutoJs6 版本. 下文描述的是 1.0.0 的設計目標, 進度見開發路線圖.
+> 1.0.0 的相機核心, 取景頁與設定頁均已完成, 正在進行發行前驗證. 指令碼使用的 `camera` 模組需要 AutoJs6 6.8.1 (內部版本號 6641) 或更高版本.
 
 ### 功能亮點
 
@@ -11,4 +11,4 @@
 - 取景頁: 從啟動器開啟外掛即進入取景頁, 可切換鏡頭, 開關手電筒, 變焦與輕觸對焦, 拍下的相片只顯示不儲存, 右上角進入設定頁; `camera.capture({ ui: true })` 開啟同一個取景頁, 使用者按下快門後指令碼取得相片, 取消時傳回 `null`.
 - 背景可用: 工作階段開啟期間執行相機前景服務, 指令碼切到背景或螢幕關閉後仍可擷取影格; 指令碼結束或 AutoJs6 被終止時自動釋放相機.
 
-開發進度與設計見 [專案首頁](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera).
+指令碼 API 見 [AutoJs6 文件 > 相機 (Camera)](https://docs.autojs6.com/#/camera), 開發進度與設計見 [專案首頁](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera).

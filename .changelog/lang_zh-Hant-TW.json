@@ -8,7 +8,7 @@
     "v1.0.0": {
       "released_date": "2026/11/05",
       "hint": [
-        "開發預覽: 相機核心與取景頁已可供 AutoJs6 呼叫 (開啟相機, 連續擷取影格, 拍照, 預覽, 各項控制與取景頁拍照), 正式發布前細節仍可能調整",
+        "指令碼 API 見 [AutoJs6 文件 > 相機 (Camera)](https://docs.autojs6.com/#/camera)",
         "需要 AutoJs6 {{ required_host_version_name }} ({{ required_host_version_code }}) 或更高版本 (確切的最低版本號待宿主端變更完成後回填)",
         "目前圖示為候選圖案, 之後可能更換"
       ],

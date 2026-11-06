@@ -8,7 +8,7 @@
     "v1.0.0": {
       "released_date": "2026/11/05",
       "hint": [
-        "开发预览: 相机核心与取景页已可供 AutoJs6 调用 (打开相机, 连续取帧, 拍照, 预览, 各项控制与取景页拍照), 正式发布前细节仍可能调整",
+        "脚本 API 见 [AutoJs6 文档 > 相机 (Camera)](https://docs.autojs6.com/#/camera)",
         "需要 AutoJs6 {{ required_host_version_name }} ({{ required_host_version_code }}) 或更高版本 (准确的最低版本号待宿主侧改动落地后回填)",
         "当前图标为候选图案, 之后可能更换"
       ],

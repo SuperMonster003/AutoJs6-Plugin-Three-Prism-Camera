@@ -1,6 +1,6 @@
 3-Prism Camera es el complemento de cámara de AutoJs6. Basado en Jetpack CameraX, ofrece a los scripts captura de fotos, análisis continuo de fotogramas y vista previa del visor. Los fotogramas en vivo llegan al script como objetos `ImageWrapper` de AutoJs6, de modo que el script puede pasarlos directamente a módulos existentes como `ocr`, `barcode` o `yolo` para escanear códigos en vivo, reconocer texto y detectar objetos.
 
-> Esta es una versión preliminar de desarrollo: el centro de complementos de AutoJs6 reconoce el complemento, y el núcleo de cámara (abrir la cámara, fotogramas en vivo, captura de fotos, vista previa y los controles) y la pantalla de captura están terminados; el módulo de script `camera` necesita una versión de AutoJs6 que aún no se ha publicado. Las secciones siguientes describen los objetivos de diseño de la 1.0.0; consulte la hoja de ruta para ver el progreso.
+> El núcleo de la cámara, el visor y la página de ajustes de la 1.0.0 están terminados, y las comprobaciones de publicación están en curso. El módulo de script `camera` requiere AutoJs6 6.8.1 (versión interna 6641) o posterior.
 
 ### Funciones Destacadas
 
@@ -11,4 +11,4 @@
 - Pantalla de captura: al abrir el complemento desde el lanzador se muestra la pantalla de captura, con cambio de lente, linterna, zoom y enfoque al tocar; las fotos tomadas ahí solo se muestran, no se guardan, y el botón de arriba a la derecha abre los ajustes; `camera.capture({ ui: true })` abre la misma pantalla, y el script recibe la foto cuando el usuario pulsa el obturador, o `null` si cancela.
 - Funciona en segundo plano: un servicio en primer plano de cámara se ejecuta mientras hay una sesión abierta, así que los fotogramas siguen llegando en segundo plano o con la pantalla apagada; la cámara se libera cuando el script termina o AutoJs6 se detiene.
 
-El progreso y el diseño están disponibles en la [página del proyecto](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera).
+La API de script está en [Documentación de AutoJs6 > Camera](https://docs.autojs6.com/#/camera), y el progreso y el diseño en la [página del proyecto](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera).

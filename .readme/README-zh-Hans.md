@@ -46,7 +46,7 @@
 
 插件持有相机并通过 Binder 与 AutoJs6 通信: 连续帧经共享内存环形缓冲传给 AutoJs6 (Android 7.0 - 8.0 改用临时文件), 照片以 JPEG 交给 AutoJs6 解码或原样保存, 预览直接渲染到脚本界面中的 `SurfaceView`, 像素不经过 Binder. 会话打开期间插件运行相机前台服务, 脚本在后台或熄屏时也能继续取帧.
 
-> 当前为开发预览版: 插件可以被 AutoJs6 插件中心识别, 相机核心 (打开相机, 连续帧, 拍照, 预览与各项控制) 与取景页已完成, 脚本使用的 `camera` 模块需要尚未发布的 AutoJs6 版本. 下文描述的是 1.0.0 的设计目标, 进度见开发路线图.
+> 1.0.0 的相机核心, 取景页与设置页均已完成, 正在进行发布前验证. 脚本使用的 `camera` 模块需要 AutoJs6 6.8.1 (内部版本号 6641) 或更高版本.
 
 ******
 
@@ -75,11 +75,22 @@
 
 ******
 
+### 兼容性
+
+******
+
+- Android 7.0 (API 24) 及以上, 不限 ABI: arm64-v8a, armeabi-v7a, x86_64 与 x86 各有安装包, `universal` 安装包适用于全部设备.
+- Android 7.0 - 8.0 (API 24 - 26) 没有共享内存, 帧改经临时文件传给 AutoJs6, 连续帧的帧率低于更新的系统.
+- 脚本使用 `camera` 模块需要 AutoJs6 6.8.1 (内部版本号 6641) 或更高版本; 更早的 AutoJs6 没有该模块, 但仍可以从启动器打开插件的取景页.
+- 部分厂商系统 (例如 ColorOS) 会额外限制后台应用使用相机; 各设备的验证结果见开发路线图附录 F.
+
+******
+
 ### 脚本 API
 
 ******
 
-脚本通过全局模块 `camera` (也可写作 `$camera`) 使用这些能力 (1.0.0 设计草案, 以发布版本的文档为准):
+脚本通过全局模块 `camera` (也可写作 `$camera`) 使用这些能力, 完整说明见 [AutoJs6 文档 > 相机 (Camera)](https://docs.autojs6.com/#/camera):
 
 ```javascript
 // Take one photo and keep the original JPEG.
@@ -178,7 +189,7 @@ native libraries: libimage_processing_util_jni.so, libsurface_util_jni.so (Camer
 
 _2026/11/05_
 
-- `提示` 开发预览: 相机核心与取景页已可供 AutoJs6 调用 (打开相机, 连续取帧, 拍照, 预览, 各项控制与取景页拍照), 正式发布前细节仍可能调整
+- `提示` 脚本 API 见 [AutoJs6 文档 > 相机 (Camera)](https://docs.autojs6.com/#/camera)
 - `提示` 需要 AutoJs6 6.8.1 (6641) 或更高版本 (准确的最低版本号待宿主侧改动落地后回填)
 - `提示` 当前图标为候选图案, 之后可能更换
 - `新增` 插件骨架: Wake 激活协议与插件中心身份服务

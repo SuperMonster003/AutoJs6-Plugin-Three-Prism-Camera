@@ -7,6 +7,7 @@
   "h3_introduction": "简介",
   "h3_features": "功能亮点",
   "h3_usage": "使用方法",
+  "h3_compatibility": "兼容性",
   "h3_script_api": "脚本 API",
   "h3_faq": "常见问题",
   "h3_security": "权限与安全",
@@ -24,7 +25,7 @@
   "p_roadmap": "功能规划, 设计决策与完成情况以可勾选清单维护在 ROADMAP.md 中. 未勾选条目表示规划意向, 不代表当前版本能力.",
   "p_introduction_what": "3-Prism Camera 是 AutoJs6 的相机插件, 基于 Jetpack CameraX 为脚本提供拍照, 连续帧分析与取景预览. 连续帧以 AutoJs6 的 `ImageWrapper` 交给脚本, 脚本可以直接把它交给 `ocr`, `barcode` 或 `yolo` 等已有模块, 实现实时扫码, 文字识别与目标检测.",
   "p_introduction_how": "插件持有相机并通过 Binder 与 AutoJs6 通信: 连续帧经共享内存环形缓冲传给 AutoJs6 (Android 7.0 - 8.0 改用临时文件), 照片以 JPEG 交给 AutoJs6 解码或原样保存, 预览直接渲染到脚本界面中的 `SurfaceView`, 像素不经过 Binder. 会话打开期间插件运行相机前台服务, 脚本在后台或熄屏时也能继续取帧.",
-  "p_status_note": "当前为开发预览版: 插件可以被 AutoJs6 插件中心识别, 相机核心 (打开相机, 连续帧, 拍照, 预览与各项控制) 与取景页已完成, 脚本使用的 `camera` 模块需要尚未发布的 AutoJs6 版本. 下文描述的是 1.0.0 的设计目标, 进度见开发路线图.",
+  "p_status_note": "1.0.0 的相机核心, 取景页与设置页均已完成, 正在进行发布前验证. 脚本使用的 `camera` 模块需要 AutoJs6 {{ required_host_version_name }} (内部版本号 {{ required_host_version_code }}) 或更高版本.",
   "features": [
     "拍照: 返回按 EXIF 方向旋正的 `ImageWrapper`, 也可以把原始 JPEG (含 EXIF) 保存到指定路径; 可设置闪光模式, 画质与分辨率.",
     "连续帧: RGBA 帧默认 640x480 (可在设置页修改), 最高 1920x1080, 默认按屏幕方向旋正; 处理不过来时自动丢帧并计数, 不会排队积压.",
@@ -39,7 +40,13 @@
     "要在脚本中使用 `camera` 模块, 请将 AutoJs6 升级到内部版本号 {{ required_host_version_code }} ({{ required_host_version_name }}) 或更高版本, 并在插件中心启用本插件."
   ],
   "p_usage_note": "插件支持 Android {{ min_android_version }} (API {{ android_min_sdk }}) 及以上的设备. 每种 ABI 各有一个安装包, 另有适用于全部设备的 `universal` 安装包; CameraX 与 Compose 自带的少量原生库 (每种 ABI 约 50 KB) 已按 16 KB 内存页对齐, 采用 16 KB 内存页的新设备也能正常安装.",
-  "p_script_api_intro": "脚本通过全局模块 `camera` (也可写作 `$camera`) 使用这些能力 (1.0.0 设计草案, 以发布版本的文档为准)",
+  "compatibility_points": [
+    "Android 7.0 (API 24) 及以上, 不限 ABI: arm64-v8a, armeabi-v7a, x86_64 与 x86 各有安装包, `universal` 安装包适用于全部设备.",
+    "Android 7.0 - 8.0 (API 24 - 26) 没有共享内存, 帧改经临时文件传给 AutoJs6, 连续帧的帧率低于更新的系统.",
+    "脚本使用 `camera` 模块需要 AutoJs6 {{ required_host_version_name }} (内部版本号 {{ required_host_version_code }}) 或更高版本; 更早的 AutoJs6 没有该模块, 但仍可以从启动器打开插件的取景页.",
+    "部分厂商系统 (例如 ColorOS) 会额外限制后台应用使用相机; 各设备的验证结果见开发路线图附录 F."
+  ],
+  "p_script_api_intro": "脚本通过全局模块 `camera` (也可写作 `$camera`) 使用这些能力, 完整说明见 [AutoJs6 文档 > 相机 (Camera)](https://docs.autojs6.com/#/camera)",
   "api_points": [
     "`camera.capture(options)` 一步完成打开, 拍照与关闭; `camera.open(options)` 打开独占会话, 会话对象提供 `preview`, `analyze`, `capture`, `torch`, `zoom`, `exposure`, `focusAt`, `state` 与 `close`.",
     "帧的生命周期: `analyze` 回调里的 `img` 只在回调执行期间有效, 回调返回后立即回收; 要在回调之外使用, 请调用 `img.clone()`, 并在用完后自行 `recycle()`.",
@@ -69,5 +76,5 @@
   ],
   "p_license": "项目代码使用 [Mozilla Public License 2.0]({{ license_url }}). 第三方组件的许可见第三方声明.",
   "text_link_third_party": "第三方声明 (THIRD_PARTY_NOTICES.md)",
-  "p_instruction_docs": "开发进度与设计见 [项目主页]({{ repo_url }})."
+  "p_instruction_docs": "脚本 API 见 [AutoJs6 文档 > 相机 (Camera)](https://docs.autojs6.com/#/camera), 开发进度与设计见 [项目主页]({{ repo_url }})."
 }

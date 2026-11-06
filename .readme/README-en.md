@@ -46,7 +46,7 @@ The README.md file is currently available in the following languages:
 
 The plugin owns the camera and talks to AutoJs6 over Binder: live frames travel through a shared memory ring buffer (temporary files on Android 7.0 - 8.0), photos reach AutoJs6 as JPEG to be decoded or saved unchanged, and the preview renders straight into a `SurfaceView` of the script's interface, so no pixels cross Binder. While a session is open, the plugin runs a camera foreground service, so scripts keep receiving frames in the background or with the screen off.
 
-> This is a development preview: the AutoJs6 Plugin Center recognizes the plugin, and the camera core (opening the camera, live frames, photo capture, preview and the controls) and the capture screen are done; the `camera` script module needs an AutoJs6 version that is not released yet. The sections below describe the design goals of 1.0.0; see the roadmap for progress.
+> The camera core, the viewfinder and the settings page of 1.0.0 are done, and the release checks are in progress. The `camera` script module needs AutoJs6 6.8.1 (internal version 6641) or later.
 
 ******
 
@@ -75,11 +75,22 @@ The plugin owns the camera and talks to AutoJs6 over Binder: live frames travel 
 
 ******
 
+### Compatibility
+
+******
+
+- Android 7.0 (API 24) and later, with no ABI restriction: arm64-v8a, armeabi-v7a, x86_64 and x86 each have a package, and the `universal` package fits every device.
+- Android 7.0 - 8.0 (API 24 - 26) have no shared memory, so frames reach AutoJs6 through temporary files and live frames run at a lower frame rate than on newer systems.
+- The `camera` script module needs AutoJs6 6.8.1 (internal version 6641) or later; older AutoJs6 versions lack the module, while the viewfinder of the plugin still opens from the launcher.
+- Some vendor systems (such as ColorOS) restrict the camera for background apps further; the roadmap appendix F records the results per device.
+
+******
+
 ### Script API
 
 ******
 
-Scripts use these features through the global module `camera` (also available as `$camera`; a 1.0.0 design draft, the released documentation is authoritative):
+Scripts use these features through the global module `camera` (also available as `$camera`); see [AutoJs6 documentation > Camera](https://docs.autojs6.com/#/camera) for the full reference:
 
 ```javascript
 // Take one photo and keep the original JPEG.
@@ -178,7 +189,7 @@ Plans, design decisions and progress are tracked as a checklist in ROADMAP.md. U
 
 _2026/11/05_
 
-- `Hint` Development preview: AutoJs6 can already use the camera core and the viewfinder (opening the camera, live frames, photo capture, preview, the controls and capture through the viewfinder); details may still change before the release
+- `Hint` Script API: [AutoJs6 documentation > Camera](https://docs.autojs6.com/#/camera)
 - `Hint` Requires AutoJs6 6.8.1 (6641) or later (the exact minimum build will be filled in once the host changes land)
 - `Hint` The current icon is a candidate design and may still change
 - `Feature` Plugin skeleton: Wake activation protocol and Plugin Center identity service

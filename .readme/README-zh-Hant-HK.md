@@ -46,7 +46,7 @@
 
 插件持有相機並透過 Binder 與 AutoJs6 通訊: 連續幀經共享記憶體環形緩衝傳給 AutoJs6 (Android 7.0 - 8.0 改用臨時檔案), 相片以 JPEG 交給 AutoJs6 解碼或原樣儲存, 預覽直接渲染到腳本介面中的 `SurfaceView`, 像素不經過 Binder. 會話開啟期間插件執行相機前景服務, 腳本在背景或熄屏時也能繼續取幀.
 
-> 目前為開發預覽版: 插件可以被 AutoJs6 插件中心識別, 相機核心 (開啟相機, 連續幀, 拍照, 預覽與各項控制) 與取景頁已完成, 腳本使用的 `camera` 模組需要尚未發佈的 AutoJs6 版本. 下文描述的是 1.0.0 的設計目標, 進度見開發路線圖.
+> 1.0.0 的相機核心, 取景頁與設定頁均已完成, 正在進行發佈前驗證. 腳本使用的 `camera` 模組需要 AutoJs6 6.8.1 (內部版本號 6641) 或更高版本.
 
 ******
 
@@ -75,11 +75,22 @@
 
 ******
 
+### 相容性
+
+******
+
+- Android 7.0 (API 24) 及以上, 不限 ABI: arm64-v8a, armeabi-v7a, x86_64 與 x86 各有安裝包, `universal` 安裝包適用於全部裝置.
+- Android 7.0 - 8.0 (API 24 - 26) 沒有共用記憶體, 幀改經臨時檔案傳給 AutoJs6, 連續幀的幀率低於較新的系統.
+- 腳本使用 `camera` 模組需要 AutoJs6 6.8.1 (內部版本號 6641) 或更高版本; 較早的 AutoJs6 沒有該模組, 但仍可以從啟動器開啟插件的取景頁.
+- 部分廠商系統 (例如 ColorOS) 會額外限制背景應用程式使用相機; 各裝置的驗證結果見開發路線圖附錄 F.
+
+******
+
 ### 腳本 API
 
 ******
 
-腳本透過全域模組 `camera` (亦可寫作 `$camera`) 使用這些能力 (1.0.0 設計草案, 以發佈版本的文件為準):
+腳本透過全域模組 `camera` (也可寫作 `$camera`) 使用這些功能, 完整說明見 [AutoJs6 文件 > 相機 (Camera)](https://docs.autojs6.com/#/camera):
 
 ```javascript
 // Take one photo and keep the original JPEG.
@@ -178,7 +189,7 @@ native libraries: libimage_processing_util_jni.so, libsurface_util_jni.so (Camer
 
 _2026/11/05_
 
-- `提示` 開發預覽: 相機核心與取景頁已可供 AutoJs6 調用 (開啟相機, 連續取幀, 拍照, 預覽, 各項控制與取景頁拍照), 正式發佈前細節仍可能調整
+- `提示` 腳本 API 見 [AutoJs6 文件 > 相機 (Camera)](https://docs.autojs6.com/#/camera)
 - `提示` 需要 AutoJs6 6.8.1 (6641) 或更高版本 (準確的最低版本號待宿主側改動落地後回填)
 - `提示` 目前圖標為候選圖案, 之後可能更換
 - `新增` 插件骨架: Wake 啟動協議與插件中心身份服務

@@ -8,7 +8,7 @@
 
 ###### 2026/11/05
 
-* `Hint` Development preview: AutoJs6 can already use the camera core and the viewfinder (opening the camera, live frames, photo capture, preview, the controls and capture through the viewfinder); details may still change before the release
+* `Hint` Script API: [AutoJs6 documentation > Camera](https://docs.autojs6.com/#/camera)
 * `Hint` Requires AutoJs6 6.8.1 (6641) or later (the exact minimum build will be filled in once the host changes land)
 * `Hint` The current icon is a candidate design and may still change
 * `Feature` Plugin skeleton: Wake activation protocol and Plugin Center identity service

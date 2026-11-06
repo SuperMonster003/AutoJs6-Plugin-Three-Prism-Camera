@@ -46,7 +46,7 @@ Le README.md actuel prend en charge les langues suivantes:
 
 Le plugin détient la caméra et communique avec AutoJs6 par Binder: les images en direct passent par un tampon circulaire en mémoire partagée (des fichiers temporaires sous Android 7.0 - 8.0), les photos arrivent dans AutoJs6 en JPEG pour être décodées ou enregistrées telles quelles, et l'aperçu s'affiche directement dans une `SurfaceView` de l'interface du script, sans faire passer de pixels par Binder. Tant qu'une session est ouverte, le plugin exécute un service de premier plan caméra, si bien que les scripts continuent de recevoir des images en arrière-plan ou écran éteint.
 
-> Ceci est une préversion de développement: le centre de plugins d'AutoJs6 reconnaît le plugin, et le cœur caméra (ouverture de la caméra, images en direct, prise de photos, aperçu et réglages) ainsi que l'écran de prise de vue sont terminés; le module de script `camera` nécessite une version d'AutoJs6 pas encore publiée. Les sections suivantes décrivent les objectifs de conception de la 1.0.0; consultez la feuille de route pour l'avancement.
+> Le cœur caméra, le viseur et la page des paramètres de la 1.0.0 sont terminés, et les vérifications de publication sont en cours. Le module de script `camera` nécessite AutoJs6 6.8.1 (version interne 6641) ou ultérieure.
 
 ******
 
@@ -75,11 +75,22 @@ Le plugin détient la caméra et communique avec AutoJs6 par Binder: les images 
 
 ******
 
+### Compatibilité
+
+******
+
+- Android 7.0 (API 24) et ultérieur, sans restriction d'ABI: arm64-v8a, armeabi-v7a, x86_64 et x86 ont chacun un paquet, et le paquet `universal` convient à tous les appareils.
+- Android 7.0 - 8.0 (API 24 - 26) n'ont pas de mémoire partagée: les images passent à AutoJs6 par des fichiers temporaires et le flux continu a une fréquence plus basse que sur les systèmes récents.
+- Le module de script `camera` nécessite AutoJs6 6.8.1 (version interne 6641) ou ultérieure; les versions antérieures n'ont pas ce module, mais le viseur du plugin s'ouvre toujours depuis le lanceur.
+- Certains systèmes de constructeurs (par exemple ColorOS) restreignent davantage la caméra pour les applications en arrière-plan; l'annexe F de la feuille de route consigne les résultats par appareil.
+
+******
+
 ### API De Script
 
 ******
 
-Les scripts utilisent ces fonctions via le module global `camera` (aussi disponible sous `$camera`; projet de conception de la 1.0.0, la documentation publiée fait foi):
+Les scripts utilisent ces fonctions via le module global `camera` (aussi disponible sous `$camera`); la référence complète se trouve dans [Documentation AutoJs6 > Camera](https://docs.autojs6.com/#/camera):
 
 ```javascript
 // Take one photo and keep the original JPEG.
@@ -178,7 +189,7 @@ Les plans, décisions de conception et l'avancement sont suivis sous forme de li
 
 _2026/11/05_
 
-- `Note` Préversion de développement: AutoJs6 peut déjà utiliser le cœur caméra et le viseur (ouverture de la caméra, images en direct, prise de photos, aperçu, réglages et prise de vue dans le viseur); des détails peuvent encore changer avant la publication
+- `Note` API de script: [Documentation AutoJs6 > Camera](https://docs.autojs6.com/#/camera)
 - `Note` Nécessite AutoJs6 6.8.1 (6641) ou ultérieur (la version minimale exacte sera renseignée une fois les modifications de l'hôte intégrées)
 - `Note` L'icône actuelle est une proposition et peut encore changer
 - `Fonctionnalité` Squelette du plugin: protocole d'activation Wake et service d'identité du centre des plugins

@@ -7,6 +7,7 @@
   "h3_introduction": "Introducción",
   "h3_features": "Funciones Destacadas",
   "h3_usage": "Uso",
+  "h3_compatibility": "Compatibilidad",
   "h3_script_api": "API De Script",
   "h3_faq": "Preguntas Frecuentes",
   "h3_security": "Permisos Y Seguridad",
@@ -24,7 +25,7 @@
   "p_roadmap": "Los planes, las decisiones de diseño y el progreso se registran como lista de verificación en ROADMAP.md. Los elementos sin marcar son planes, no funciones de la versión actual.",
   "p_introduction_what": "3-Prism Camera es el complemento de cámara de AutoJs6. Basado en Jetpack CameraX, ofrece a los scripts captura de fotos, análisis continuo de fotogramas y vista previa del visor. Los fotogramas en vivo llegan al script como objetos `ImageWrapper` de AutoJs6, de modo que el script puede pasarlos directamente a módulos existentes como `ocr`, `barcode` o `yolo` para escanear códigos en vivo, reconocer texto y detectar objetos.",
   "p_introduction_how": "El complemento controla la cámara y se comunica con AutoJs6 por Binder: los fotogramas en vivo viajan por un búfer circular de memoria compartida (archivos temporales en Android 7.0 - 8.0), las fotos llegan a AutoJs6 en JPEG para decodificarlas o guardarlas sin cambios, y la vista previa se dibuja directamente en un `SurfaceView` de la interfaz del script, sin que ningún píxel pase por Binder. Mientras una sesión está abierta, el complemento ejecuta un servicio en primer plano de cámara, así que los scripts siguen recibiendo fotogramas en segundo plano o con la pantalla apagada.",
-  "p_status_note": "Esta es una versión preliminar de desarrollo: el centro de complementos de AutoJs6 reconoce el complemento, y el núcleo de cámara (abrir la cámara, fotogramas en vivo, captura de fotos, vista previa y los controles) y la pantalla de captura están terminados; el módulo de script `camera` necesita una versión de AutoJs6 que aún no se ha publicado. Las secciones siguientes describen los objetivos de diseño de la 1.0.0; consulte la hoja de ruta para ver el progreso.",
+  "p_status_note": "El núcleo de la cámara, el visor y la página de ajustes de la 1.0.0 están terminados, y las comprobaciones de publicación están en curso. El módulo de script `camera` requiere AutoJs6 {{ required_host_version_name }} (versión interna {{ required_host_version_code }}) o posterior.",
   "features": [
     "Fotos: devuelve un `ImageWrapper` enderezado según la orientación EXIF, o guarda el JPEG original (con EXIF) en la ruta que elija; el modo de flash, la calidad y la resolución son configurables.",
     "Fotogramas en vivo: fotogramas RGBA de 640x480 por defecto (se puede cambiar en los ajustes) y hasta 1920x1080, enderezados según la pantalla por defecto; cuando un script se retrasa, los fotogramas se descartan y se cuentan en lugar de acumularse.",
@@ -39,7 +40,13 @@
     "Para usar el módulo `camera` en scripts, actualice AutoJs6 a la versión interna {{ required_host_version_code }} ({{ required_host_version_name }}) o posterior y active este complemento en el centro de complementos."
   ],
   "p_usage_note": "El complemento es compatible con dispositivos con Android {{ min_android_version }} (API {{ android_min_sdk }}) o posterior. Hay un APK por ABI y un paquete `universal` para todos los dispositivos; las pocas bibliotecas nativas que incluyen CameraX y Compose (unos 50 KB por ABI) están alineadas a páginas de memoria de 16 KB, por lo que los dispositivos nuevos con páginas de 16 KB también lo instalan.",
-  "p_script_api_intro": "Los scripts usan estas funciones a través del módulo global `camera` (también disponible como `$camera`; borrador de diseño de la 1.0.0, la documentación publicada es la referencia)",
+  "compatibility_points": [
+    "Android 7.0 (API 24) y posterior, sin restricción de ABI: arm64-v8a, armeabi-v7a, x86_64 y x86 tienen cada uno un paquete, y el paquete `universal` sirve para todos los dispositivos.",
+    "Android 7.0 - 8.0 (API 24 - 26) no tienen memoria compartida, así que los fotogramas llegan a AutoJs6 mediante archivos temporales y el flujo continuo tiene una frecuencia menor que en sistemas más nuevos.",
+    "El módulo de script `camera` requiere AutoJs6 {{ required_host_version_name }} (versión interna {{ required_host_version_code }}) o posterior; las versiones anteriores no tienen el módulo, pero el visor del plugin se sigue abriendo desde el lanzador.",
+    "Algunos sistemas de fabricantes (por ejemplo ColorOS) restringen más la cámara para las apps en segundo plano; el apéndice F de la hoja de ruta registra los resultados por dispositivo."
+  ],
+  "p_script_api_intro": "Los scripts usan estas funciones mediante el módulo global `camera` (también disponible como `$camera`); la referencia completa está en [Documentación de AutoJs6 > Camera](https://docs.autojs6.com/#/camera)",
   "api_points": [
     "`camera.capture(options)` abre, captura y cierra en un solo paso; `camera.open(options)` abre una sesión exclusiva cuyo objeto ofrece `preview`, `analyze`, `capture`, `torch`, `zoom`, `exposure`, `focusAt`, `state` y `close`.",
     "Vida de los fotogramas: el `img` de un callback de `analyze` solo es válido mientras se ejecuta el callback y se recicla en cuanto este regresa; para usarlo después, llame a `img.clone()` y haga `recycle()` de la copia usted mismo.",
@@ -69,5 +76,5 @@
   ],
   "p_license": "El código del proyecto se distribuye bajo la [Mozilla Public License 2.0]({{ license_url }}). Las licencias de los componentes de terceros figuran en los avisos de terceros.",
   "text_link_third_party": "Avisos de terceros (THIRD_PARTY_NOTICES.md)",
-  "p_instruction_docs": "El progreso y el diseño están disponibles en la [página del proyecto]({{ repo_url }})."
+  "p_instruction_docs": "La API de script está en [Documentación de AutoJs6 > Camera](https://docs.autojs6.com/#/camera), y el progreso y el diseño en la [página del proyecto]({{ repo_url }})."
 }

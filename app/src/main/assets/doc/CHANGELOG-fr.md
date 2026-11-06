@@ -8,7 +8,7 @@
 
 ###### 2026/11/05
 
-* `Note` Préversion de développement: AutoJs6 peut déjà utiliser le cœur caméra et le viseur (ouverture de la caméra, images en direct, prise de photos, aperçu, réglages et prise de vue dans le viseur); des détails peuvent encore changer avant la publication
+* `Note` API de script: [Documentation AutoJs6 > Camera](https://docs.autojs6.com/#/camera)
 * `Note` Nécessite AutoJs6 6.8.1 (6641) ou ultérieur (la version minimale exacte sera renseignée une fois les modifications de l'hôte intégrées)
 * `Note` L'icône actuelle est une proposition et peut encore changer
 * `Fonctionnalité` Squelette du plugin: protocole d'activation Wake et service d'identité du centre des plugins

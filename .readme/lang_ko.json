@@ -7,6 +7,7 @@
   "h3_introduction": "소개",
   "h3_features": "기능 하이라이트",
   "h3_usage": "사용 방법",
+  "h3_compatibility": "호환성",
   "h3_script_api": "스크립트 API",
   "h3_faq": "자주 묻는 질문",
   "h3_security": "권한과 보안",
@@ -24,7 +25,7 @@
   "p_roadmap": "계획, 설계 결정, 진행 상황은 ROADMAP.md의 체크리스트로 관리합니다. 체크되지 않은 항목은 계획이며 현재 버전의 기능이 아닙니다.",
   "p_introduction_what": "3-Prism Camera는 AutoJs6의 카메라 플러그인입니다. Jetpack CameraX를 바탕으로 스크립트에 사진 촬영, 연속 프레임 분석, 뷰파인더 미리보기를 제공합니다. 실시간 프레임은 AutoJs6의 `ImageWrapper`로 스크립트에 전달되므로, `ocr`, `barcode`, `yolo` 등 기존 모듈에 그대로 넘겨 실시간 코드 스캔, 문자 인식, 객체 탐지를 구현할 수 있습니다.",
   "p_introduction_how": "플러그인이 카메라를 보유하고 Binder로 AutoJs6와 통신합니다: 실시간 프레임은 공유 메모리 링 버퍼로 전달되고 (Android 7.0 - 8.0에서는 임시 파일), 사진은 JPEG로 AutoJs6에 전달되어 디코딩되거나 그대로 저장되며, 미리보기는 스크립트 화면의 `SurfaceView`에 직접 렌더링되므로 픽셀이 Binder를 거치지 않습니다. 세션이 열려 있는 동안 카메라 포그라운드 서비스가 실행되어, 스크립트가 백그라운드에 있거나 화면이 꺼져 있어도 프레임을 계속 받을 수 있습니다.",
-  "p_status_note": "현재는 개발 미리보기 버전입니다: AutoJs6 플러그인 센터는 플러그인을 인식하고 카메라 핵심 기능 (카메라 열기, 실시간 프레임, 사진 촬영, 미리보기, 각종 제어)과 촬영 화면은 완성되었지만, 스크립트에서 쓰는 `camera` 모듈에는 아직 공개되지 않은 AutoJs6 버전이 필요합니다. 아래 내용은 1.0.0의 설계 목표이며, 진행 상황은 로드맵을 참고하세요.",
+  "p_status_note": "1.0.0의 카메라 핵심 기능, 뷰파인더 화면과 설정 화면이 완성되었으며 출시 전 검증을 진행하고 있습니다. 스크립트에서 쓰는 `camera` 모듈에는 AutoJs6 {{ required_host_version_name }} (내부 버전 {{ required_host_version_code }}) 이상이 필요합니다.",
   "features": [
     "사진: EXIF 방향에 맞게 바로 세운 `ImageWrapper`를 반환하거나, 원본 JPEG (EXIF 포함)를 지정한 경로에 저장합니다; 플래시 모드, 화질, 해상도를 설정할 수 있습니다.",
     "실시간 프레임: RGBA 프레임은 기본 640x480 (설정 화면에서 변경 가능), 최대 1920x1080이며 기본적으로 화면 방향에 맞게 바로 세웁니다; 처리가 밀리면 프레임을 버리고 개수를 세며, 쌓아 두지 않습니다.",
@@ -39,7 +40,13 @@
     "스크립트에서 `camera` 모듈을 사용하려면 AutoJs6를 내부 버전 {{ required_host_version_code }} ({{ required_host_version_name }}) 이상으로 업데이트하고, 플러그인 센터에서 이 플러그인을 활성화하세요."
   ],
   "p_usage_note": "플러그인은 Android {{ min_android_version }} (API {{ android_min_sdk }}) 이상 기기를 지원합니다. ABI마다 APK가 하나씩 있고, 모든 기기에서 쓰는 `universal` APK도 있습니다; CameraX와 Compose에 딸린 소량의 네이티브 라이브러리 (ABI당 약 50 KB)는 16 KB 메모리 페이지에 맞춰 정렬되어 있어, 16 KB 메모리 페이지를 쓰는 새 기기에도 설치할 수 있습니다.",
-  "p_script_api_intro": "스크립트는 전역 모듈 `camera` (`$camera`로도 사용 가능)로 이 기능을 사용합니다 (1.0.0 설계 초안이며, 정식 내용은 릴리스 버전의 문서를 따릅니다)",
+  "compatibility_points": [
+    "Android 7.0 (API 24) 이상, ABI 제한 없음: arm64-v8a, armeabi-v7a, x86_64, x86용 설치 파일이 각각 있으며 `universal` 설치 파일은 모든 기기에 맞습니다.",
+    "Android 7.0 - 8.0 (API 24 - 26)에는 공유 메모리가 없어 프레임이 임시 파일로 AutoJs6에 전달되며, 연속 프레임의 프레임률이 최신 시스템보다 낮습니다.",
+    "스크립트에서 `camera` 모듈을 쓰려면 AutoJs6 {{ required_host_version_name }} (내부 버전 {{ required_host_version_code }}) 이상이 필요합니다. 이전 AutoJs6에는 이 모듈이 없지만 런처에서 플러그인의 뷰파인더 화면은 열 수 있습니다.",
+    "일부 제조사 시스템 (예: ColorOS)은 백그라운드 앱의 카메라 사용을 추가로 제한합니다. 기기별 검증 결과는 로드맵 부록 F에 있습니다."
+  ],
+  "p_script_api_intro": "스크립트는 전역 모듈 `camera` (`$camera`로도 사용 가능)로 이 기능들을 사용합니다. 전체 설명은 [AutoJs6 문서 > Camera](https://docs.autojs6.com/#/camera)를 참고하세요",
   "api_points": [
     "`camera.capture(options)`는 열기, 촬영, 닫기를 한 번에 수행합니다; `camera.open(options)`는 독점 세션을 열며, 세션 객체는 `preview`, `analyze`, `capture`, `torch`, `zoom`, `exposure`, `focusAt`, `state`, `close`를 제공합니다.",
     "프레임 수명: `analyze` 콜백의 `img`는 콜백이 실행되는 동안에만 유효하며 콜백이 반환되면 즉시 회수됩니다; 콜백 밖에서 사용하려면 `img.clone()`을 호출하고, 다 쓴 뒤 직접 `recycle()`하세요.",
@@ -69,5 +76,5 @@
   ],
   "p_license": "프로젝트 코드는 [Mozilla Public License 2.0]({{ license_url }})으로 배포됩니다. 서드파티 구성 요소의 라이선스는 서드파티 고지를 참고하세요.",
   "text_link_third_party": "제3자 고지 (THIRD_PARTY_NOTICES.md)",
-  "p_instruction_docs": "개발 진행 상황과 설계는 [프로젝트 페이지]({{ repo_url }})에서 확인할 수 있습니다."
+  "p_instruction_docs": "스크립트 API는 [AutoJs6 문서 > Camera](https://docs.autojs6.com/#/camera), 개발 진행 상황과 설계는 [프로젝트 페이지]({{ repo_url }})를 참고하세요."
 }

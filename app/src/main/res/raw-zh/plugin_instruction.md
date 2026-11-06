@@ -1,6 +1,6 @@
 3-Prism Camera 是 AutoJs6 的相机插件, 基于 Jetpack CameraX 为脚本提供拍照, 连续帧分析与取景预览. 连续帧以 AutoJs6 的 `ImageWrapper` 交给脚本, 脚本可以直接把它交给 `ocr`, `barcode` 或 `yolo` 等已有模块, 实现实时扫码, 文字识别与目标检测.
 
-> 当前为开发预览版: 插件可以被 AutoJs6 插件中心识别, 相机核心 (打开相机, 连续帧, 拍照, 预览与各项控制) 与取景页已完成, 脚本使用的 `camera` 模块需要尚未发布的 AutoJs6 版本. 下文描述的是 1.0.0 的设计目标, 进度见开发路线图.
+> 1.0.0 的相机核心, 取景页与设置页均已完成, 正在进行发布前验证. 脚本使用的 `camera` 模块需要 AutoJs6 6.8.1 (内部版本号 6641) 或更高版本.
 
 ### 功能亮点
 
@@ -11,4 +11,4 @@
 - 取景页: 从启动器打开插件即进入取景页, 可切换镜头, 开关手电, 变焦与点按对焦, 拍下的照片只显示不保存, 右上角进入设置页; `camera.capture({ ui: true })` 打开同一个取景页, 用户按下快门后脚本拿到照片, 取消时返回 `null`.
 - 后台可用: 会话打开期间运行相机前台服务, 脚本切到后台或熄屏后仍可取帧; 脚本退出或 AutoJs6 被结束时自动释放相机.
 
-开发进度与设计见 [项目主页](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera).
+脚本 API 见 [AutoJs6 文档 > 相机 (Camera)](https://docs.autojs6.com/#/camera), 开发进度与设计见 [项目主页](https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera).

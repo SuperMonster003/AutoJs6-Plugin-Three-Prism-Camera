@@ -8,7 +8,7 @@
     "v1.0.0": {
       "released_date": "2026/11/05",
       "hint": [
-        "Development preview: AutoJs6 can already use the camera core and the viewfinder (opening the camera, live frames, photo capture, preview, the controls and capture through the viewfinder); details may still change before the release",
+        "Script API: [AutoJs6 documentation > Camera](https://docs.autojs6.com/#/camera)",
         "Requires AutoJs6 {{ required_host_version_name }} ({{ required_host_version_code }}) or later (the exact minimum build will be filled in once the host changes land)",
         "The current icon is a candidate design and may still change"
       ],

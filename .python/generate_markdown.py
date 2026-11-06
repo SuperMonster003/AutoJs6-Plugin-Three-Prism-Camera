@@ -467,6 +467,7 @@ def build_readme_values(
     content["placeholder_usage_steps"] = numbered_list(content["usage_steps"])
     content["placeholder_api_points"] = bullet_list(content["api_points"])
     content["placeholder_security_points"] = bullet_list(content["security_points"])
+    content["placeholder_compatibility_points"] = bullet_list(content["compatibility_points"])
     content["placeholder_faq"] = faq_list(content[README_FAQ_KEY])
     content["placeholder_latest_release_history"] = format_changelog_items(
         changelogs[code],

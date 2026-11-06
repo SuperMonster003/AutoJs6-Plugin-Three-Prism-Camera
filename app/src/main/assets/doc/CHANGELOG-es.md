@@ -8,7 +8,7 @@
 
 ###### 2026/11/05
 
-* `Aviso` Versión preliminar de desarrollo: AutoJs6 ya puede usar el núcleo de cámara y el visor (abrir la cámara, fotogramas en vivo, captura de fotos, vista previa, los controles y la captura desde el visor); algunos detalles aún pueden cambiar antes de la publicación
+* `Aviso` API de script: [Documentación de AutoJs6 > Camera](https://docs.autojs6.com/#/camera)
 * `Aviso` Requiere AutoJs6 6.8.1 (6641) o posterior (la versión mínima exacta se indicará cuando se integren los cambios del anfitrión)
 * `Aviso` El icono actual es un diseño candidato y aún puede cambiar
 * `Función` Esqueleto del complemento: protocolo de activación Wake y servicio de identidad del centro de complementos
