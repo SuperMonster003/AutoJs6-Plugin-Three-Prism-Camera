@@ -125,7 +125,7 @@ class SettingsActivity : StandaloneActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        updates = AppUpdateController(AppUpdateStore.of(this), BuildConfig.VERSION_NAME)
+        updates = AppUpdateController(AppUpdateStore.of(this), BuildConfig.VERSION_CODE.toLong())
         loadLenses()
         // Appendix D Q46: the plugin has no home screen, so the automatic check runs when this page opens (not on a
         // recreation). zh-CN: 附录 D Q46: 插件没有首页, 自动检查在打开本页时运行 (重建时不运行).

@@ -64,7 +64,7 @@
   "security_points": [
     "Protected entry points: the capability service and the activation entry require the AutoJs6 plugin permission (`org.autojs.permission.PLUGIN`), so other apps cannot call them; the foreground service and the transparent start screen are not exported.",
     "Camera: only `CAMERA`, the camera foreground service permissions and, on Android 13 or later, the notification permission for the camera-in-use notification are requested; the camera is used only while a session is open and is released as soon as the session closes, the script exits or AutoJs6 is stopped.",
-    "Network and storage: the network permission serves only the update check of the settings page (the GitHub releases API only, automatic checks at most once every 12 hours, can be turned off), and no storage permission is requested; frames and photos pass only between the plugin and AutoJs6, are never uploaded and never reach the system gallery.",
+    "Network and storage: the network permission serves only the update check of the settings page (it reads only the AutoJs6 official plugin index, automatic checks at most once every 12 hours, can be turned off), and no storage permission is requested; frames and photos pass only between the plugin and AutoJs6, are never uploaded and never reach the system gallery.",
     "Exclusive use: one session at a time (a script or the plugin's capture screen), and the error message names the holder."
   ],
   "p_license": "The project code is licensed under the [Mozilla Public License 2.0]({{ license_url }}). See the third party notices for the licenses of third party components.",

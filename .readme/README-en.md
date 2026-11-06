@@ -135,7 +135,7 @@ The plugin keeps its permission surface as small as possible:
 
 - Protected entry points: the capability service and the activation entry require the AutoJs6 plugin permission (`org.autojs.permission.PLUGIN`), so other apps cannot call them; the foreground service and the transparent start screen are not exported.
 - Camera: only `CAMERA`, the camera foreground service permissions and, on Android 13 or later, the notification permission for the camera-in-use notification are requested; the camera is used only while a session is open and is released as soon as the session closes, the script exits or AutoJs6 is stopped.
-- Network and storage: the network permission serves only the update check of the settings page (the GitHub releases API only, automatic checks at most once every 12 hours, can be turned off), and no storage permission is requested; frames and photos pass only between the plugin and AutoJs6, are never uploaded and never reach the system gallery.
+- Network and storage: the network permission serves only the update check of the settings page (it reads only the AutoJs6 official plugin index, automatic checks at most once every 12 hours, can be turned off), and no storage permission is requested; frames and photos pass only between the plugin and AutoJs6, are never uploaded and never reach the system gallery.
 - Exclusive use: one session at a time (a script or the plugin's capture screen), and the error message names the holder.
 
 ******
@@ -193,7 +193,7 @@ _2026/11/05_
 - `Feature` When a script is using the camera, the viewfinder names the script and can stop it to take over the camera
 - `Feature` Settings (top right of the viewfinder): appearance (language, night mode, theme color, launcher icon), camera and notification permissions, the default camera, the default analysis size and frame rate, the foreground service notification, diagnostics (CameraX version, the capabilities of each lens, who is using the camera) and the version history
 - `Feature` When a script names no camera, resolution or frame rate, the defaults of the settings page apply (initially the back camera, 640x480 and the device's own frame rate); a value the script sets always wins
-- `Feature` Update check: see a newer release on GitHub and its notes from the settings page, and ignore a release if you like; an automatic check runs when the settings page opens (at most once every 12 hours, can be turned off); the network permission serves only this check, and the plugin never uploads camera frames or photos
+- `Feature` Update check: see a newer release listed in the official plugin index and its notes from the settings page, and ignore a release if you like; an automatic check runs when the settings page opens (at most once every 12 hours, can be turned off); the network permission serves only this check, and the plugin never uploads camera frames or photos
 - `Feature` One package per ABI (arm64-v8a, armeabi-v7a, x86_64, x86) plus a universal package for every device; the native libraries that come with CameraX and Compose are aligned to 16 KB memory pages
 - `Feature` README, Plugin Center instructions and changelogs in 10 languages, generated from JSON sources
 - `Dependency` Attach Jetpack CameraX 1.6.2 (opens the camera, takes photos, delivers frames and the viewfinder)

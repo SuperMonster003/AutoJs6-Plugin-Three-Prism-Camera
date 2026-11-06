@@ -102,7 +102,7 @@
     <string name="settings_save_failed">Impossible d\'enregistrer le paramètre</string>
     <string name="settings_theme_color">Couleur du thème</string>
     <string name="settings_title">Paramètres</string>
-    <string name="settings_update_summary">Rechercher une version plus récente sur GitHub</string>
+    <string name="settings_update_summary">Rechercher une version plus récente dans l\'index officiel des plugins</string>
     <string name="settings_version">Version</string>
     <string name="settings_version_value">%1$s (%2$d) · %3$s</string>
     <string name="settings_yes">Oui</string>

@@ -102,7 +102,7 @@
     <string name="settings_save_failed">Не удалось сохранить настройку</string>
     <string name="settings_theme_color">Цвет темы</string>
     <string name="settings_title">Настройки</string>
-    <string name="settings_update_summary">Найти более новый выпуск на GitHub</string>
+    <string name="settings_update_summary">Найти более новый выпуск в официальном индексе плагинов</string>
     <string name="settings_version">Версия</string>
     <string name="settings_version_value">%1$s (%2$d) · %3$s</string>
     <string name="settings_yes">Есть</string>

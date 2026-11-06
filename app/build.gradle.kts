@@ -349,6 +349,7 @@ dependencies {
     implementation(libs.material.color.utilities)
 
     testImplementation(libs.junit)
+    testImplementation(libs.org.json)
     androidTestImplementation(libs.test.ext.junit)
     androidTestImplementation(libs.test.runner)
     androidTestImplementation(libs.test.rules)

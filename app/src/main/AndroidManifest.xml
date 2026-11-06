@@ -20,8 +20,9 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!--
-        Roadmap appendix D Q42 = (b): the in-app update check of the settings page asks api.github.com for the latest
-        release (ported from 3-Macaw Speech P5.4). It is the plugin's only network traffic; camera frames, photos and
+        Roadmap appendix D Q42 = (b) / Q45 = (b): the in-app update check of the settings page reads the official plugin
+        index (raw.githubusercontent.com, then the jsDelivr mirrors) and compares versionCode. It is the plugin's only
+        network traffic; camera frames, photos and
         settings never leave the device. res/xml/network_security_config.xml adds ISRG Root X1 for Android 7.0.
     -->
     <uses-permission android:name="android.permission.INTERNET" />

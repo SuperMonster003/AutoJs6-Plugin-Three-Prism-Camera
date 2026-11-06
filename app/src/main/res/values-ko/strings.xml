@@ -102,7 +102,7 @@
     <string name="settings_save_failed">설정을 저장할 수 없습니다</string>
     <string name="settings_theme_color">테마 색상</string>
     <string name="settings_title">설정</string>
-    <string name="settings_update_summary">GitHub에서 새 릴리스 찾기</string>
+    <string name="settings_update_summary">공식 플러그인 색인에서 새 릴리스 찾기</string>
     <string name="settings_version">버전</string>
     <string name="settings_version_value">%1$s (%2$d) · %3$s</string>
     <string name="settings_yes">있음</string>

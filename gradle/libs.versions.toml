@@ -14,6 +14,9 @@ core-ktx = "1.16.0"
 exifinterface = "1.4.2"
 foojay-resolver-convention = "1.0.0"
 junit = "4.13.2"
+# The real org.json for the JVM tests of the update check (android.jar only has stubs); the version 3-Macaw Speech and the
+# host test with.
+org-json = "20231013"
 # The MIT Kotlin port of Material Color Utilities that 3-Macaw Speech and 3-Block Compose ship: the fixed HCT tone rule of the
 # standalone settings specification (section 6) for the theme accent of the plugin's screens (roadmap P3.2).
 material-color-utilities = "4.1.1"
@@ -40,6 +43,7 @@ compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview"
 core-ktx = { module = "androidx.core:core-ktx", version.ref = "core-ktx" }
 exifinterface = { module = "androidx.exifinterface:exifinterface", version.ref = "exifinterface" }
 junit = { module = "junit:junit", version.ref = "junit" }
+org-json = { module = "org.json:json", version.ref = "org-json" }
 material-color-utilities = { module = "com.materialkolor:material-color-utilities", version.ref = "material-color-utilities" }
 test-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "test-espresso-core" }
 test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "test-junit-version" }
