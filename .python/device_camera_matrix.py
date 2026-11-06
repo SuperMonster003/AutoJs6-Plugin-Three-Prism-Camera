@@ -18,7 +18,8 @@ reused); the shell adds what only it sees. One line per check: PASS / FAIL / SKI
   --seconds; frames in each window, plus the plugin's foreground service and process capability from dumpsys.
 - bgopen (P4.3): the host goes home first, then the script calls `camera.open()` and analyzes 10 s.
 - kill (P4.3): a session analyzes, the host goes home and is killed with `am kill` (`am force-stop` when the process
-  survives); the plugin's foreground notification and its camera client must be gone within 1 s.
+  survives); the plugin's foreground notification must be gone and its session close must start within 1 s, the camera
+  device within 1.3 s (CameraX closes it about 1 s after the graph stops; appendix D Q58 (a)).
 - coldstart (P4.4): the plugin is force-stopped and its launcher (the viewfinder) started with `am start -W`, 3 times;
   TotalTime median.
 - recognize (P4.5, with --yolo-model and the ML Kit Barcode and YOLO NCNN plugins): the calls of the OCR, barcode and
@@ -32,7 +33,7 @@ zh-CN: 经宿主 `camera` 模块在设备上跑 3-Prism Camera 的设备矩阵 (
 只有 shell 能看到的由本脚本补充. 每项一行 PASS / FAIL / SKIP / INFO 与关键值. smoke (R3): list, open + 10 帧, capture 到文件, 手电开关;
 perf (P4.4): 每个分辨率分析 --seconds 秒, 记录实际分辨率与帧率, 丢帧, 传感器时间戳到脚本回调的延迟 P50 / P95 (宿主 onFrame 处理的上界),
 两进程 CPU 与 PSS 增量, 以及会话打开时 `session.capture()` 的延迟 (3 次中位数); background (P4.3): 宿主回桌面与熄屏各 --seconds 秒的出帧数,
-以及插件前台服务与进程能力; bgopen: 宿主先回桌面再 open; kill: `am kill` 宿主后插件通知与相机客户端须在 1 秒内消失; coldstart: 取景页冷启动
+以及插件前台服务与进程能力; bgopen: 宿主先回桌面再 open; kill: `am kill` 宿主后插件通知须在 1 秒内消失且会话 1 秒内开始关闭, 相机设备 1.3 秒内释放 (附录 D Q58 (a)); coldstart: 取景页冷启动
 (`am start -W` 3 次中位数); q41: 写入设置页的默认值 (前置, 320x240, 15 fps), 不带参数的 `camera.open()` 须按其取值, 之后还原.
 """
 from __future__ import annotations
@@ -512,7 +513,10 @@ def main():
                 # run proves nothing about the kill.
                 # zh-CN: 击杀前就释放说明相机更早就丢了 (例如锁屏之下), 该次运行不能证明击杀后的释放.
                 early = released is not None and released < 0
-                ok = gone is not None and gone <= 1.0 and released is not None and not early and released <= 1.0
+                # Appendix D Q58 (a): the session and the notification within 1 s, the camera device within 1.3 s.
+                # zh-CN: 附录 D Q58 (a): 会话与通知 1 秒内, 相机设备 1.3 秒内.
+                ok = (gone is not None and gone <= 1.0 and (started is None or started <= 1.0)
+                      and released is not None and not early and released <= 1.3)
                 print("kill %s %s; %s; notification gone after %s s (one dumpsys pair per poll); plugin close started %s s, camera released %s s after the kill (log times)%s" % (
                     "PASS" if ok else "FAIL", before, how, "%.2f" % gone if gone is not None else ">10",
                     "%.2f" % started if started is not None else "-",

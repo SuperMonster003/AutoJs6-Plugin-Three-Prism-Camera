@@ -1,8 +1,8 @@
 """Device checks of the camera core (roadmap P2.1 - P2.6, P1.2 shared memory) on one device.
 
     py .python/device_camera_core.py <serial> [--steps a,b,...] [--abi <abi> | --plugin-apk <file> | --no-install]
-        [--host-tree <dir>] [--install-host] [--seconds 30] [--orientation portrait|landscape] [--expect-focus]
-        [--screenshot <dir>]
+        [--host-tree <dir>] [--install-host] [--seconds 30] [--perf-sizes 640x480,1280x720]
+        [--orientation portrait|landscape] [--expect-focus] [--screenshot <dir>]
 
 The checks are instrumentation tests of the AutoJs6 host (app/src/androidTest/.../core/plugin/camera, runner
 org.autojs.autojs6.test/androidx.test.runner.AndroidJUnitRunner): they run in the host process, bind the installed
@@ -16,7 +16,9 @@ Steps (default: all that apply to the device; a step whose assumption fails is r
 - denied: without the CAMERA permission openSession fails with PERMISSION_DENIED (SKIP once granted).
 - transport: SharedMemory[] crosses the process boundary (API 27+): 3 blocks, 10 frames, seq increasing, block reuse.
 - busy: a second open fails with CAMERA_BUSY and names the holder; it succeeds after the first closes.
-- perf: analysis at 640x480 for --seconds; fps, drops and the plugin CPU share (appendix F).
+- perf: analysis for --seconds at each of --perf-sizes (default 640x480); fps, drops, the plugin CPU share and the host
+  segments of a frame as P50 / P95 ms (PERF_SEGMENTS: sensor to host callback, callback to frame handed over, the copy
+  alone, callback to block released; appendix F, roadmap P4.4).
 - capture: one picture; decoded size, EXIF orientation and, with --orientation, the expected shape.
 - captureui: openCaptureUi brings the viewfinder of the plugin to the front; a back press closes it and the callback
   gets CANCELLED. The test binds the plugin itself (the script path, a photo and a cancel through
@@ -149,17 +151,37 @@ def wait_for_line(device, marker, timeout):
     return None
 
 
-def step_perf(device, seconds):
-    process = instrument(device, f"{SESSION_TEST}#analysisRunsThirtySeconds", {"prismSeconds": seconds}, background=True)
+def count_lines(device, marker):
+    return sum(1 for line in device.summary_lines() if line.startswith(marker))
+
+
+def wait_for_count(device, marker, count, timeout):
+    """Waits until the log holds `count` lines starting with `marker` (earlier runs may still be in the log)."""
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        if count_lines(device, marker) >= count:
+            return True
+        time.sleep(0.3)
+    return False
+
+
+def step_perf(device, seconds, size="640x480"):
+    width, height = size.lower().split("x")
+    extras = {"prismSeconds": seconds, "prismWidth": width, "prismHeight": height}
+    process = instrument(device, f"{SESSION_TEST}#analysisRunsThirtySeconds", extras, background=True)
+    # The session opens in about a second, so these counts are taken before this run's PERF_START.
+    starts, ends = count_lines(device, "PERF_START"), count_lines(device, "PERF_END")
     start = end = None
-    if wait_for_line(device, "PERF_START", 60):
+    if wait_for_count(device, "PERF_START", starts + 1, 60):
         pid = device.pid(PLUGIN)
         start = cpu_ticks(device, pid) if pid else None
-        if wait_for_line(device, "PERF_END", seconds + 60) and start:
+        if wait_for_count(device, "PERF_END", ends + 1, seconds + 60) and start:
             end = cpu_ticks(device, pid)
     raw = process.communicate(timeout=seconds + 120)[0].decode("utf-8", "replace")
     status, reason = parse(raw)
-    lines = [line for line in device.summary_lines() if line.startswith("PERF ")]
+    summary = device.summary_lines()
+    last = max((index for index, line in enumerate(summary) if line.startswith("PERF_START")), default=-1)
+    lines = [line for line in summary[last + 1:] if line.startswith(("PERF ", "PERF_SEGMENTS "))]
     extra = reason
     if start and end:
         hz = int(device.shell("getconf CLK_TCK").strip() or 100)
@@ -167,7 +189,7 @@ def step_perf(device, seconds):
         extra = f"pluginCpu={share:.1f}% (one core = 100%) window={end[0] - start[0]:.1f}s {reason}".strip()
     elif status == "PASS":
         status, extra = "FAIL", "plugin CPU was not sampled"
-    return report("perf", status, lines, extra)
+    return report(f"perf {size}", status, lines, extra)
 
 
 def step_preview(device, seconds, orientation, screenshot):
@@ -251,6 +273,7 @@ def main():
     parser.add_argument("--host-tree", default=str(ROOT.parent / "AutoJs6"))
     parser.add_argument("--install-host", action="store_true")
     parser.add_argument("--seconds", type=int, default=30)
+    parser.add_argument("--perf-sizes", default="640x480", help="analysis sizes of the perf step, comma separated")
     parser.add_argument("--orientation", choices=("portrait", "landscape"))
     parser.add_argument("--expect-focus", action="store_true")
     parser.add_argument("--screenshot")
@@ -286,7 +309,8 @@ def main():
             status, lines = instrument(device, f"{SESSION_TEST}#secondOpenIsBusyAndNamesTheHolder", prefixes=("BUSY",))
             results.append(report(step, status[0], lines, status[1]))
         elif step == "perf":
-            results.append(step_perf(device, args.seconds))
+            for size in (item.strip() for item in args.perf_sizes.split(",") if item.strip()):
+                results.append(step_perf(device, args.seconds, size))
         elif step == "capture":
             extras = {"prismOrientation": args.orientation} if args.orientation else {}
             status, lines = instrument(device, f"{SESSION_TEST}#capturesAnUprightPicture", extras, prefixes=("CAPTURE ",))
