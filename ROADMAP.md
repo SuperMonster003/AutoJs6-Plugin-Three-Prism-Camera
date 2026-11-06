@@ -507,6 +507,8 @@ isClosed()
 
 `CameraError` (继承 `Error`): `code` 见 D29, `message` 为 10 语言文案, `details` 可含 `holder` (占用者), `cameraId`, `limit`.
 
+后台与锁屏 (附录 D Q57 = (a), prism-q57 2026-11-06): AutoJs6 在后台或手机停在锁屏时 (API 30+), 插件此时启动的相机前台服务没有相机能力, CameraX 报 `ERROR_CAMERA_DISABLED`. `camera.open()` 照常返回会话但不出帧; 插件先经 `ICameraSessionCallback.onError` 发 `CAMERA_DISABLED`, 再以 `policy` 关闭 (关闭原因的含义不变), 脚本依次收到 `"error"` (`CameraError`, `code` 为 `CAMERA_DISABLED`) 与 `"close"` (`policy`). 宿主可见时打开的会话在宿主退后台或熄屏后照常出帧. 例外: Rhino 脚本线程阻塞时 (例如 `open` 之后 `sleep()`), 尚未派发的 `"error"` 会被随后到达的 `"close"` 替换, 脚本只看到 `close` (`policy`), 见附录 D Q62; Node / Bun 按序派发, 不受影响.
+
 ### A.5 示例
 
 ```javascript
@@ -601,6 +603,17 @@ oneway interface ICameraSessionCallback {
 
 每个应答 Bundle 都带 `contractVersion`; 错误以 `errorCode` + `errorMessage` 表达, 不抛跨进程异常.
 
+CameraX `CameraState` 错误到会话的映射 (插件 `session/CameraErrorPolicy`, 附录 D Q57 = (a) 之后):
+
+| `CameraState` 错误 | 会话 | 契约错误码 |
+| --- | --- | --- |
+| `ERROR_MAX_CAMERAS_IN_USE`, `ERROR_CAMERA_IN_USE`, `ERROR_OTHER_RECOVERABLE_ERROR` | `onError`, 会话保留 (CameraX 重试) | `CAMERA_UNAVAILABLE` |
+| `ERROR_STREAM_CONFIG` | `onError`, 会话保留; 宿主的 Surface 已失效时改为停止预览 | `INTERNAL` |
+| `ERROR_CAMERA_DISABLED` | 先 `onError`, 再以 `policy` 关闭 | `CAMERA_DISABLED` (消息区分设备策略与 "宿主在后台或锁屏, 或相机隐私开关") |
+| `ERROR_DO_NOT_DISTURB_MODE_ENABLED` | 先 `onError`, 再以 `policy` 关闭 | `CAMERA_DISABLED` (契约没有勿扰模式的错误码, 归到最接近的 "现在不能使用相机") |
+| `ERROR_CAMERA_REMOVED` | 以 `cameraDisconnected` 关闭, 不发 `onError` (关闭原因已说明) | - |
+| `ERROR_CAMERA_FATAL_ERROR` 与未知错误 | 以 `error` 关闭, `onClosed` 带 `INTERNAL` | `INTERNAL` |
+
 ### B.2 插件 Manifest 片段
 
 ```xml
@@ -669,9 +682,10 @@ oneway interface ICameraSessionCallback {
 | Q54 | CI 模拟器后置镜头用 `virtualscene` 还是 `emulated` (P4.1 发现: 本机 `AVD_API_33` 以 CI 的 `-camera-back virtualscene` 启动时相机 HAL 每帧给出同一个负时间戳, cameraserver 丢弃全部帧, `CameraSmokeTest` 收不到帧; `emulated` 正常, 6 / 6 通过. 自查时 `AVD_API_26_PRISM` 用 `virtualscene` 后置也是 6 / 6, 问题只见于 API 33 镜像. 远端 Linux 运行器上是否同样未知, 因仓库还没有 remote) | (a) `.github/workflows/build.yml` 的 `emulator-options` 改为 `-camera-back emulated -camera-front emulated`, D35 同步改写 (推荐, 未先行; 1 行 + D35 一句, 约 5 分钟); (b) 保持 `virtualscene`, 建仓后第一次远端运行失败再改; (c) 两种各跑一次 (job 矩阵, CI 时长翻倍) | 已拍板 (a) (维护者 2026-11-06 17:45, 调度会话转达): `build.yml` 的 `emulator-options` 与 `ci_connected_tests.py` 说明改为 `-camera-back emulated -camera-front emulated`, D35 同步改写 (prism-p4, 提交 `a8dd335`). 远端运行仍等建仓. |
 | Q55 | API 35 设备 (OPD2413 `63751f63`, 小米平板 `968e9f18`) 的 P4.2 - P4.5 项 (两台按卡片约定不换装克隆宿主, 公开宿主 6.8.0 没有 `camera` 模块) | (a) 等宿主 6.8.1 公开后用公开宿主补测 (推荐, 已先行: 本卡未测, 表中写 "未执行"); (b) 维护者同意后临时换装克隆宿主 6641 测完还原 (约 40 分钟, 需维护者确认 ColorOS 安装对话框) | 待拍板. 影响 P4.2 / P4.3 / P4.4 / P4.5 的 API 35 行 (P4.4 / P4.5 因此未勾选); 改选 (b) 约 40 分钟, 无返工. |
 | Q56 | P4.4 的 "宿主 `onFrame` 处理耗时 P50 / P95" 无法单独测 (脚本只能测传感器时间戳到回调, 含曝光读出与插件拷贝, P95 91 - 183 ms; 宿主 instrumentation `analysisRunsThirtySeconds` 只有 640x480, 不分段计时) | (a) 宿主测试加 `prismWidth` / `prismHeight` 参数并记录 `onFrame` 收到到交给脚本的分段耗时, 重建克隆后在 API 28 / 31 补测 (推荐, 未先行; 宿主约 1 小时 + 补测 20 分钟); (b) 以 "传感器到回调" 上界作为基线, 5 ms 目标改为 "帧率不低于 25 fps 且丢帧低于 1%" (已有数据即满足, 改 P4.4 一句); (c) 去掉该指标 | 待拍板. 影响 P4.4 与附录 F 性能表; 改选 (b) / (c) 约 5 分钟. |
-| Q57 | 宿主已在后台时 `camera.open()` 在 API 31 / 33 的行为与 P4.3 预期不符 (实测: `open` 正常返回, 10 秒 0 帧, 会话以 `close` 事件 `policy` 关闭, 没有 `error` 事件; 系统日志 `Foreground service started from background can not have ... camera access`, CameraX `ERROR_CAMERA_DISABLED`; 预期是 `CAMERA_DISABLED` 错误. 手机停在安全锁屏时 (宿主 "top sleeping") 同样如此) | (a) 插件在前台服务没有相机能力时把 `ERROR_CAMERA_DISABLED` 转成会话 `error` (`CAMERA_DISABLED`, 说明 "宿主在后台或锁屏") 再以 `policy` 关闭, 文档写明 (推荐, 未先行; 插件 `app/src/main` 约 1 小时, 交 prism-p5 或后续卡片, 另需 P5.1 文档一句); (b) 保持现状, 只在文档写明 "宿主在后台或锁屏时打开的会话会以 policy 关闭" (约 10 分钟); (c) 插件改走透明 Activity 路径取得前台 (D25), 后台启动 Activity 在 API 29+ 受限, 收益不确定 | 待拍板. 影响 P4.3, P5.1 文档与附录 A.4; 改选 (b) 约 10 分钟, (c) 约半天. |
+| Q57 | 宿主已在后台时 `camera.open()` 在 API 31 / 33 的行为与 P4.3 预期不符 (实测: `open` 正常返回, 10 秒 0 帧, 会话以 `close` 事件 `policy` 关闭, 没有 `error` 事件; 系统日志 `Foreground service started from background can not have ... camera access`, CameraX `ERROR_CAMERA_DISABLED`; 预期是 `CAMERA_DISABLED` 错误. 手机停在安全锁屏时 (宿主 "top sleeping") 同样如此) | (a) 插件在前台服务没有相机能力时把 `ERROR_CAMERA_DISABLED` 转成会话 `error` (`CAMERA_DISABLED`, 说明 "宿主在后台或锁屏") 再以 `policy` 关闭, 文档写明 (推荐, 未先行; 插件 `app/src/main` 约 1 小时, 交 prism-p5 或后续卡片, 另需 P5.1 文档一句); (b) 保持现状, 只在文档写明 "宿主在后台或锁屏时打开的会话会以 policy 关闭" (约 10 分钟); (c) 插件改走透明 Activity 路径取得前台 (D25), 后台启动 Activity 在 API 29+ 受限, 收益不确定 | 已拍板 (a) (维护者 2026-11-06 17:45, 调度会话转达), prism-q57 落实: 插件 `CameraErrorPolicy` 把 `ERROR_CAMERA_DISABLED` (以及 `ERROR_DO_NOT_DISTURB_MODE_ENABLED`, 无对应码, 归 `CAMERA_DISABLED`) 映射为先 `onError` `CAMERA_DISABLED` 再以 `policy` 关闭, 映射表见附录 B, 构建 23 (插件提交 `927a814`); 附录 A.4, 文档站 `api/camera.md` (文档站提交 `1fa9464`), 宿主协议文档 Callbacks 与错误码表 (宿主提交 `d4945448d5`, 仅本地), 插件 changelog 与 README FAQ 10 种语言. 复测见附录 F: XQ-AT72 (API 31) 与 Redmi (API 33) 回桌面与锁屏各 1 次, 都是 `error` (`CAMERA_DISABLED`) 先于 `close` (`policy`), 前台冒烟不回归. 遗留: Rhino 脚本线程阻塞时 `error` 被 `close` 替换, 登记 Q62. |
 | Q58 | P4.3 "am kill 宿主后插件 1 秒内释放相机" 在 G8441 (API 28) 上未达标 (自查发现: 插件 0.09 - 0.13 s 关闭会话, 但 CameraX camera-pipe 在图停止后约 1 秒才关闭 `CameraDevice`, 相机 1.18 - 1.27 s 释放, 3 次一致; API 31 / 33 由系统在宿主死亡时收回相机, 0.03 - 0.04 s; 通知三台都在 0.6 s 内消失) | (a) 接受: P4.3 的标准改为 "插件 1 秒内关闭会话与通知, 相机设备随 CameraX 延迟关闭 (约 1.3 秒内) 释放", 附录 F 已有数字 (推荐, 未先行; 改 P4.3 一句, 约 5 分钟); (b) 插件在宿主死亡与 `close` 时让 CameraX 立即关闭设备 (先查 camera-pipe 有无可用的立即关闭途径, 例如关闭 `ProcessCameraProvider`), 再在 G8441 重测 (插件 `app/src/main` 约 1 - 2 小时, 结果不确定); (c) 保持 1 秒标准, 记为 API 28 已知差异 | 已拍板 (a) (维护者 2026-11-06 17:45, 调度会话转达): P4.3 标准与附录 F 已改为 "1 秒内关闭会话与通知, 相机随 CameraX 延迟关闭约 1.3 秒内释放" (prism-p4, 提交 `a8dd335`). |
 | Q61 | README 截图 (P5.3 发现: R2 写 "界面有变化时重采 `docs/images/screenshots`", 但仓库没有该目录, README 模板也没有截图位置; P3 的截图按约定未入库) | (a) 1.0.0 README 不放截图, R2 的截图项视为不适用, 发布后界面稳定再补 (推荐, 已先行; 零返工); (b) P5.4 前用 API 33 AVD 合成素材采取景页与设置页明暗各 1 张 (1080 x 2340) 放进 `docs/images/screenshots`, README 10 种语言加截图段 (约 1 - 1.5 小时, 需借 AVD) | 已按推荐先行待确认 (2026-11-06, prism-p5); 影响 P5.3 / P5.4 R2; 改选 (b) 约 1 - 1.5 小时 |
+| Q62 | Rhino 脚本线程阻塞时, 后台 / 锁屏 `open` 的 `CAMERA_DISABLED` 收不到 (Q57 (a) 实施发现: 宿主 Rhino `CameraSession.ended` 用 `replaceQueuedWithTerminalValues` 把尚未派发的事件换成 `close`; 插件的 `onError` 与 `onClosed` 相隔 15 - 50 ms, 脚本线程在 `sleep()` 中时 `error` 还在队列里. Redmi 探针: 不阻塞时 `error` +379 ms 先于 `close` +393 ms, `open` 后 `sleep(3000)` 时只有 `close` +3260 ms `policy`; Node / Bun 桥按序派发不受影响) | (a) 宿主 Rhino 会话在关闭时先派发尚未派发的 `error` 事件再发 `close` (与 UI 线程打开失败时 "先 `error` 再 `close`" 同在终止动作中), 加 JVM 测试, 重建克隆在一台 API 31+ 设备用 sleep 探针复测 (推荐, 未先行, 需改宿主; 宿主约 1 小时 + 复测 20 分钟, 插件零改动); (b) 保持, 文档写明 "要收到 `CAMERA_DISABLED` 时不要在 `open` 之后阻塞脚本线程, 改用 `setTimeout` 或事件, 阻塞时以 `close` 的 `policy` 判断" (文档站与附录 A.4 各一句, 约 10 分钟); (c) 插件在 `onError` 之后延迟数秒再关闭 (只覆盖短阻塞, 会话多占数秒, 不推荐) | 待拍板 (prism-q57 登记, 2026-11-06). 影响附录 A.4, 文档站 `api/camera.md`, 宿主 `runtime/api/modules/camera/CameraSession.kt`; 改选 (b) 约 10 分钟, (c) 插件约 30 分钟. |
 
 ---
 
@@ -742,14 +756,16 @@ P4 设备矩阵 (P4.2 / P4.3, prism-p4, 2026-11-06): `py -3 .python/device_camer
 | 设备 | API | 冒烟 | 实际分辨率 / 帧率 | 拍照 (一次性) | 后台 30 秒 | 熄屏 30 秒 | 宿主在后台时 open | am kill 后释放 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Sony G8441 `BH900ASK9E` | 28 | PASS (2 镜头) | 480x640, 30.4 fps | 2448x3264, 1400 ms | 900 帧, 30 fps, 丢 1 | 901 帧, 30 fps, 丢 2 | 成功, 10 秒 284 帧 | `am kill` 生效; 通知 0.48 - 0.58 s; 插件 0.09 - 0.13 s 关会话, 相机设备 1.18 - 1.27 s 释放 (CameraX 延迟关闭, 在 Q58 (a) 改定的约 1.3 秒内) |
-| Sony XQ-AT72 `QV710AF65F` | 31 | PASS (5 镜头) | 480x640, 30.2 fps | 3024x4032, 1411 ms | 896 帧, 29.9 fps, 丢 0 | 897 帧, 29.9 fps, 丢 2 | `open` 返回, 0 帧, 会话以 `policy` 关闭 (Q57) | `am kill` 生效; 通知 0.16 s, 相机 0.04 s (系统收回) |
-| Redmi 22120RN86C `bek749scrwv4wo8h` | 33 | PASS (2 镜头) | 480x640, 14.3 fps (相机自身) | 2448x3264, 1726 ms | 428 帧, 14.3 fps, 丢 0 | 428 帧, 14.3 fps, 丢 0 | 同 XQ-AT72 | `am kill` 生效; 通知 0.28 s, 相机 0.03 s (系统收回) |
+| Sony XQ-AT72 `QV710AF65F` | 31 | PASS (5 镜头) | 480x640, 30.2 fps | 3024x4032, 1411 ms | 896 帧, 29.9 fps, 丢 0 | 897 帧, 29.9 fps, 丢 2 | `open` 返回, 0 帧; Q57 (a) 之后先 `error` `CAMERA_DISABLED` (+77 ms) 再 `close` `policy`, 锁屏下同 (+91 ms) (构建 23) | `am kill` 生效; 通知 0.16 s, 相机 0.04 s (系统收回) |
+| Redmi 22120RN86C `bek749scrwv4wo8h` | 33 | PASS (2 镜头) | 480x640, 14.3 fps (相机自身) | 2448x3264, 1726 ms | 428 帧, 14.3 fps, 丢 0 | 428 帧, 14.3 fps, 丢 0 | `open` 返回, 0 帧; Q57 (a) 之后先 `error` `CAMERA_DISABLED` (+109 ms) 再 `close` `policy` (+134 ms), 锁屏下 +153 / +186 ms (构建 23) | `am kill` 生效; 通知 0.28 s, 相机 0.03 s (系统收回) |
 | 模拟器 `AVD_API_33` (emulated) | 33 | `CameraSmokeTest` 6 / 6 (P4.1), Q41 (b) PASS | 480x640, 29 fps | 1392x1856, 525 ms | 未执行 | 未执行 | 未执行 | 未执行 |
 | Sony XQ-DQ72 `QV770340J7` | 33 | 未执行 (未连接) | - | - | - | - | - | - |
 | Xiaomi Pad 23046RP50C `968e9f18` | 35 | 未执行 (等宿主 6.8.1 公开, Q55) | - | - | - | - | - | - |
 | OnePlus OPD2413 `63751f63` | 35 | 未执行 (等宿主 6.8.1 公开, Q55; ColorOS 激活与通知同) | - | - | - | - | - | - |
 | Samsung SM-A566B / SM-F971B | 36 / 37 | 未执行 (未租用) | - | - | - | - | - | - |
 | `AVD_API_24` | 24 | 未执行 (本卡; 见 P1.2 / P2.x) | - | - | - | - | - | - |
+
+Q57 (a) 复测 (prism-q57, 2026-11-06): 克隆宿主 6641 (arm64 md5 ee8253185f9eb6f21f01700f1b4fddc6) + 插件构建 23 (设备上为 arm64 md5 e86b2a227087fa1d13d4ce38426a7929, 与提交的构建只差 changelog / README 资源), `device_camera_matrix.py <serial> --phases smoke`, `--phases bgopen` 与 `--phases bgopen --bgopen-via lock` (新参数: 熄屏停在锁屏代替回桌面; bgopen 无帧时须为 `error:CAMERA_DISABLED` 后 `close:policy` 才 PASS). 结果: XQ-AT72 冒烟 PASS (480x640, 30 fps, 拍照 3024x4032 1706 ms), 回桌面 / 锁屏 bgopen PASS (`error` +77 / +91 ms, 插件日志在 `CameraState error 5: CAMERA_DISABLED, then close policy` 之后 14 - 15 ms 写 `Session closed: policy`, 系统日志 `Foreground service started from background can not have location/camera/microphone access`); Redmi 冒烟 PASS (14.4 fps, 拍照 2448x3264 1825 ms), 回桌面 / 锁屏 bgopen PASS (`error` +109 / +153 ms, `close` +134 / +186 ms, 系统日志 `Service.startForeground() not allowed due to bg restriction`), `background --seconds 15` 两窗各 214 帧, 14.3 fps, 丢 0. 冒烟要求宿主主界面在前台 (先 `am start -n org.autojs.autojs6/org.autojs.autojs.launcher.AdaptiveIconAlias`): 换装克隆后宿主进程重启, 前台是桌面, 此时冒烟的 `open` 同样以 `CAMERA_DISABLED` 结束, 不是回归. Redmi 探针 (Q62): 脚本线程不阻塞时 `error` +379 ms 先于 `close` +393 ms; `open` 后 `sleep(3000)` 时只收到 `close` +3260 ms (`policy`); 另一次插件进程在后台被 MIUI CameraBooster 以 "camera boost" 杀掉 (adj 800, 非崩溃), 会话以 `error` 关闭.
 
 前台服务与进程能力: 三台在后台阶段都是 `isForeground=true`; `dumpsys activity processes` 的 `curCapability` 在 Sony / Redmi 上对插件进程只给出 `----` 或 `LCMN`, 不能稳定区分, 以出帧与相机服务日志为准. 三台的有效运行里 `am kill` 都直接杀掉了宿主. XQ-AT72 首轮几次 `am kill` 未杀掉宿主, 脚本退到 `am force-stop`, 但那几次都在锁屏之下 (插件前台服务没有相机能力), 结果作废, 不作为证据. 锁屏之下的运行一律作废: 熄屏阶段之后手机停在安全锁屏, 宿主为 "top sleeping", 插件此时启动的前台服务没有相机能力; 脚本现在每个阶段前确认已解锁, 仍锁着就跳过该阶段.
 
