@@ -1,0 +1,16 @@
+# Extra TLS trust anchors of res/xml/network_security_config.xml (appendix D Q42 = (b), the in-app update check on
+# Android 7.0), checked by app/build.gradle.kts during configuration and by TrustAnchorsTest. The update check calls only
+# api.github.com, which on 2026-11-06 served a Sectigo chain ending at USERTrust ECC Certification Authority (openssl
+# s_client), already in the system store of Android 7.0 (API 24). GitHub serves raw.githubusercontent.com and the release
+# assets with a Let's Encrypt chain that ends at ISRG Root X1, which that store lacks and 7.1.1 carries, so the anchor keeps
+# the check working on API 24 should the API host move to the same chain; it is the anchor of 3-Macaw Speech cf32b5e,
+# added next to the system store, never instead.
+# isrg-root-x1: the self-signed ISRG Root X1 certificate (RSA 4096, valid 2015-06-04 to 2035-06-04) as Let's Encrypt
+#   publishes it in DER form; the SHA-256 of the DER bytes is the certificate's SHA-256 fingerprint. Copied byte for byte
+#   from 3-Macaw Speech (downloaded there on 2026-10-29). Certificates are not licensed works; the file carries no license.
+format=1
+isrg-root-x1.path=app/src/main/res/raw/isrg_root_x1.der
+isrg-root-x1.sha256=96bcec06264976f37460779acf28c5a7cfe8a3c0aae11a8ffcee05c0bddf08c6
+isrg-root-x1.url=https://letsencrypt.org/certs/isrgrootx1.der
+isrg-root-x1.subject=CN=ISRG Root X1,O=Internet Security Research Group,C=US
+isrg-root-x1.notAfter=2035-06-04T11:04:38Z

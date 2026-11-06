@@ -81,6 +81,24 @@ val hostApiAars: List<File> = run {
     }
 }
 
+run {
+    // The extra TLS trust anchor of res/xml/network_security_config.xml (appendix D Q42 = (b), the update check on Android
+    // 7.0): the ISRG Root X1 certificate in DER form, locked in locks/trust-anchors.lock and checked again by TrustAnchorsTest.
+    // zh-CN: res/xml/network_security_config.xml 的额外 TLS 信任锚 (附录 D Q42 = (b), Android 7.0 上的更新检查): DER 格式的 ISRG Root X1
+    // 证书, 锁定在 locks/trust-anchors.lock 中, TrustAnchorsTest 再次核对.
+    val entries = readLock("locks/trust-anchors.lock")
+    val names = entries.keys.filter { it.endsWith(".path") }.map { it.removeSuffix(".path") }.sorted()
+    check(names == listOf("isrg-root-x1")) { "locks/trust-anchors.lock must list isrg-root-x1" }
+    check(entries.keys == setOf("format") + names.flatMap { name -> listOf("path", "sha256", "url", "subject", "notAfter").map { "$name.$it" } }) {
+        "Unexpected keys in locks/trust-anchors.lock"
+    }
+    names.forEach { name ->
+        val path = entries.getValue("$name.path")
+        check(path == "app/src/main/res/raw/${name.replace('-', '_')}.der") { "trust anchor $name must be the DER file of res/raw" }
+        verifiedFile(path, entries["$name.sha256"], "trust anchor $name")
+    }
+}
+
 // Native code inventory (roadmap D22, amended by the P0.2 evidence): the plugin has no native code of its own, but
 // camera-core bundles libimage_processing_util_jni.so and libsurface_util_jni.so, and Compose ui-graphics depends on
 // androidx.graphics:graphics-path with libandroidx.graphics.path.so, each for the four Android ABIs (202140 bytes in

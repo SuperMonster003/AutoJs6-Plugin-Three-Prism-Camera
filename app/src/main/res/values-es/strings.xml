@@ -44,8 +44,12 @@
     <string name="release_history_title">Historial de versiones</string>
     <string name="release_history_unavailable">No se pudo cargar el historial de versiones</string>
     <string name="settings_about">Acerca de</string>
-    <string name="settings_analysis_defaults">Tamaño de análisis y velocidad de fotogramas</string>
-    <string name="settings_analysis_defaults_summary">640x480 a la velocidad del dispositivo si el script no indica resolution o fps. Solo se muestra como referencia</string>
+    <string name="settings_analysis_fps">Velocidad de análisis predeterminada</string>
+    <string name="settings_analysis_fps_device">Velocidad del dispositivo</string>
+    <string name="settings_analysis_fps_message">Se usa cuando un script abre la cámara o inicia el análisis sin fps. Con la velocidad del dispositivo, la cámara decide. El valor fps que indica el script siempre tiene prioridad.</string>
+    <string name="settings_analysis_fps_value">%1$d fps</string>
+    <string name="settings_analysis_size">Tamaño de análisis predeterminado</string>
+    <string name="settings_analysis_size_message">Se usa cuando un script abre la cámara o inicia el análisis sin resolution. El valor resolution que indica el script siempre tiene prioridad.</string>
     <string name="settings_appearance">Apariencia</string>
     <string name="settings_camera">Cámara</string>
     <string name="settings_camera_permission">Permiso de cámara</string>
@@ -53,7 +57,7 @@
     <string name="settings_dark_mode_dark">Oscuro</string>
     <string name="settings_dark_mode_light">Claro</string>
     <string name="settings_default_lens">Cámara predeterminada</string>
-    <string name="settings_default_lens_message">Solo se aplica al visor abierto desde el lanzador. Las sesiones de script y camera.capture({ ui: true }) usan la cámara que pide el script, o la trasera si no pide ninguna.</string>
+    <string name="settings_default_lens_message">La usan el visor abierto desde el lanzador y las sesiones de script y camera.capture({ ui: true }) que no piden ninguna cámara. El valor facing o el ID de cámara que indica el script siempre tiene prioridad.</string>
     <string name="settings_diagnostics">Diagnóstico</string>
     <string name="settings_follow_autojs6">Seguir AutoJs6</string>
     <string name="settings_follow_autojs6_summary">Seguir AutoJs6 - %1$s</string>
@@ -98,7 +102,7 @@
     <string name="settings_save_failed">No se pudo guardar el ajuste</string>
     <string name="settings_theme_color">Color del tema</string>
     <string name="settings_title">Ajustes</string>
-    <string name="settings_update_summary">Abre la página de versiones de GitHub en el navegador. El complemento no pide permiso de red, y el Centro de plugins de AutoJs6 también avisa de las nuevas versiones</string>
+    <string name="settings_update_summary">Buscar una versión más reciente en GitHub</string>
     <string name="settings_version">Versión</string>
     <string name="settings_version_value">%1$s (%2$d) · %3$s</string>
     <string name="settings_yes">Sí</string>
@@ -111,5 +115,21 @@
     <string name="ui_theme_invalid">Introduce #RRGGBB, RRGGBB o rgb(r, g, b). Los valores RGB deben ser de 0 a 255.</string>
     <string name="ui_theme_presets">Colores predefinidos</string>
     <string name="ui_theme_preview">Vista previa</string>
+    <string name="update_automatic">Buscar actualizaciones automáticamente</string>
+    <string name="update_automatic_summary">Buscar como máximo una vez cada 12 horas al abrir los ajustes</string>
+    <string name="update_available_summary">Hay una versión más reciente: %1$s</string>
     <string name="update_check">Buscar actualizaciones</string>
+    <string name="update_check_failed">No se pudo buscar actualizaciones. Comprueba la red e inténtalo de nuevo.</string>
+    <string name="update_checking">Buscando actualizaciones</string>
+    <string name="update_checking_summary">Conectando con el servicio de versiones del proyecto</string>
+    <string name="update_current_version">Versión instalada: %1$s</string>
+    <string name="update_ignore_version">Ignorar esta actualización</string>
+    <string name="update_ignored">Gestionar actualizaciones ignoradas</string>
+    <string name="update_ignored_message">Elija las versiones de las que quiere volver a recibir avisos</string>
+    <string name="update_ignored_none">No hay versiones ignoradas</string>
+    <string name="update_later">Más tarde</string>
+    <string name="update_no_release">Aún no se ha publicado ninguna versión. Versión instalada: %1$s</string>
+    <string name="update_stop_ignoring">Dejar de ignorar</string>
+    <string name="update_up_to_date">Está actualizado</string>
+    <string name="update_view_release">Ver versión</string>
 </resources>

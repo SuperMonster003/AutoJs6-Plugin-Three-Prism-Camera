@@ -44,8 +44,12 @@
     <string name="release_history_title">سجل الإصدارات</string>
     <string name="release_history_unavailable">تعذر تحميل سجل الإصدارات</string>
     <string name="settings_about">حول</string>
-    <string name="settings_analysis_defaults">حجم التحليل ومعدل الإطارات</string>
-    <string name="settings_analysis_defaults_summary">640x480 بمعدل إطارات الجهاز ما لم يحدد النص البرمجي resolution أو fps. للعرض فقط</string>
+    <string name="settings_analysis_fps">معدل إطارات التحليل الافتراضي</string>
+    <string name="settings_analysis_fps_device">معدل إطارات الجهاز</string>
+    <string name="settings_analysis_fps_message">يستخدم عندما يفتح نص برمجي الكاميرا أو يبدأ التحليل دون fps. عند اختيار معدل إطارات الجهاز تختار الكاميرا بنفسها. القيمة fps التي يحددها النص البرمجي لها الأولوية دائما.</string>
+    <string name="settings_analysis_fps_value">%1$d fps</string>
+    <string name="settings_analysis_size">حجم التحليل الافتراضي</string>
+    <string name="settings_analysis_size_message">يستخدم عندما يفتح نص برمجي الكاميرا أو يبدأ التحليل دون resolution. القيمة resolution التي يحددها النص البرمجي لها الأولوية دائما.</string>
     <string name="settings_appearance">المظهر</string>
     <string name="settings_camera">الكاميرا</string>
     <string name="settings_camera_permission">إذن الكاميرا</string>
@@ -53,7 +57,7 @@
     <string name="settings_dark_mode_dark">داكن</string>
     <string name="settings_dark_mode_light">فاتح</string>
     <string name="settings_default_lens">الكاميرا الافتراضية</string>
-    <string name="settings_default_lens_message">ينطبق فقط على شاشة المعاينة المفتوحة من المشغل. تستخدم جلسات النصوص البرمجية و camera.capture({ ui: true }) الكاميرا التي يطلبها النص البرمجي أو الكاميرا الخلفية إن لم يطلب أي كاميرا.</string>
+    <string name="settings_default_lens_message">تستخدمها شاشة المعاينة المفتوحة من المشغل وجلسات النصوص البرمجية و camera.capture({ ui: true }) التي لا تحدد كاميرا. القيمة facing أو معرف الكاميرا الذي يحدده النص البرمجي له الأولوية دائما.</string>
     <string name="settings_diagnostics">التشخيص</string>
     <string name="settings_follow_autojs6">اتباع AutoJs6</string>
     <string name="settings_follow_autojs6_summary">اتباع AutoJs6 - %1$s</string>
@@ -98,7 +102,7 @@
     <string name="settings_save_failed">تعذر حفظ الإعداد</string>
     <string name="settings_theme_color">لون السمة</string>
     <string name="settings_title">الإعدادات</string>
-    <string name="settings_update_summary">يفتح صفحة الإصدارات على GitHub في المتصفح. لا تطلب الإضافة إذن الشبكة ويعرض مركز الإضافات في AutoJs6 الإصدارات الجديدة أيضا</string>
+    <string name="settings_update_summary">البحث عن إصدار أحدث على GitHub</string>
     <string name="settings_version">الإصدار</string>
     <string name="settings_version_value">%1$s (%2$d) · %3$s</string>
     <string name="settings_yes">نعم</string>
@@ -111,5 +115,21 @@
     <string name="ui_theme_invalid">أدخل #RRGGBB أو RRGGBB أو rgb(r, g, b). يجب أن تكون قيم RGB بين 0 و255.</string>
     <string name="ui_theme_presets">ألوان جاهزة</string>
     <string name="ui_theme_preview">معاينة</string>
+    <string name="update_automatic">التحقق من التحديثات تلقائيا</string>
+    <string name="update_automatic_summary">التحقق مرة واحدة كحد أقصى كل 12 ساعة عند فتح الإعدادات</string>
+    <string name="update_available_summary">يتوفر إصدار أحدث: %1$s</string>
     <string name="update_check">التحقق من التحديثات</string>
+    <string name="update_check_failed">تعذر التحقق من التحديثات. تحقق من الشبكة وحاول مجددا.</string>
+    <string name="update_checking">جار التحقق من التحديثات</string>
+    <string name="update_checking_summary">جار الاتصال بخدمة إصدارات المشروع</string>
+    <string name="update_current_version">الإصدار المثبت: %1$s</string>
+    <string name="update_ignore_version">تجاهل هذا التحديث</string>
+    <string name="update_ignored">إدارة التحديثات المتجاهلة</string>
+    <string name="update_ignored_message">اختر الإصدارات التي تريد التذكير بها مجددا</string>
+    <string name="update_ignored_none">لا توجد إصدارات متجاهلة</string>
+    <string name="update_later">لاحقا</string>
+    <string name="update_no_release">لم يُنشر أي إصدار بعد. الإصدار المثبت: %1$s</string>
+    <string name="update_stop_ignoring">إيقاف التجاهل</string>
+    <string name="update_up_to_date">أحدث إصدار مثبت</string>
+    <string name="update_view_release">عرض الإصدار</string>
 </resources>

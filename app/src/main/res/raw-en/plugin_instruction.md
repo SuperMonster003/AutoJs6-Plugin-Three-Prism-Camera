@@ -5,7 +5,7 @@
 ### Features
 
 - Photos: returns an `ImageWrapper` turned upright by its EXIF orientation, or saves the original JPEG (with EXIF) to a path you choose; flash mode, quality and resolution are configurable.
-- Live frames: RGBA frames at 640x480 by default and up to 1920x1080, turned upright to match the screen by default; when a script falls behind, frames are dropped and counted instead of piling up.
+- Live frames: RGBA frames at 640x480 by default (changeable on the settings page) and up to 1920x1080, turned upright to match the screen by default; when a script falls behind, frames are dropped and counted instead of piling up.
 - Preview: hand a `SurfaceView` from a ui script or a floating window to the session to show the viewfinder, alongside live frames and photo capture.
 - Controls: lens selection, resolution, target frame rate, torch, flash mode, zoom, exposure compensation and tap to focus, with readable ranges and current state.
 - Capture screen: opening the plugin from the launcher shows the capture screen, with lens switching, the flashlight, zoom and tap to focus; photos taken there are only shown, not saved, and the top right button opens the settings; `camera.capture({ ui: true })` opens the same screen, and the script gets the photo when the user presses the shutter, or `null` when the user cancels.

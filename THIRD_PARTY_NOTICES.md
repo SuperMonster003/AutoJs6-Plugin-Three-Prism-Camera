@@ -64,6 +64,20 @@ page-aligned (roadmap D22):
 | `libimage_processing_util_jni.so`, `libsurface_util_jni.so` | CameraX `camera-core` 1.6.2 | Apache-2.0 |
 | `libandroidx.graphics.path.so` | AndroidX `graphics-path` 1.0.1 | Apache-2.0 |
 
+## Trust anchors
+
+| File | Source | Terms |
+| --- | --- | --- |
+| `app/src/main/res/raw/isrg_root_x1.der` | ISRG Root X1, the root certificate of Let's Encrypt (Internet Security Research Group), downloaded from https://letsencrypt.org/certs/isrgrootx1.der | A public certificate, not a licensed work; redistributed byte for byte |
+
+The update check of the settings page reads only `api.github.com`, whose certificate chain currently ends at a root
+that Android 7.0 (API 24, the plugin's minimum version) already trusts. Other GitHub hosts (`raw.githubusercontent.com`,
+`release-assets.githubusercontent.com`) use a chain that ends at ISRG Root X1, which the system trust store of Android
+7.0 lacks, so the plugin carries that root as a precaution, the same file as 3-Macaw Speech.
+`res/xml/network_security_config.xml` adds it next to the system store, never instead of it, without trusting
+user-installed certificates or cleartext traffic; Android 7.1.1 and later already carry it. The SHA-256 digest of the
+DER file is recorded in `locks/trust-anchors.lock` and checked during the build and by `TrustAnchorsTest`.
+
 The full text of the Apache License 2.0 is available at https://www.apache.org/licenses/LICENSE-2.0.
 
 Libraries used only by the JVM and device tests (JUnit, AndroidX Test) are not part of the APK.

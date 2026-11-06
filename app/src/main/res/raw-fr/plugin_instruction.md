@@ -5,7 +5,7 @@
 ### Points Forts
 
 - Photos: renvoie un `ImageWrapper` redressé selon l'orientation EXIF, ou enregistre le JPEG d'origine (avec EXIF) au chemin choisi; le mode flash, la qualité et la résolution sont réglables.
-- Images en direct: images RGBA en 640x480 par défaut et jusqu'à 1920x1080, redressées selon l'écran par défaut; quand un script prend du retard, les images sont abandonnées et comptées au lieu de s'accumuler.
+- Images en direct: images RGBA en 640x480 par défaut (modifiable dans les paramètres) et jusqu'à 1920x1080, redressées selon l'écran par défaut; quand un script prend du retard, les images sont abandonnées et comptées au lieu de s'accumuler.
 - Aperçu: confiez à la session une `SurfaceView` d'un script ui ou d'une fenêtre flottante pour afficher le viseur, en parallèle des images en direct et de la prise de photos.
 - Commandes: choix de l'objectif, résolution, fréquence d'images cible, lampe, mode flash, zoom, compensation d'exposition et mise au point au toucher, avec lecture des plages et de l'état courant.
 - Écran de prise de vue: ouvrir le plugin depuis le lanceur affiche l'écran de prise de vue, avec changement d'objectif, lampe, zoom et mise au point au toucher; les photos prises ici sont seulement affichées, pas enregistrées, et le bouton en haut à droite ouvre les paramètres; `camera.capture({ ui: true })` ouvre le même écran, et le script reçoit la photo quand l'utilisateur appuie sur le déclencheur, ou `null` s'il annule.

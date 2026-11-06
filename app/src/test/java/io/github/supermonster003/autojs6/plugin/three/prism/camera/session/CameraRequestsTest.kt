@@ -56,7 +56,57 @@ class CameraRequestsTest {
             ),
         )
         assertEquals(OpenRequest(CameraContract.FACING_FRONT, null, 1280, 720, 15, CameraContract.FLASH_AUTO, -2, "/sdcard/Scripts/a.js"), open)
-        assertEquals(OpenRequest(null, null, null, null, null, null, null, ""), CameraRequests.open(null))
+        assertEquals(
+            OpenRequest(CameraContract.FACING_BACK, null, CameraLimits.DEFAULT_ANALYSIS_WIDTH, CameraLimits.DEFAULT_ANALYSIS_HEIGHT, null, null, null, ""),
+            CameraRequests.open(null),
+        )
+    }
+
+    /** Appendix D Q41 = (b): the host omits the keys the script omits, the plugin fills them from its settings. */
+    @Test
+    fun `missing keys take the defaults of the settings page and present keys win`() {
+        val defaults = SessionDefaults(CameraContract.FACING_FRONT, 1280, 720, 15)
+        // A newer host: the script set nothing, so nothing is sent.
+        assertEquals(OpenRequest(CameraContract.FACING_FRONT, null, 1280, 720, 15, null, null, ""), CameraRequests.open(options(), defaults))
+        assertEquals(OpenRequest(CameraContract.FACING_FRONT, null, 1280, 720, 15, null, null, ""), CameraRequests.open(null, defaults))
+        // A host that still sends every key (host 6641): the request wins over the settings.
+        assertEquals(
+            OpenRequest(CameraContract.FACING_BACK, null, 640, 480, 30, null, null, ""),
+            CameraRequests.open(
+                options(CameraOptionKeys.FACING to CameraContract.FACING_BACK, CameraOptionKeys.WIDTH to 640, CameraOptionKeys.HEIGHT to 480, CameraOptionKeys.FPS to 30),
+                defaults,
+            ),
+        )
+        // Each key falls back on its own; a camera id picks the lens itself, so no default facing is added.
+        assertEquals(OpenRequest(null, "1", 1280, 720, 10, null, null, ""), CameraRequests.open(options(CameraOptionKeys.CAMERA_ID to "1", CameraOptionKeys.FPS to 10), defaults))
+        assertEquals(OpenRequest(CameraContract.FACING_FRONT, null, 320, 240, 15, null, null, ""), CameraRequests.open(options(CameraOptionKeys.WIDTH to 320, CameraOptionKeys.HEIGHT to 240), defaults))
+        // A null value counts as absent, so it takes the default too.
+        assertEquals(CameraContract.FACING_FRONT, CameraRequests.open(options(CameraOptionKeys.FACING to null), defaults).facing)
+        // The camera's own rate as the default stays null.
+        assertNull(CameraRequests.open(options(), defaults.copy(fps = null)).fps)
+        // startAnalysis without a size or rate inherits the filled open request.
+        assertEquals(AnalysisRequest(1280, 720, 15, upright = true, mirror = false), CameraRequests.analysis(options(), CameraRequests.open(options(), defaults)))
+        // The viewfinder of a script takes the default lens unless the script names one or a camera id.
+        assertEquals(CameraContract.FACING_FRONT, CameraRequests.captureUi(options(), defaults).facing)
+        assertEquals(CameraContract.FACING_BACK, CameraRequests.captureUi(options(CameraOptionKeys.FACING to CameraContract.FACING_BACK), defaults).facing)
+        assertEquals(CaptureUiRequest(null, "0", CaptureRequest(CameraLimits.DEFAULT_QUALITY, null, null, null, false)), CameraRequests.captureUi(options(CameraOptionKeys.CAMERA_ID to "0"), defaults))
+        assertEquals(CameraContract.FACING_BACK, CameraRequests.captureUi(null).facing)
+    }
+
+    @Test
+    fun `the choices of the settings page are inside the protocol limits`() {
+        assertEquals(SessionDefaults(CameraContract.FACING_BACK, CameraLimits.DEFAULT_ANALYSIS_WIDTH, CameraLimits.DEFAULT_ANALYSIS_HEIGHT, null), SessionDefaults.PROTOCOL)
+        assertTrue((SessionDefaults.PROTOCOL.width to SessionDefaults.PROTOCOL.height) in SessionDefaults.SIZES)
+        SessionDefaults.SIZES.forEach { (width, height) ->
+            assertTrue("$width", width in CameraLimits.MIN_ANALYSIS_WIDTH..CameraLimits.MAX_ANALYSIS_WIDTH)
+            assertTrue("$height", height in CameraLimits.MIN_ANALYSIS_HEIGHT..CameraLimits.MAX_ANALYSIS_HEIGHT)
+            // Every choice passes the request checks unchanged.
+            assertEquals(width to height, CameraRequests.open(options(CameraOptionKeys.WIDTH to width, CameraOptionKeys.HEIGHT to height)).let { it.width to it.height })
+            assertEquals(width to height, SessionDefaults.parseSize(SessionDefaults.formatSize(width to height)))
+        }
+        assertTrue(null in SessionDefaults.FPS_CHOICES)
+        SessionDefaults.FPS_CHOICES.filterNotNull().forEach { assertTrue("$it", it in CameraLimits.MIN_FPS..CameraLimits.MAX_FPS) }
+        listOf(null, "", "640", "640x", "x480", "640x480x1", "640*480", "ax480").forEach { assertNull(it, SessionDefaults.parseSize(it)) }
     }
 
     @Test
@@ -113,6 +163,7 @@ class CameraRequestsTest {
     @Test
     fun `the viewfinder request carries the camera and the capture options`() {
         val request = CameraRequests.captureUi(options(CameraOptionKeys.FACING to CameraContract.FACING_FRONT, CameraOptionKeys.QUALITY to 70, CameraOptionKeys.MIRROR to true))
+        assertEquals(CameraContract.FACING_FRONT, request.facing)
         assertEquals(CaptureUiRequest(CameraContract.FACING_FRONT, null, CaptureRequest(70, null, null, null, true)), request)
         failure { CameraRequests.captureUi(options(CameraOptionKeys.CAMERA_ID to "")) }
     }
@@ -165,7 +216,7 @@ class CameraRequestsTest {
     @Test
     fun `a null value counts as absent`() {
         val open = CameraRequests.open(options(CameraOptionKeys.FACING to null, CameraOptionKeys.FPS to null))
-        assertNull(open.facing)
+        assertEquals(CameraContract.FACING_BACK, open.facing)
         assertNull(open.fps)
         assertFalse(CameraRequests.capture(options(CameraOptionKeys.MIRROR to null)).mirror)
         assertTrue(CameraRequests.analysis(options(CameraOptionKeys.UPRIGHT to null), null).upright)

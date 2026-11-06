@@ -55,7 +55,7 @@ El complemento controla la cámara y se comunica con AutoJs6 por Binder: los fot
 ******
 
 - Fotos: devuelve un `ImageWrapper` enderezado según la orientación EXIF, o guarda el JPEG original (con EXIF) en la ruta que elija; el modo de flash, la calidad y la resolución son configurables.
-- Fotogramas en vivo: fotogramas RGBA de 640x480 por defecto y hasta 1920x1080, enderezados según la pantalla por defecto; cuando un script se retrasa, los fotogramas se descartan y se cuentan en lugar de acumularse.
+- Fotogramas en vivo: fotogramas RGBA de 640x480 por defecto (se puede cambiar en los ajustes) y hasta 1920x1080, enderezados según la pantalla por defecto; cuando un script se retrasa, los fotogramas se descartan y se cuentan en lugar de acumularse.
 - Vista previa: entregue a la sesión un `SurfaceView` de un script ui o de una ventana flotante para mostrar el visor, junto con los fotogramas en vivo y la captura de fotos.
 - Controles: selección de lente, resolución, velocidad de fotogramas objetivo, linterna, modo de flash, zoom, compensación de exposición y enfoque al tocar, con rangos y estado actual legibles.
 - Pantalla de captura: al abrir el complemento desde el lanzador se muestra la pantalla de captura, con cambio de lente, linterna, zoom y enfoque al tocar; las fotos tomadas ahí solo se muestran, no se guardan, y el botón de arriba a la derecha abre los ajustes; `camera.capture({ ui: true })` abre la misma pantalla, y el script recibe la foto cuando el usuario pulsa el obturador, o `null` si cancela.
@@ -135,7 +135,7 @@ El complemento reduce al máximo sus permisos:
 
 - Puntos de entrada protegidos: el servicio de capacidades y el punto de activación requieren el permiso de complemento de AutoJs6 (`org.autojs.permission.PLUGIN`), por lo que otras aplicaciones no pueden llamarlos; el servicio en primer plano y la pantalla de inicio transparente no se exportan.
 - Cámara: solo se solicitan `CAMERA`, los permisos de servicio en primer plano de cámara y, en Android 13 o posterior, el permiso de notificaciones para la notificación de cámara en uso; la cámara solo se usa mientras hay una sesión abierta y se libera en cuanto la sesión se cierra, el script termina o AutoJs6 se detiene.
-- Red y almacenamiento: sin permisos de red ni de almacenamiento; los fotogramas y las fotos solo pasan entre el complemento y AutoJs6 y nunca llegan a la galería del sistema.
+- Red y almacenamiento: el permiso de red solo sirve para la búsqueda de actualizaciones de los ajustes (solo la API de versiones de GitHub, búsqueda automática como máximo una vez cada 12 horas y desactivable), y no se pide permiso de almacenamiento; los fotogramas y las fotos solo pasan entre el complemento y AutoJs6, nunca se suben y nunca llegan a la galería del sistema.
 - Uso exclusivo: una sesión a la vez (un script o la pantalla de captura del complemento), y el mensaje de error indica quién la ocupa.
 
 ******
@@ -191,7 +191,9 @@ _2026/11/05_
 - `Función` Visor: se abre desde el lanzador y permite cambiar de lente, usar la linterna, hacer zoom con el control deslizante o pellizcando y tocar para enfocar; una foto tomada aquí solo muestra la imagen y su resolución y no se guarda; la imagen de la lente frontal se ve reflejada en pantalla, la foto no
 - `Función` camera.capture({ ui: true }) en un script abre el mismo visor: la foto se entrega directamente al script y al cancelar se devuelve null; si el visor no puede abrirse porque AutoJs6 está en segundo plano, la llamada devuelve UI_REQUIRES_FOREGROUND a los 10 segundos en lugar de esperar indefinidamente
 - `Función` Cuando un script está usando la cámara, el visor indica cuál es y puede detenerlo para tomar la cámara
-- `Función` Ajustes (arriba a la derecha del visor): apariencia (idioma, modo nocturno, color del tema, icono del lanzador), permisos de cámara y notificaciones, cámara predeterminada al abrir desde el lanzador, notificación del servicio en primer plano, diagnóstico (versión de CameraX, capacidades de cada lente, quién usa la cámara) e historial de versiones; Buscar actualizaciones abre la página de versiones de GitHub en el navegador, ya que el complemento no solicita permiso de red
+- `Función` Ajustes (arriba a la derecha del visor): apariencia (idioma, modo nocturno, color del tema, icono del lanzador), permisos de cámara y notificaciones, cámara predeterminada, tamaño y velocidad de análisis predeterminados, notificación del servicio en primer plano, diagnóstico (versión de CameraX, capacidades de cada lente, quién usa la cámara) e historial de versiones
+- `Función` Cuando un script no indica cámara, resolución ni velocidad de fotogramas, se aplican los valores predeterminados de los ajustes (al principio la cámara trasera, 640x480 y la velocidad propia del dispositivo); el valor que indica el script siempre tiene prioridad
+- `Función` Búsqueda de actualizaciones: desde los ajustes se ve una versión más reciente en GitHub y sus notas, y se puede ignorar una versión; al abrir los ajustes se busca automáticamente (como máximo una vez cada 12 horas, se puede desactivar); el permiso de red solo sirve para esta búsqueda y el complemento nunca sube imágenes de la cámara ni fotos
 - `Función` Un paquete por ABI (arm64-v8a, armeabi-v7a, x86_64, x86) y un paquete universal para todos los dispositivos; las bibliotecas nativas que incluyen CameraX y Compose están alineadas a páginas de memoria de 16 KB
 - `Función` README, instrucciones del centro de complementos y registros de cambios en 10 idiomas, generados a partir de fuentes JSON
 - `Dependencia` Se agrega Jetpack CameraX 1.6.2 (abre la cámara, toma fotos, entrega fotogramas y el visor)

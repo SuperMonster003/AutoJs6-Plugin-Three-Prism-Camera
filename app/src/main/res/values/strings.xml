@@ -44,8 +44,12 @@
     <string name="release_history_title">Version history</string>
     <string name="release_history_unavailable">Unable to load the version history</string>
     <string name="settings_about">About</string>
-    <string name="settings_analysis_defaults">Analysis size and frame rate</string>
-    <string name="settings_analysis_defaults_summary">640x480 at the device\'s frame rate unless the script sets resolution or fps. Shown for reference only</string>
+    <string name="settings_analysis_fps">Default analysis frame rate</string>
+    <string name="settings_analysis_fps_device">Device frame rate</string>
+    <string name="settings_analysis_fps_message">Used when a script opens the camera or starts analysis without fps. With the device frame rate the camera chooses. An fps set by the script always wins.</string>
+    <string name="settings_analysis_fps_value">%1$d fps</string>
+    <string name="settings_analysis_size">Default analysis size</string>
+    <string name="settings_analysis_size_message">Used when a script opens the camera or starts analysis without resolution. A resolution set by the script always wins.</string>
     <string name="settings_appearance">Appearance</string>
     <string name="settings_camera">Camera</string>
     <string name="settings_camera_permission">Camera permission</string>
@@ -53,7 +57,7 @@
     <string name="settings_dark_mode_dark">Dark</string>
     <string name="settings_dark_mode_light">Light</string>
     <string name="settings_default_lens">Default camera</string>
-    <string name="settings_default_lens_message">Applies only to the viewfinder opened from the launcher. Script sessions and camera.capture({ ui: true }) use the camera the script asks for, or the back camera when it asks for none.</string>
+    <string name="settings_default_lens_message">Used by the viewfinder opened from the launcher, and by script sessions and camera.capture({ ui: true }) that name no camera. A facing or camera ID set by the script always wins.</string>
     <string name="settings_diagnostics">Diagnostics</string>
     <string name="settings_follow_autojs6">Follow AutoJs6</string>
     <string name="settings_follow_autojs6_summary">Follow AutoJs6 - %1$s</string>
@@ -98,7 +102,7 @@
     <string name="settings_save_failed">Could not save the setting</string>
     <string name="settings_theme_color">Theme color</string>
     <string name="settings_title">Settings</string>
-    <string name="settings_update_summary">Opens the GitHub release page in the browser. The plugin asks for no network permission, and the AutoJs6 Plugin center also shows new versions</string>
+    <string name="settings_update_summary">Look for a newer release on GitHub</string>
     <string name="settings_version">Version</string>
     <string name="settings_version_value">%1$s (%2$d) · %3$s</string>
     <string name="settings_yes">Yes</string>
@@ -111,5 +115,21 @@
     <string name="ui_theme_invalid">Enter #RRGGBB, RRGGBB or rgb(r, g, b). RGB values must be 0..255.</string>
     <string name="ui_theme_presets">Preset colors</string>
     <string name="ui_theme_preview">Preview</string>
+    <string name="update_automatic">Automatically check for updates</string>
+    <string name="update_automatic_summary">Check at most once every 12 hours when the settings page opens</string>
+    <string name="update_available_summary">A newer release is available: %1$s</string>
     <string name="update_check">Check for updates</string>
+    <string name="update_check_failed">Could not check for updates. Check the network and try again.</string>
+    <string name="update_checking">Checking for updates</string>
+    <string name="update_checking_summary">Contacting the project release service</string>
+    <string name="update_current_version">Installed version: %1$s</string>
+    <string name="update_ignore_version">Ignore this update</string>
+    <string name="update_ignored">Manage ignored updates</string>
+    <string name="update_ignored_message">Choose the releases to be reminded of again</string>
+    <string name="update_ignored_none">No releases are currently ignored</string>
+    <string name="update_later">Later</string>
+    <string name="update_no_release">No release has been published yet. Installed version: %1$s</string>
+    <string name="update_stop_ignoring">Stop ignoring</string>
+    <string name="update_up_to_date">Up to date</string>
+    <string name="update_view_release">View release</string>
 </resources>

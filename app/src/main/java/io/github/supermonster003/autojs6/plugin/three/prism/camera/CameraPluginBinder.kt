@@ -21,6 +21,7 @@ import io.github.supermonster003.autojs6.plugin.three.prism.camera.session.MainT
 import io.github.supermonster003.autojs6.plugin.three.prism.camera.session.OpenRequest
 import io.github.supermonster003.autojs6.plugin.three.prism.camera.session.answer
 import io.github.supermonster003.autojs6.plugin.three.prism.camera.session.guarded
+import io.github.supermonster003.autojs6.plugin.three.prism.camera.ui.CameraPreferences
 import io.github.supermonster003.autojs6.plugin.three.prism.camera.ui.ThreePrismCameraCaptureActivity
 import org.autojs.plugin.camera.api.CameraCapabilityKeys
 import org.autojs.plugin.camera.api.CameraContract
@@ -77,7 +78,7 @@ internal class CameraPluginBinder(context: Context) : ICameraPlugin.Stub() {
      */
     override fun openSession(request: Bundle?, callback: ICameraSessionCallback?): Bundle = guarded(request, TAG) { requestVersion ->
         callback ?: throw CameraFailure(CameraErrorCodes.INVALID_ARGUMENT, "the session callback is null")
-        val open = CameraRequests.open(BundleOptions(request))
+        val open = CameraRequests.open(BundleOptions(request), CameraPreferences.sessionDefaults(appContext))
         requirePermission()
         if (CameraEngine.disabledByPolicy(appContext)) throw CameraFailure(CameraErrorCodes.CAMERA_DISABLED, "a device policy disabled the camera")
         val holder = CameraExclusivity.Holder(open.holderLabel, viewfinder = false)
@@ -175,7 +176,7 @@ internal class CameraPluginBinder(context: Context) : ICameraPlugin.Stub() {
      */
     override fun openCaptureUi(request: Bundle?, callback: ICameraCaptureCallback?): Bundle = guarded(request, TAG) { requestVersion ->
         callback ?: throw CameraFailure(CameraErrorCodes.INVALID_ARGUMENT, "the capture callback is null")
-        val captureUi = CameraRequests.captureUi(BundleOptions(request))
+        val captureUi = CameraRequests.captureUi(BundleOptions(request), CameraPreferences.sessionDefaults(appContext))
         requirePermission()
         if (CaptureUiRegistry.hasPending() || exclusivity.holder()?.viewfinder == true) {
             throw CameraFailure(CameraErrorCodes.CAMERA_BUSY, "the viewfinder is open already", holder = CameraContract.HOLDER_PLUGIN_UI)

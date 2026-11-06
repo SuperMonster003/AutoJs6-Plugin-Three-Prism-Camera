@@ -26,8 +26,9 @@ class ManifestContractTest {
     private val application: Element get() = manifest.child("application")
 
     @Test
-    fun `the permissions are exactly the plugin permission, the camera, the camera foreground service and its notification`() {
-        // Appendix D Q12: POST_NOTIFICATIONS keeps the ongoing camera notification visible on API 33+.
+    fun `the permissions are exactly the plugin permission, the camera, the camera foreground service, its notification and the update check`() {
+        // Appendix D Q12: POST_NOTIFICATIONS keeps the ongoing camera notification visible on API 33+. Appendix D Q42 = (b):
+        // INTERNET serves only the update check of the settings page (api.github.com, TrustAnchorsTest).
         assertEquals(
             listOf(
                 PLUGIN_PERMISSION,
@@ -35,12 +36,13 @@ class ManifestContractTest {
                 "android.permission.FOREGROUND_SERVICE",
                 CAMERA_SERVICE_PERMISSION,
                 "android.permission.POST_NOTIFICATIONS",
+                "android.permission.INTERNET",
             ),
             manifest.children("uses-permission").map { it.android("name") },
         )
         val permissions = manifest.children("uses-permission").map { it.android("name") }
         assertTrue("no storage permission (roadmap D25)", permissions.none { it.contains("STORAGE") || it.contains("MEDIA") })
-        assertTrue("no network permission (roadmap D25)", permissions.none { it.contains("INTERNET") || it.contains("NETWORK") })
+        assertTrue("no network state permission: the update check just tries (roadmap D25)", permissions.none { it.contains("NETWORK") || it.contains("WIFI") })
         assertTrue("no microphone permission: 1.0.0 records no audio", permissions.none { it.contains("RECORD_AUDIO") })
         assertTrue("no uses-sdk override: SDK levels come from version.properties", manifest.children("uses-sdk").isEmpty())
     }

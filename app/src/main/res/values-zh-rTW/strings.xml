@@ -44,8 +44,12 @@
     <string name="release_history_title">版本記錄</string>
     <string name="release_history_unavailable">無法載入版本記錄</string>
     <string name="settings_about">關於</string>
-    <string name="settings_analysis_defaults">分析解析度與影格速率</string>
-    <string name="settings_analysis_defaults_summary">指令碼未指定 resolution 或 fps 時為 640x480 與裝置影格速率, 此處僅供參考</string>
+    <string name="settings_analysis_fps">預設分析影格速率</string>
+    <string name="settings_analysis_fps_device">裝置影格速率</string>
+    <string name="settings_analysis_fps_message">指令碼開啟相機或開始分析時未指定 fps 就使用此值. 選擇裝置影格速率時由相機自行決定. 指令碼指定的 fps 一律優先.</string>
+    <string name="settings_analysis_fps_value">每秒 %1$d 影格</string>
+    <string name="settings_analysis_size">預設分析解析度</string>
+    <string name="settings_analysis_size_message">指令碼開啟相機或開始分析時未指定 resolution 就使用此值. 指令碼指定的 resolution 一律優先.</string>
     <string name="settings_appearance">外觀</string>
     <string name="settings_camera">相機</string>
     <string name="settings_camera_permission">相機權限</string>
@@ -53,7 +57,7 @@
     <string name="settings_dark_mode_dark">深色</string>
     <string name="settings_dark_mode_light">淺色</string>
     <string name="settings_default_lens">預設鏡頭</string>
-    <string name="settings_default_lens_message">只作用於從啟動器開啟的取景頁. 指令碼工作階段與 camera.capture({ ui: true }) 使用指令碼指定的鏡頭, 未指定時使用後置鏡頭.</string>
+    <string name="settings_default_lens_message">用於從啟動器開啟的取景頁, 以及未指定鏡頭的指令碼工作階段與 camera.capture({ ui: true }). 指令碼指定的 facing 或鏡頭 ID 一律優先.</string>
     <string name="settings_diagnostics">診斷</string>
     <string name="settings_follow_autojs6">跟隨 AutoJs6</string>
     <string name="settings_follow_autojs6_summary">跟隨 AutoJs6 - %1$s</string>
@@ -98,7 +102,7 @@
     <string name="settings_save_failed">無法儲存設定</string>
     <string name="settings_theme_color">主題色</string>
     <string name="settings_title">設定</string>
-    <string name="settings_update_summary">在瀏覽器中開啟 GitHub 發行頁. 外掛程式不要求網路權限, AutoJs6 外掛中心也會提示新版本</string>
+    <string name="settings_update_summary">在 GitHub 上尋找新版本</string>
     <string name="settings_version">版本</string>
     <string name="settings_version_value">%1$s (%2$d) · %3$s</string>
     <string name="settings_yes">有</string>
@@ -111,5 +115,21 @@
     <string name="ui_theme_invalid">請輸入 #RRGGBB, RRGGBB 或 rgb(r, g, b). RGB 數值須為 0..255.</string>
     <string name="ui_theme_presets">預設色彩</string>
     <string name="ui_theme_preview">預覽</string>
+    <string name="update_automatic">自動檢查更新</string>
+    <string name="update_automatic_summary">開啟設定頁時檢查, 每 12 小時最多一次</string>
+    <string name="update_available_summary">有較新的發行版可用: %1$s</string>
     <string name="update_check">檢查更新</string>
+    <string name="update_check_failed">無法檢查更新. 請檢查網路後重試.</string>
+    <string name="update_checking">正在檢查更新</string>
+    <string name="update_checking_summary">正在連線專案發行服務</string>
+    <string name="update_current_version">已安裝版本: %1$s</string>
+    <string name="update_ignore_version">忽略此更新</string>
+    <string name="update_ignored">管理已忽略更新</string>
+    <string name="update_ignored_message">選擇要重新提醒的版本</string>
+    <string name="update_ignored_none">目前沒有被忽略的發行版</string>
+    <string name="update_later">稍後</string>
+    <string name="update_no_release">尚未發布任何版本. 已安裝版本: %1$s</string>
+    <string name="update_stop_ignoring">取消忽略</string>
+    <string name="update_up_to_date">已是最新版本</string>
+    <string name="update_view_release">檢視發行版</string>
 </resources>

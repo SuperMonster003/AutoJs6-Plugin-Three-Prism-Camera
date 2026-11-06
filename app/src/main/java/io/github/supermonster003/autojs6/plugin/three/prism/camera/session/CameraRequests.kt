@@ -36,6 +36,36 @@ internal data class CaptureRequest(val quality: Int, val flashMode: String?, val
 
 internal data class CaptureUiRequest(val facing: String?, val cameraId: String?, val capture: CaptureRequest)
 
+/**
+ * The values a request falls back to when it omits a key (appendix D Q41 = (b)): the defaults of the settings page,
+ * which the binder reads; [PROTOCOL] holds the protocol defaults (the back lens, 640x480, the camera's own rate). A key
+ * the request carries always wins, so a host that still sends every key gets exactly what it asks for.
+ * zh-CN: 请求省略某个键时补齐所用的值 (附录 D Q41 = (b)): 设置页的默认值, 由 binder 读取; [PROTOCOL] 是协议缺省值 (后置镜头, 640x480, 相机
+ * 自身的帧率). 请求携带的键总是优先, 所以仍然发送全部键的宿主得到的正是它所请求的.
+ */
+internal data class SessionDefaults(val facing: String, val width: Int, val height: Int, val fps: Int?) {
+
+    companion object {
+        val PROTOCOL = SessionDefaults(CameraContract.FACING_BACK, CameraLimits.DEFAULT_ANALYSIS_WIDTH, CameraLimits.DEFAULT_ANALYSIS_HEIGHT, null)
+
+        /** The analysis sizes the settings page offers, all inside the protocol limits. zh-CN: 设置页提供的分析尺寸, 都在协议限制之内. */
+        val SIZES: List<Pair<Int, Int>> = listOf(320 to 240, 640 to 480, 1280 to 720, 1920 to 1080)
+
+        /** The frame rates the settings page offers; null is the camera's own rate. zh-CN: 设置页提供的帧率; null 为相机自身的帧率. */
+        val FPS_CHOICES: List<Int?> = listOf(null, 5, 10, 15, 24, 30, 60)
+
+        /** `640x480` to its pair, or null for anything else. zh-CN: 把 `640x480` 转为尺寸对, 其他内容为 null. */
+        fun parseSize(value: String?): Pair<Int, Int>? {
+            val parts = value?.split('x')?.takeIf { it.size == 2 } ?: return null
+            val width = parts[0].toIntOrNull() ?: return null
+            val height = parts[1].toIntOrNull() ?: return null
+            return width to height
+        }
+
+        fun formatSize(size: Pair<Int, Int>): String = "${size.first}x${size.second}"
+    }
+}
+
 internal data class ZoomRequest(val ratio: Float?, val linear: Float?)
 
 internal data class FocusRequest(val x: Float, val y: Float, val size: Float, val autoCancelMillis: Long)
@@ -71,10 +101,16 @@ internal object CameraRequests {
         return version
     }
 
-    fun open(source: OptionSource?): OpenRequest {
+    /**
+     * `openSession`: a missing key takes [defaults] (appendix D Q41 = (b)); a request naming `cameraId` picks the lens by
+     * that id, so the default lens applies only when neither `facing` nor `cameraId` is present.
+     * zh-CN: `openSession`: 缺少的键取 [defaults] (附录 D Q41 = (b)); 指定 `cameraId` 的请求按该 id 选镜头, 所以只有 `facing` 与 `cameraId`
+     * 都不存在时才使用默认镜头.
+     */
+    fun open(source: OptionSource?, defaults: SessionDefaults = SessionDefaults.PROTOCOL): OpenRequest {
         val options = source ?: MapOptions(emptyMap())
         val cameraId = cameraId(options)
-        val facing = facing(options)
+        val facing = facing(options) ?: defaults.facing.takeIf { cameraId == null }
         val (width, height) = analysisSize(options, required = false)
         val holderLabel = string(options, CameraOptionKeys.HOLDER_LABEL).orEmpty()
         if (holderLabel.length > CameraLimits.MAX_HOLDER_LABEL_CHARS) {
@@ -83,9 +119,9 @@ internal object CameraRequests {
         return OpenRequest(
             facing = facing,
             cameraId = cameraId,
-            width = width,
-            height = height,
-            fps = fps(options),
+            width = width ?: defaults.width,
+            height = height ?: defaults.height,
+            fps = fps(options) ?: defaults.fps,
             flashMode = flashMode(options, CameraOptionKeys.FLASH_MODE),
             exposureIndex = int(options, CameraOptionKeys.EXPOSURE_INDEX),
             holderLabel = holderLabel,
@@ -121,12 +157,14 @@ internal object CameraRequests {
     }
 
     /**
-     * `openCaptureUi`: the camera of the viewfinder and the options of its capture (protocol "Per method").
-     * zh-CN: `openCaptureUi`: 取景页的镜头与其拍照选项 (协议 "Per method" 一节).
+     * `openCaptureUi`: the camera of the viewfinder and the options of its capture (protocol "Per method"); the lens
+     * falls back to the default lens of [defaults] like [open].
+     * zh-CN: `openCaptureUi`: 取景页的镜头与其拍照选项 (协议 "Per method" 一节); 镜头与 [open] 一样回退到 [defaults] 的默认镜头.
      */
-    fun captureUi(source: OptionSource?): CaptureUiRequest {
+    fun captureUi(source: OptionSource?, defaults: SessionDefaults = SessionDefaults.PROTOCOL): CaptureUiRequest {
         val options = source ?: MapOptions(emptyMap())
-        return CaptureUiRequest(facing(options), cameraId(options), capture(options))
+        val cameraId = cameraId(options)
+        return CaptureUiRequest(facing(options) ?: defaults.facing.takeIf { cameraId == null }, cameraId, capture(options))
     }
 
     private fun cameraId(options: OptionSource): String? = string(options, CameraOptionKeys.CAMERA_ID)?.also {

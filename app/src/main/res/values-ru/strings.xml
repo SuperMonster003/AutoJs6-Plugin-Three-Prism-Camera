@@ -44,8 +44,12 @@
     <string name="release_history_title">История версий</string>
     <string name="release_history_unavailable">Не удалось загрузить историю версий</string>
     <string name="settings_about">О приложении</string>
-    <string name="settings_analysis_defaults">Размер анализа и частота кадров</string>
-    <string name="settings_analysis_defaults_summary">640x480 с частотой устройства, если скрипт не задаёт resolution или fps. Только для справки</string>
+    <string name="settings_analysis_fps">Частота анализа по умолчанию</string>
+    <string name="settings_analysis_fps_device">Частота устройства</string>
+    <string name="settings_analysis_fps_message">Используется, когда скрипт открывает камеру или запускает анализ без fps. При частоте устройства камера выбирает сама. Значение fps из скрипта всегда важнее.</string>
+    <string name="settings_analysis_fps_value">%1$d кадр/с</string>
+    <string name="settings_analysis_size">Размер анализа по умолчанию</string>
+    <string name="settings_analysis_size_message">Используется, когда скрипт открывает камеру или запускает анализ без resolution. Значение resolution из скрипта всегда важнее.</string>
     <string name="settings_appearance">Оформление</string>
     <string name="settings_camera">Камера</string>
     <string name="settings_camera_permission">Разрешение на камеру</string>
@@ -53,7 +57,7 @@
     <string name="settings_dark_mode_dark">Темная</string>
     <string name="settings_dark_mode_light">Светлая</string>
     <string name="settings_default_lens">Камера по умолчанию</string>
-    <string name="settings_default_lens_message">Действует только для видоискателя, открытого из лаунчера. Сеансы скриптов и camera.capture({ ui: true }) используют камеру, заданную скриптом, а без указания основную камеру.</string>
+    <string name="settings_default_lens_message">Используется видоискателем, открытым из лаунчера, а также сеансами скриптов и camera.capture({ ui: true }), в которых камера не указана. Значение facing или ID камеры из скрипта всегда важнее.</string>
     <string name="settings_diagnostics">Диагностика</string>
     <string name="settings_follow_autojs6">Следовать AutoJs6</string>
     <string name="settings_follow_autojs6_summary">Следовать AutoJs6 - %1$s</string>
@@ -98,7 +102,7 @@
     <string name="settings_save_failed">Не удалось сохранить настройку</string>
     <string name="settings_theme_color">Цвет темы</string>
     <string name="settings_title">Настройки</string>
-    <string name="settings_update_summary">Открывает страницу выпусков на GitHub в браузере. Плагин не запрашивает доступ к сети, а Центр плагинов AutoJs6 тоже сообщает о новых версиях</string>
+    <string name="settings_update_summary">Найти более новый выпуск на GitHub</string>
     <string name="settings_version">Версия</string>
     <string name="settings_version_value">%1$s (%2$d) · %3$s</string>
     <string name="settings_yes">Есть</string>
@@ -111,5 +115,21 @@
     <string name="ui_theme_invalid">Введите #RRGGBB, RRGGBB или rgb(r, g, b). Значения RGB должны быть от 0 до 255.</string>
     <string name="ui_theme_presets">Готовые цвета</string>
     <string name="ui_theme_preview">Предпросмотр</string>
+    <string name="update_automatic">Автоматически проверять обновления</string>
+    <string name="update_automatic_summary">Проверять не чаще одного раза в 12 часов при открытии настроек</string>
+    <string name="update_available_summary">Доступна новая версия: %1$s</string>
     <string name="update_check">Проверить обновления</string>
+    <string name="update_check_failed">Не удалось проверить обновления. Проверьте сеть и повторите попытку.</string>
+    <string name="update_checking">Проверка обновлений</string>
+    <string name="update_checking_summary">Подключение к сервису выпусков проекта</string>
+    <string name="update_current_version">Установленная версия: %1$s</string>
+    <string name="update_ignore_version">Игнорировать обновление</string>
+    <string name="update_ignored">Управление игнорируемыми обновлениями</string>
+    <string name="update_ignored_message">Выберите выпуски, о которых нужно снова напоминать</string>
+    <string name="update_ignored_none">Игнорируемых выпусков нет</string>
+    <string name="update_later">Позже</string>
+    <string name="update_no_release">Ещё не опубликовано ни одного выпуска. Установленная версия: %1$s</string>
+    <string name="update_stop_ignoring">Не игнорировать</string>
+    <string name="update_up_to_date">Установлена последняя версия</string>
+    <string name="update_view_release">Открыть выпуск</string>
 </resources>

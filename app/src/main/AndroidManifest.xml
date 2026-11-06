@@ -19,6 +19,13 @@
     -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!--
+        Roadmap appendix D Q42 = (b): the in-app update check of the settings page asks api.github.com for the latest
+        release (ported from 3-Macaw Speech P5.4). It is the plugin's only network traffic; camera frames, photos and
+        settings never leave the device. res/xml/network_security_config.xml adds ISRG Root X1 for Android 7.0.
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false" />
@@ -31,6 +38,7 @@
     <application
         android:name=".ThreePrismCameraApplication"
         android:allowBackup="false"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="false"
         android:label="@string/app_name"

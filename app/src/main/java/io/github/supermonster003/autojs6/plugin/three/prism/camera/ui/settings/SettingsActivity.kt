@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -39,6 +40,7 @@ import io.github.supermonster003.autojs6.plugin.three.prism.camera.session.Camer
 import io.github.supermonster003.autojs6.plugin.three.prism.camera.session.CameraExclusivity
 import io.github.supermonster003.autojs6.plugin.three.prism.camera.session.CameraExecutors
 import io.github.supermonster003.autojs6.plugin.three.prism.camera.session.MainThread
+import io.github.supermonster003.autojs6.plugin.three.prism.camera.session.SessionDefaults
 import io.github.supermonster003.autojs6.plugin.three.prism.camera.ui.CameraPreferences
 import io.github.supermonster003.autojs6.plugin.three.prism.camera.ui.StandaloneActivity
 import io.github.supermonster003.autojs6.plugin.three.prism.camera.ui.appearance.AppearancePreferences
@@ -50,11 +52,16 @@ import io.github.supermonster003.autojs6.plugin.three.prism.camera.ui.components
 import io.github.supermonster003.autojs6.plugin.three.prism.camera.ui.components.ChoiceDialog
 import io.github.supermonster003.autojs6.plugin.three.prism.camera.ui.components.Hairline
 import io.github.supermonster003.autojs6.plugin.three.prism.camera.ui.components.MessageDialog
+import io.github.supermonster003.autojs6.plugin.three.prism.camera.ui.components.MultiChoiceDialog
 import io.github.supermonster003.autojs6.plugin.three.prism.camera.ui.components.PrismScreen
 import io.github.supermonster003.autojs6.plugin.three.prism.camera.ui.components.SectionHeader
 import io.github.supermonster003.autojs6.plugin.three.prism.camera.ui.components.SettingsRow
+import io.github.supermonster003.autojs6.plugin.three.prism.camera.ui.components.SwitchRow
 import io.github.supermonster003.autojs6.plugin.three.prism.camera.ui.components.ThemeColorDialog
 import io.github.supermonster003.autojs6.plugin.three.prism.camera.ui.release.ReleaseHistoryActivity
+import io.github.supermonster003.autojs6.plugin.three.prism.camera.ui.update.AppUpdateController
+import io.github.supermonster003.autojs6.plugin.three.prism.camera.ui.update.AppUpdateStore
+import io.github.supermonster003.autojs6.plugin.three.prism.camera.ui.update.UpdateDialogs
 import java.util.Locale
 import org.autojs.plugin.camera.api.CameraContract
 import org.autojs.plugin.camera.api.CameraResultKeys
@@ -62,17 +69,19 @@ import org.autojs.plugin.camera.api.CameraResultKeys
 /**
  * The settings screen (roadmap P3.2, standalone settings specification, precedent 3-Macaw Speech), opened from the
  * viewfinder only: appearance (language, night mode, theme color, launcher icon; the first three follow AutoJs6 by
- * default), camera (permissions, the default lens of the launcher viewfinder, the analysis defaults shown read only, the
- * foreground service notification; appendix D Q41 = (a)), diagnostics (CameraX version, lenses and their capabilities,
- * the current holder) and about (version, release history, the GitHub release page; appendix D Q42 = (a), no network
- * permission). Every choice dialog edits a draft and saves once on confirm.
+ * default), camera (permissions, the default lens, analysis size and frame rate that script requests omitting them fall
+ * back to, the foreground service notification; appendix D Q41 = (b)), diagnostics (CameraX version, lenses and their
+ * capabilities, the current holder) and about (version, release history, the in-app update check with its automatic
+ * check and ignored releases; appendix D Q42 = (b), Q46: the automatic check runs when this page opens). Every choice
+ * dialog edits a draft and saves once on confirm.
  * zh-CN: 设置页 (路线图 P3.2, 独立设置规范, 先例 3-Macaw Speech), 只从取景页打开: 外观 (语言, 夜间模式, 主题色, 启动器图标; 前三项默认跟随
- * AutoJs6), 相机 (权限, 启动器取景页的默认镜头, 只读展示的分析缺省值, 前台服务通知; 附录 D Q41 = (a)), 诊断 (CameraX 版本, 镜头及其能力,
- * 当前持有者) 与关于 (版本, 发行历史, GitHub 发行页; 附录 D Q42 = (a), 不申请网络权限). 每个选择对话框编辑草稿, 确定时保存一次.
+ * AutoJs6), 相机 (权限, 省略对应键的脚本请求所回退的默认镜头, 分析分辨率与帧率, 前台服务通知; 附录 D Q41 = (b)), 诊断 (CameraX 版本, 镜头及其
+ * 能力, 当前持有者) 与关于 (版本, 发行历史, 应用内更新检查及其自动检查与已忽略版本; 附录 D Q42 = (b), Q46: 自动检查在打开本页时运行). 每个选择
+ * 对话框编辑草稿, 确定时保存一次.
  */
 class SettingsActivity : StandaloneActivity() {
 
-    private enum class Dialog { LANGUAGE, DARK_MODE, THEME_COLOR, LAUNCHER_ICON, DEFAULT_LENS, LENSES }
+    private enum class Dialog { LANGUAGE, DARK_MODE, THEME_COLOR, LAUNCHER_ICON, DEFAULT_LENS, ANALYSIS_SIZE, ANALYSIS_FPS, LENSES, IGNORED }
 
     /** The lenses read for the diagnostics; null while loading. zh-CN: 诊断读取的镜头; 读取中为 null. */
     private sealed interface Lenses {
@@ -89,6 +98,7 @@ class SettingsActivity : StandaloneActivity() {
     private var notificationsGranted by mutableStateOf(true)
     private var holder by mutableStateOf<CameraExclusivity.Holder?>(null)
     private var lenses by mutableStateOf<Lenses>(Lenses.Loading)
+    private lateinit var updates: AppUpdateController
 
     /** A denial without rationale means "don't ask again": the next tap opens the app settings. zh-CN: 无理由的拒绝即 "不再询问": 下次点按打开应用设置. */
     private var cameraBlocked = false
@@ -115,7 +125,11 @@ class SettingsActivity : StandaloneActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        updates = AppUpdateController(AppUpdateStore.of(this), BuildConfig.VERSION_NAME)
         loadLenses()
+        // Appendix D Q46: the plugin has no home screen, so the automatic check runs when this page opens (not on a
+        // recreation). zh-CN: 附录 D Q46: 插件没有首页, 自动检查在打开本页时运行 (重建时不运行).
+        if (savedInstanceState == null) updates.checkAutomaticallyIfDue()
     }
 
     override fun onResume() {
@@ -133,7 +147,12 @@ class SettingsActivity : StandaloneActivity() {
         super.onPause()
     }
 
-    override fun holdsAppearance(): Boolean = dialog != null
+    override fun onDestroy() {
+        if (isFinishing) updates.cancel()
+        super.onDestroy()
+    }
+
+    override fun holdsAppearance(): Boolean = dialog != null || updates.state != null
 
     /**
      * The provider is awaited on the camera I/O thread (never on the main thread), the cameras are described on the main
@@ -165,6 +184,8 @@ class SettingsActivity : StandaloneActivity() {
         // Saved choices bump the revision, so the summaries below read the stored values again.
         val appearancePreferences = remember(revision) { AppearancePreferences.read(this) }
         val defaultFacing = remember(revision) { CameraPreferences.defaultFacing(this) }
+        val analysisSize = remember(revision) { CameraPreferences.analysisSize(this) }
+        val analysisFps = remember(revision) { CameraPreferences.fps(this) }
         PrismScreen(title = stringResource(R.string.settings_title), onBack = ::finish, snackbarHostState = snackbar) { padding ->
             // A saved choice bumps the revision and rebuilds the rows from the stored values. zh-CN: 保存后修订号增加, 各行按存储值重建.
             key(revision) {
@@ -200,8 +221,11 @@ class SettingsActivity : StandaloneActivity() {
                     SettingsRow(stringResource(R.string.settings_default_lens), summary = stringResource(lensLabel(defaultFacing)), icon = R.drawable.ic_cameraswitch_24,
                         onClick = { dialog = Dialog.DEFAULT_LENS }, modifier = Modifier.testTag("prism.settings.defaultLens"))
                     Hairline()
-                    SettingsRow(stringResource(R.string.settings_analysis_defaults), summary = stringResource(R.string.settings_analysis_defaults_summary), icon = R.drawable.ic_tune_24,
-                        showChevron = false, modifier = Modifier.testTag("prism.settings.analysisDefaults"))
+                    SettingsRow(stringResource(R.string.settings_analysis_size), summary = SessionDefaults.formatSize(analysisSize), icon = R.drawable.ic_tune_24,
+                        onClick = { dialog = Dialog.ANALYSIS_SIZE }, modifier = Modifier.testTag("prism.settings.analysisSize"))
+                    Hairline()
+                    SettingsRow(stringResource(R.string.settings_analysis_fps), summary = fpsLabel(analysisFps), icon = R.drawable.ic_tune_24,
+                        onClick = { dialog = Dialog.ANALYSIS_FPS }, modifier = Modifier.testTag("prism.settings.analysisFps"))
                     Hairline()
                     SettingsRow(stringResource(R.string.settings_foreground_service), summary = stringResource(R.string.settings_foreground_service_summary), icon = R.drawable.ic_notifications_24,
                         onClick = ::openNotificationSettings, modifier = Modifier.testTag("prism.settings.foregroundService"))
@@ -225,13 +249,28 @@ class SettingsActivity : StandaloneActivity() {
                         onClick = { startActivity(Intent(this@SettingsActivity, ReleaseHistoryActivity::class.java)) }, modifier = Modifier.testTag("prism.settings.releaseHistory"))
                     Hairline()
                     SettingsRow(stringResource(R.string.update_check), summary = stringResource(R.string.settings_update_summary), icon = R.drawable.ic_update_24,
-                        onClick = { open(Intent(Intent.ACTION_VIEW, Uri.parse(RELEASES_URL))) }, modifier = Modifier.testTag("prism.settings.update"))
+                        onClick = updates::checkManually, modifier = Modifier.testTag("prism.settings.update"))
+                    Hairline()
+                    val store = remember { AppUpdateStore.of(this@SettingsActivity) }
+                    var automatic by remember { mutableStateOf(store.automaticChecks) }
+                    SwitchRow(stringResource(R.string.update_automatic), automatic, { automatic = it; store.automaticChecks = it },
+                        summary = stringResource(R.string.update_automatic_summary), icon = R.drawable.ic_notifications_24, modifier = Modifier.testTag("prism.settings.autoUpdate"))
+                    Hairline()
+                    val ignored = store.ignoredTags.size
+                    SettingsRow(stringResource(R.string.update_ignored), summary = ignoredSummary(ignored), icon = R.drawable.ic_close_24,
+                        enabled = ignored > 0, onClick = { dialog = Dialog.IGNORED }, modifier = Modifier.testTag("prism.settings.ignored"))
                     Spacer(Modifier.height(24.dp))
                 }
             }
         }
         Dialogs()
+        UpdateDialogs(updates, onOpenRelease = { url -> open(Intent(Intent.ACTION_VIEW, Uri.parse(url))) },
+            onReleaseHistory = { startActivity(Intent(this, ReleaseHistoryActivity::class.java)) })
     }
+
+    @Composable
+    private fun ignoredSummary(count: Int): String =
+        if (count == 0) stringResource(R.string.update_ignored_none) else pluralStringResource(R.plurals.update_ignored_count, count, count)
 
     @Composable
     private fun Dialogs() {
@@ -306,6 +345,42 @@ class SettingsActivity : StandaloneActivity() {
                     tag = "prism.dialog.defaultLens",
                 )
             }
+            Dialog.ANALYSIS_SIZE -> {
+                val current = CameraPreferences.analysisSize(this)
+                ChoiceDialog(
+                    title = stringResource(R.string.settings_analysis_size),
+                    message = stringResource(R.string.settings_analysis_size_message),
+                    options = SessionDefaults.SIZES.map { Choice(SessionDefaults.formatSize(it)) },
+                    selectedIndex = SessionDefaults.SIZES.indexOf(current).coerceAtLeast(0),
+                    onDismissRequest = close,
+                    onConfirm = { index ->
+                        close()
+                        val next = SessionDefaults.SIZES[index]
+                        if (next != current) {
+                            if (CameraPreferences.saveAnalysisSize(this, next)) revision++ else pendingMessage = getString(R.string.settings_save_failed)
+                        }
+                    },
+                    tag = "prism.dialog.analysisSize",
+                )
+            }
+            Dialog.ANALYSIS_FPS -> {
+                val current = CameraPreferences.fps(this)
+                ChoiceDialog(
+                    title = stringResource(R.string.settings_analysis_fps),
+                    message = stringResource(R.string.settings_analysis_fps_message),
+                    options = SessionDefaults.FPS_CHOICES.map { Choice(fpsLabel(it)) },
+                    selectedIndex = SessionDefaults.FPS_CHOICES.indexOf(current).coerceAtLeast(0),
+                    onDismissRequest = close,
+                    onConfirm = { index ->
+                        close()
+                        val next = SessionDefaults.FPS_CHOICES[index]
+                        if (next != current) {
+                            if (CameraPreferences.saveFps(this, next)) revision++ else pendingMessage = getString(R.string.settings_save_failed)
+                        }
+                    },
+                    tag = "prism.dialog.analysisFps",
+                )
+            }
             Dialog.LENSES -> MessageDialog(
                 title = stringResource(R.string.settings_lenses),
                 message = lensesDetails(),
@@ -315,6 +390,21 @@ class SettingsActivity : StandaloneActivity() {
                 dismissText = null,
                 tag = "prism.dialog.lenses",
             )
+            Dialog.IGNORED -> {
+                val store = AppUpdateStore.of(this)
+                val tags = store.ignoredTags.sorted()
+                MultiChoiceDialog(
+                    title = stringResource(R.string.update_ignored),
+                    message = stringResource(R.string.update_ignored_message),
+                    options = tags.map { Choice(it) },
+                    selected = emptySet(),
+                    onDismissRequest = close,
+                    onConfirm = { chosen -> close(); store.stopIgnoring(chosen.map(tags::get)); revision++ },
+                    confirmText = stringResource(R.string.update_stop_ignoring),
+                    requireOne = true,
+                    tag = "prism.dialog.ignored",
+                )
+            }
         }
     }
 
@@ -396,6 +486,10 @@ class SettingsActivity : StandaloneActivity() {
     }
 
     @Composable
+    private fun fpsLabel(fps: Int?): String =
+        if (fps == null) stringResource(R.string.settings_analysis_fps_device) else stringResource(R.string.settings_analysis_fps_value, fps)
+
+    @Composable
     private fun holderSummary(): String {
         val current = holder ?: return stringResource(R.string.settings_holder_none)
         return if (current.viewfinder) stringResource(R.string.settings_holder_viewfinder) else stringResource(R.string.settings_holder_script, current.label)
@@ -469,8 +563,6 @@ class SettingsActivity : StandaloneActivity() {
     private companion object {
         const val TAG = "PrismSettings"
         const val HOLDER_TICK_MILLIS = 1_000L
-        /** Appendix D Q42 = (a): the release page in the browser instead of an in-app check. zh-CN: 附录 D Q42 = (a): 用浏览器打开发行页, 不做应用内检查. */
-        const val RELEASES_URL = "https://github.com/SuperMonster003/AutoJs6-Plugin-Three-Prism-Camera/releases"
     }
 
 }

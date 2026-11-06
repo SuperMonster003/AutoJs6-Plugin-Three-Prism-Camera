@@ -5,7 +5,7 @@
 ### Funciones Destacadas
 
 - Fotos: devuelve un `ImageWrapper` enderezado según la orientación EXIF, o guarda el JPEG original (con EXIF) en la ruta que elija; el modo de flash, la calidad y la resolución son configurables.
-- Fotogramas en vivo: fotogramas RGBA de 640x480 por defecto y hasta 1920x1080, enderezados según la pantalla por defecto; cuando un script se retrasa, los fotogramas se descartan y se cuentan en lugar de acumularse.
+- Fotogramas en vivo: fotogramas RGBA de 640x480 por defecto (se puede cambiar en los ajustes) y hasta 1920x1080, enderezados según la pantalla por defecto; cuando un script se retrasa, los fotogramas se descartan y se cuentan en lugar de acumularse.
 - Vista previa: entregue a la sesión un `SurfaceView` de un script ui o de una ventana flotante para mostrar el visor, junto con los fotogramas en vivo y la captura de fotos.
 - Controles: selección de lente, resolución, velocidad de fotogramas objetivo, linterna, modo de flash, zoom, compensación de exposición y enfoque al tocar, con rangos y estado actual legibles.
 - Pantalla de captura: al abrir el complemento desde el lanzador se muestra la pantalla de captura, con cambio de lente, linterna, zoom y enfoque al tocar; las fotos tomadas ahí solo se muestran, no se guardan, y el botón de arriba a la derecha abre los ajustes; `camera.capture({ ui: true })` abre la misma pantalla, y el script recibe la foto cuando el usuario pulsa el obturador, o `null` si cancela.

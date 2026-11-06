@@ -27,7 +27,7 @@
   "p_status_note": "Esta es una versión preliminar de desarrollo: el centro de complementos de AutoJs6 reconoce el complemento, y el núcleo de cámara (abrir la cámara, fotogramas en vivo, captura de fotos, vista previa y los controles) y la pantalla de captura están terminados; el módulo de script `camera` necesita una versión de AutoJs6 que aún no se ha publicado. Las secciones siguientes describen los objetivos de diseño de la 1.0.0; consulte la hoja de ruta para ver el progreso.",
   "features": [
     "Fotos: devuelve un `ImageWrapper` enderezado según la orientación EXIF, o guarda el JPEG original (con EXIF) en la ruta que elija; el modo de flash, la calidad y la resolución son configurables.",
-    "Fotogramas en vivo: fotogramas RGBA de 640x480 por defecto y hasta 1920x1080, enderezados según la pantalla por defecto; cuando un script se retrasa, los fotogramas se descartan y se cuentan en lugar de acumularse.",
+    "Fotogramas en vivo: fotogramas RGBA de 640x480 por defecto (se puede cambiar en los ajustes) y hasta 1920x1080, enderezados según la pantalla por defecto; cuando un script se retrasa, los fotogramas se descartan y se cuentan en lugar de acumularse.",
     "Vista previa: entregue a la sesión un `SurfaceView` de un script ui o de una ventana flotante para mostrar el visor, junto con los fotogramas en vivo y la captura de fotos.",
     "Controles: selección de lente, resolución, velocidad de fotogramas objetivo, linterna, modo de flash, zoom, compensación de exposición y enfoque al tocar, con rangos y estado actual legibles.",
     "Pantalla de captura: al abrir el complemento desde el lanzador se muestra la pantalla de captura, con cambio de lente, linterna, zoom y enfoque al tocar; las fotos tomadas ahí solo se muestran, no se guardan, y el botón de arriba a la derecha abre los ajustes; `camera.capture({ ui: true })` abre la misma pantalla, y el script recibe la foto cuando el usuario pulsa el obturador, o `null` si cancela.",
@@ -64,7 +64,7 @@
   "security_points": [
     "Puntos de entrada protegidos: el servicio de capacidades y el punto de activación requieren el permiso de complemento de AutoJs6 (`org.autojs.permission.PLUGIN`), por lo que otras aplicaciones no pueden llamarlos; el servicio en primer plano y la pantalla de inicio transparente no se exportan.",
     "Cámara: solo se solicitan `CAMERA`, los permisos de servicio en primer plano de cámara y, en Android 13 o posterior, el permiso de notificaciones para la notificación de cámara en uso; la cámara solo se usa mientras hay una sesión abierta y se libera en cuanto la sesión se cierra, el script termina o AutoJs6 se detiene.",
-    "Red y almacenamiento: sin permisos de red ni de almacenamiento; los fotogramas y las fotos solo pasan entre el complemento y AutoJs6 y nunca llegan a la galería del sistema.",
+    "Red y almacenamiento: el permiso de red solo sirve para la búsqueda de actualizaciones de los ajustes (solo la API de versiones de GitHub, búsqueda automática como máximo una vez cada 12 horas y desactivable), y no se pide permiso de almacenamiento; los fotogramas y las fotos solo pasan entre el complemento y AutoJs6, nunca se suben y nunca llegan a la galería del sistema.",
     "Uso exclusivo: una sesión a la vez (un script o la pantalla de captura del complemento), y el mensaje de error indica quién la ocupa."
   ],
   "p_license": "El código del proyecto se distribuye bajo la [Mozilla Public License 2.0]({{ license_url }}). Las licencias de los componentes de terceros figuran en los avisos de terceros.",

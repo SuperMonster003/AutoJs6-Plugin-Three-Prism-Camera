@@ -44,8 +44,12 @@
     <string name="release_history_title">Historique des versions</string>
     <string name="release_history_unavailable">Impossible de charger l\'historique des versions</string>
     <string name="settings_about">À propos</string>
-    <string name="settings_analysis_defaults">Taille d\'analyse et fréquence d\'images</string>
-    <string name="settings_analysis_defaults_summary">640x480 à la fréquence de l\'appareil si le script ne fixe pas resolution ou fps. Affiché à titre indicatif</string>
+    <string name="settings_analysis_fps">Fréquence d\'analyse par défaut</string>
+    <string name="settings_analysis_fps_device">Fréquence de l\'appareil</string>
+    <string name="settings_analysis_fps_message">Utilisée quand un script ouvre la caméra ou lance l\'analyse sans fps. Avec la fréquence de l\'appareil, la caméra choisit elle-même. La valeur fps fixée par le script l\'emporte toujours.</string>
+    <string name="settings_analysis_fps_value">%1$d i/s</string>
+    <string name="settings_analysis_size">Taille d\'analyse par défaut</string>
+    <string name="settings_analysis_size_message">Utilisée quand un script ouvre la caméra ou lance l\'analyse sans resolution. La valeur resolution fixée par le script l\'emporte toujours.</string>
     <string name="settings_appearance">Apparence</string>
     <string name="settings_camera">Caméra</string>
     <string name="settings_camera_permission">Autorisation Caméra</string>
@@ -53,7 +57,7 @@
     <string name="settings_dark_mode_dark">Sombre</string>
     <string name="settings_dark_mode_light">Clair</string>
     <string name="settings_default_lens">Caméra par défaut</string>
-    <string name="settings_default_lens_message">Ne s\'applique qu\'au viseur ouvert depuis le lanceur. Les sessions de script et camera.capture({ ui: true }) utilisent la caméra demandée par le script, ou la caméra arrière s\'il n\'en demande aucune.</string>
+    <string name="settings_default_lens_message">Utilisée par le viseur ouvert depuis le lanceur, ainsi que par les sessions de script et camera.capture({ ui: true }) qui ne précisent aucune caméra. La valeur facing ou l\'ID de caméra fixé par le script l\'emporte toujours.</string>
     <string name="settings_diagnostics">Diagnostic</string>
     <string name="settings_follow_autojs6">Suivre AutoJs6</string>
     <string name="settings_follow_autojs6_summary">Suivre AutoJs6 - %1$s</string>
@@ -98,7 +102,7 @@
     <string name="settings_save_failed">Impossible d\'enregistrer le paramètre</string>
     <string name="settings_theme_color">Couleur du thème</string>
     <string name="settings_title">Paramètres</string>
-    <string name="settings_update_summary">Ouvre la page des versions GitHub dans le navigateur. Le plugin ne demande pas l\'accès au réseau, et le Centre des plugins d\'AutoJs6 signale aussi les nouvelles versions</string>
+    <string name="settings_update_summary">Rechercher une version plus récente sur GitHub</string>
     <string name="settings_version">Version</string>
     <string name="settings_version_value">%1$s (%2$d) · %3$s</string>
     <string name="settings_yes">Oui</string>
@@ -111,5 +115,21 @@
     <string name="ui_theme_invalid">Saisissez #RRGGBB, RRGGBB ou rgb(r, g, b). Les valeurs RGB doivent être comprises entre 0 et 255.</string>
     <string name="ui_theme_presets">Couleurs prédéfinies</string>
     <string name="ui_theme_preview">Aperçu</string>
+    <string name="update_automatic">Rechercher automatiquement les mises à jour</string>
+    <string name="update_automatic_summary">Rechercher au plus une fois toutes les 12 heures à l\'ouverture des paramètres</string>
+    <string name="update_available_summary">Une version plus récente est disponible: %1$s</string>
     <string name="update_check">Rechercher les mises à jour</string>
+    <string name="update_check_failed">Impossible de rechercher les mises à jour. Vérifiez le réseau et réessayez.</string>
+    <string name="update_checking">Recherche des mises à jour</string>
+    <string name="update_checking_summary">Connexion au service des versions du projet</string>
+    <string name="update_current_version">Version installée: %1$s</string>
+    <string name="update_ignore_version">Ignorer cette mise à jour</string>
+    <string name="update_ignored">Gérer les mises à jour ignorées</string>
+    <string name="update_ignored_message">Choisissez les versions à signaler de nouveau</string>
+    <string name="update_ignored_none">Aucune version ignorée</string>
+    <string name="update_later">Plus tard</string>
+    <string name="update_no_release">Aucune version n\'a encore été publiée. Version installée: %1$s</string>
+    <string name="update_stop_ignoring">Ne plus ignorer</string>
+    <string name="update_up_to_date">À jour</string>
+    <string name="update_view_release">Voir la version</string>
 </resources>
