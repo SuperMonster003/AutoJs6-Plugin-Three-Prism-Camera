@@ -184,7 +184,7 @@ _2026/11/05_
 - `Fonctionnalité` Squelette du plugin: protocole d'activation Wake et service d'identité du centre des plugins
 - `Fonctionnalité` Service de capacité caméra: une seule session peut utiliser la caméra à la fois et une caméra occupée indique son détenteur; une notification de premier plan s'affiche tant que la caméra est utilisée, et quand AutoJs6 se ferme la caméra est libérée aussitôt et la notification disparaît
 - `Fonctionnalité` Images en direct: les images RGBA parviennent à AutoJs6 à tour de rôle par 3 blocs de mémoire partagée (Android 8.1 ou ultérieur) ou 3 fichiers temporaires (Android 7.0 - 8.0), avec la résolution et la fréquence choisies; les images qui ne peuvent pas être traitées à temps sont sautées et comptées
-- `Fonctionnalité` Prise de photos: le JPEG parvient à AutoJs6 sous forme de fichier en lecture seule avec ses dimensions, l'orientation EXIF, le nombre d'octets et l'indication miroir; la qualité, la résolution et le mode flash sont réglables
+- `Fonctionnalité` Prise de photos: le JPEG parvient à AutoJs6 sous forme de fichier en lecture seule avec ses dimensions, l'orientation EXIF, le nombre d'octets et l'indication miroir; la qualité, la résolution et le mode flash sont réglables; une photo en miroir ne voit que son orientation EXIF réécrite, sans réencodage; lorsqu'une caméra n'écrit pas l'orientation de la photo (par exemple l'émulateur Android 7.0), le plugin écrit l'orientation de 90 / 270 degrés pour que la photo s'affiche dans le sens où le téléphone était tenu (un oubli de 180 degrés ne peut pas être détecté)
 - `Fonctionnalité` Aperçu: l'image s'affiche sur une surface fournie par AutoJs6 et suit la rotation de l'écran; l'aperçu de l'objectif avant est en miroir par défaut, pas les images ni les photos; quand la surface qui affiche l'aperçu disparaît, l'aperçu s'arrête de lui-même et les images comme les photos continuent
 - `Fonctionnalité` Réglages: lampe torche, mode flash, zoom (rapport ou linéaire), correction d'exposition, mise au point et mesure par toucher; ce que l'appareil ne prend pas en charge (comme le flash de l'objectif avant) renvoie UNSUPPORTED
 - `Fonctionnalité` Autorisation caméra: ouvrir la caméra sans elle renvoie PERMISSION_DENIED et l'autorisation peut être demandée; sur Android 13 ou ultérieur, l'autorisation des notifications est aussi demandée, pour la notification de caméra en cours d'utilisation
@@ -194,6 +194,7 @@ _2026/11/05_
 - `Dépendance` Ajout de Jetpack Compose BOM 2026.09.00 (écrans du plugin)
 - `Dépendance` Ajout de AndroidX Activity Compose 1.12.2
 - `Dépendance` Ajout de AndroidX Core KTX 1.16.0
+- `Dépendance` Ajout de AndroidX ExifInterface 1.4.2 (écrit l'orientation EXIF des photos)
 
 ##### Pour plus d'historique des versions
 

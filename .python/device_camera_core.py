@@ -26,6 +26,8 @@ Steps (default: all that apply to the device; a step whose assumption fails is r
 - preview: floating SurfaceView preview with analysis and capture for --seconds, then an invalid surface (needs the
   overlay permission of AutoJs6; --screenshot saves preview-<serial>-<orientation>.png at PREVIEW_READY).
 - front: the front preview reports previewMirrored = true (SKIP without a front camera).
+- frontcapture: a front picture with mirror: true has the horizontally mirrored EXIF orientation of the plain one
+  (1 <-> 2, 3 <-> 4, 5 <-> 6, 7 <-> 8) and the same decoded size (appendix D Q13 = (b); SKIP without a front camera).
 - kill: a held session shows the plugin's foreground notification; after the host process is killed (`am kill`,
   else `am force-stop`, since `am kill` spares the instrumented process) the notification has to be gone within 1 s of
   the kill command returning (one `dumpsys notification` per poll bounds the resolution).
@@ -55,7 +57,7 @@ TAGS = ("CameraPluginDeviceIT", "CameraFrameTransportIT")
 ROOT = Path(__file__).resolve().parent.parent
 ABIS = ("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
 MIN_HOST = 6641
-STEPS = ("check", "denied", "transport", "busy", "perf", "capture", "captureui", "controls", "preview", "front", "kill")
+STEPS = ("check", "denied", "transport", "busy", "perf", "capture", "captureui", "controls", "preview", "front", "frontcapture", "kill")
 STATUS = {"0": "PASS", "-1": "FAIL", "-2": "FAIL", "-3": "SKIP", "-4": "SKIP"}
 
 
@@ -298,7 +300,10 @@ def main():
         elif step == "preview":
             results.append(step_preview(device, args.seconds, args.orientation, args.screenshot))
         elif step == "front":
-            status, lines = instrument(device, f"{SESSION_TEST}#frontPreviewIsMirrored", prefixes=("FRONT",))
+            status, lines = instrument(device, f"{SESSION_TEST}#frontPreviewIsMirrored", prefixes=("FRONT ",))
+            results.append(report(step, status[0], lines, status[1]))
+        elif step == "frontcapture":
+            status, lines = instrument(device, f"{SESSION_TEST}#frontCaptureIsMirrored", prefixes=("FRONT_CAPTURE",))
             results.append(report(step, status[0], lines, status[1]))
         elif step == "kill":
             results.append(step_kill(device))

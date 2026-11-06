@@ -14,7 +14,7 @@
 * `Función` Esqueleto del complemento: protocolo de activación Wake y servicio de identidad del centro de complementos
 * `Función` Servicio de capacidad de cámara: solo una sesión puede usar la cámara a la vez y, si está ocupada, se indica quién la ocupa; mientras la cámara está en uso se muestra una notificación en primer plano, y cuando AutoJs6 se cierra la cámara se libera de inmediato y la notificación desaparece
 * `Función` Fotogramas en vivo: los fotogramas RGBA llegan a AutoJs6 por turnos a través de 3 bloques de memoria compartida (Android 8.1 o posterior) o 3 archivos temporales (Android 7.0 - 8.0), con la resolución y la frecuencia elegidas; los fotogramas que no se pueden procesar a tiempo se omiten y se cuentan
-* `Función` Captura de fotos: el JPEG llega a AutoJs6 como un archivo de solo lectura junto con sus dimensiones, la orientación EXIF, el número de bytes y si está reflejado; se pueden ajustar la calidad, la resolución y el modo de flash
+* `Función` Captura de fotos: el JPEG llega a AutoJs6 como un archivo de solo lectura junto con sus dimensiones, la orientación EXIF, el número de bytes y si está reflejado; se pueden ajustar la calidad, la resolución y el modo de flash; en una foto reflejada solo se reescribe la orientación EXIF, sin volver a codificarla; si una cámara no escribe la orientación de la foto (por ejemplo, el emulador de Android 7.0), el complemento escribe la orientación de 90 / 270 grados para que la foto se muestre tal como se sostenía el teléfono (no se puede detectar una omisión de 180 grados)
 * `Función` Vista previa: la imagen se muestra en una superficie que proporciona AutoJs6 y sigue la rotación de la pantalla; la vista previa de la lente frontal se refleja por defecto, los fotogramas y las fotos no; cuando desaparece la superficie que muestra la vista previa, esta se detiene sola y los fotogramas y las fotos continúan
 * `Función` Controles: linterna, modo de flash, zoom (proporción o lineal), compensación de exposición, enfoque y medición por toque; lo que el dispositivo no admite (como el flash de la lente frontal) devuelve UNSUPPORTED
 * `Función` Permiso de cámara: abrir la cámara sin él devuelve PERMISSION_DENIED y se puede solicitar; en Android 13 o posterior también se solicita el permiso de notificaciones, para la notificación de cámara en uso
@@ -24,3 +24,4 @@
 * `Dependencia` Se agrega Jetpack Compose BOM 2026.09.00 (pantallas del complemento)
 * `Dependencia` Se agrega AndroidX Activity Compose 1.12.2
 * `Dependencia` Se agrega AndroidX Core KTX 1.16.0
+* `Dependencia` Se agrega AndroidX ExifInterface 1.4.2 (escribe la orientación EXIF de las fotos)

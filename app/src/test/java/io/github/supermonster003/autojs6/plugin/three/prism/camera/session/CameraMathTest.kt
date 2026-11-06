@@ -70,6 +70,25 @@ class CameraMathTest {
     }
 
     @Test
+    fun `a missing quarter turn is filled in only over unrotated sensor pixels`() {
+        assertEquals(6, ExifOrientation.completed(1, 90, wider = true))
+        assertEquals(8, ExifOrientation.completed(1, 270, wider = true))
+        assertEquals(6, ExifOrientation.completed(0, 90, wider = true))
+        assertEquals(8, ExifOrientation.completed(0, 270, wider = true))
+        // The camera rotated the pixels itself, or the capture needs no quarter turn: nothing to fill in.
+        assertEquals(1, ExifOrientation.completed(1, 90, wider = false))
+        assertEquals(1, ExifOrientation.completed(1, 0, wider = true))
+        assertEquals(0, ExifOrientation.completed(0, 0, wider = true))
+        // A missing half turn keeps the shape and cannot be told apart (appendix D Q14).
+        assertEquals(1, ExifOrientation.completed(1, 180, wider = true))
+        // The camera wrote an orientation: it is kept.
+        (2..8).forEach { stored -> assertEquals("stored $stored", stored, ExifOrientation.completed(stored, 90, wider = true)) }
+        // Mirroring follows the filled-in orientation (protocol "Capture").
+        assertEquals(5, ExifOrientation.mirroredOf(ExifOrientation.completed(1, 90, wider = true)))
+        assertEquals(7, ExifOrientation.mirroredOf(ExifOrientation.completed(0, 270, wider = true)))
+    }
+
+    @Test
     fun `the device orientation picks the capture rotation`() {
         assertEquals(0, DeviceRotation.surfaceRotationOf(0, 2))
         assertEquals(0, DeviceRotation.surfaceRotationOf(44, 2))

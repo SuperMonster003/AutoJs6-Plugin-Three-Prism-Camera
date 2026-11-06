@@ -64,6 +64,24 @@ internal object ExifOrientation {
         else -> 2
     }
 
+    /**
+     * The orientation a capture keeps once a turn the camera left out is filled in (appendix D Q14). A camera that
+     * ignores `JPEG_ORIENTATION` (the API 24 emulator) stores the sensor pixels unrotated with orientation 1 or none
+     * ([stored] 1 or 0): when the capture needs a 90 or 270 degree turn ([expectedRotation]) and the pixels still have
+     * the landscape shape of the sensor ([wider]), 6 or 8 is returned. A missing 180 degree turn keeps the shape and
+     * cannot be told apart; any other [stored] orientation is kept.
+     * zh-CN: 补上相机遗漏的旋转后照片应保留的方向 (附录 D Q14). 忽略 `JPEG_ORIENTATION` 的相机 (API 24 模拟器) 存下未旋转的传感器像素, 方向为 1 或缺失
+     * ([stored] 为 1 或 0): 拍照需要旋转 90 或 270 度 ([expectedRotation]) 而像素仍是传感器的横向形状 ([wider]) 时返回 6 或 8. 遗漏的 180 度旋转
+     * 不改变形状, 无法分辨; 其他 [stored] 方向保持不变.
+     */
+    fun completed(stored: Int, expectedRotation: Int, wider: Boolean): Int = when {
+        stored != 0 && stored != 1 -> stored
+        !wider -> stored
+        expectedRotation == 90 -> 6
+        expectedRotation == 270 -> 8
+        else -> stored
+    }
+
 }
 
 /**

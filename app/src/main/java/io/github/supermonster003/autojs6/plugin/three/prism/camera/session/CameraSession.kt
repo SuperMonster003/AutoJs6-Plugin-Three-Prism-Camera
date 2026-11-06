@@ -27,6 +27,7 @@ import androidx.camera.core.FocusMeteringResult
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.ImageProxy
 import androidx.camera.core.MirrorMode
 import androidx.camera.core.Preview
 import androidx.camera.core.SurfaceOrientedMeteringPointFactory
@@ -203,7 +204,7 @@ internal class CameraSession(
 
     val isClosed: Boolean get() = closed.get()
 
-    /** Main thread: the state keys (protocol "Per method") plus `previewMirrored` (appendix D Q11). zh-CN: 主线程: 状态键另加 `previewMirrored`. */
+    /** Main thread: the state keys (protocol "Per method", `previewMirrored` per appendix D Q11 = (b)). zh-CN: 主线程: 状态键 (含附录 D Q11 = (b) 的 `previewMirrored`). */
     fun stateBundle(): Bundle = answer(version) {
         putString(CameraResultKeys.STATE, if (closed.get()) CameraContract.STATE_CLOSED else CameraContract.STATE_READY)
         putString(CameraResultKeys.ID, id)
@@ -235,7 +236,7 @@ internal class CameraSession(
         putLong(CameraResultKeys.FRAMES, counters.frames.get())
         putLong(CameraResultKeys.DROPPED, counters.dropped.get())
         putString(CameraResultKeys.HOLDER, holder.label)
-        putBoolean(KEY_PREVIEW_MIRRORED, previewMirrored)
+        putBoolean(CameraResultKeys.STATE_PREVIEW_MIRRORED, previewMirrored)
     }
 
     private fun zoomRange(): Pair<Float, Float> {
@@ -596,9 +597,9 @@ internal class CameraSession(
             val useCase = captureUseCase(CaptureConfig(job.request.quality, job.request.width, job.request.height))
             useCase.flashMode = flashModeOf(job.request.flashMode ?: flashMode)
             useCase.targetRotation = deviceRotation
-            val file = CaptureWriter.newFile(appContext)
-            val metadata = ImageCapture.Metadata().apply { isReversedHorizontal = job.request.mirror }
-            val options = ImageCapture.OutputFileOptions.Builder(file).setMetadata(metadata).build()
+            // The turn the picture needs to stand upright as the phone is held (appendix D Q14).
+            // zh-CN: 照片按手持方向转正所需的旋转 (附录 D Q14).
+            val expectedRotation = cameraInfo.getSensorRotationDegrees(deviceRotation)
             val watchdog = Runnable {
                 finishCapture(job) {
                     job.callback.onError(CameraFailure(CameraErrorCodes.TIMEOUT, "the camera delivered no picture within ${CameraLimits.CAPTURE_TIMEOUT_MILLIS} ms").toBundle(version))
@@ -606,10 +607,9 @@ internal class CameraSession(
             }
             job.watchdog = watchdog
             MainThread.handler.postDelayed(watchdog, CameraLimits.CAPTURE_TIMEOUT_MILLIS)
-            useCase.takePicture(options, CameraExecutors.io, object : ImageCapture.OnImageSavedCallback {
-                override fun onImageSaved(output: ImageCapture.OutputFileResults) = delivered(job, file)
+            useCase.takePicture(CameraExecutors.io, object : ImageCapture.OnImageCapturedCallback() {
+                override fun onCaptureSuccess(image: ImageProxy) = written(job, image, expectedRotation)
                 override fun onError(exception: ImageCaptureException) {
-                    file.delete()
                     val failure = when {
                         exception.imageCaptureError == ImageCapture.ERROR_CAMERA_CLOSED && closed.get() ->
                             CameraFailure(CameraErrorCodes.SESSION_CLOSED, "the session closed during the capture")
@@ -624,6 +624,32 @@ internal class CameraSession(
             val failure = throwable.asCameraFailure()
             finishCapture(job) { job.callback.onError(failure.toBundle(version)) }
         }
+    }
+
+    /**
+     * IO thread: copies the in-memory JPEG to a file with its EXIF orientation settled (appendix D Q13 / Q14 = (b)) and
+     * releases the image at once, then hands the file over.
+     * zh-CN: IO 线程: 把内存中的 JPEG 复制到文件并确定 EXIF 方向 (附录 D Q13 / Q14 = (b)), 随即释放图像, 然后交出文件.
+     */
+    private fun written(job: CaptureJob, image: ImageProxy, expectedRotation: Int) {
+        val file = try {
+            if (job.done.get()) return
+            CaptureWriter.newFile(appContext).also { file ->
+                try {
+                    CaptureWriter.write(image, file, job.request.mirror, expectedRotation)
+                } catch (throwable: Throwable) {
+                    file.delete()
+                    throw throwable
+                }
+            }
+        } catch (throwable: Throwable) {
+            val failure = throwable.asCameraFailure()
+            finishCapture(job) { job.callback.onError(failure.toBundle(version)) }
+            return
+        } finally {
+            image.close()
+        }
+        delivered(job, file)
     }
 
     /** IO thread: reads the saved picture and hands it over (protocol "Capture"). zh-CN: IO 线程: 读取已保存的照片并交出. */
@@ -893,12 +919,6 @@ internal class CameraSession(
 
     internal companion object {
         const val TAG = "PrismSession"
-
-        /**
-         * State key of the plugin (appendix D Q11): whether the preview is mirrored (front camera, `MIRROR_MODE_ON_FRONT_ONLY`).
-         * zh-CN: 插件自带的状态键 (附录 D Q11): 预览是否镜像 (前置镜头, `MIRROR_MODE_ON_FRONT_ONLY`).
-         */
-        const val KEY_PREVIEW_MIRRORED = "previewMirrored"
 
         /** [PreviewLossWatch]: lost preview buffers within [LOSS_WINDOW_MILLIS] that stop the preview. zh-CN: 停止预览所需的丢失次数. */
         const val LOSS_BURST = 3

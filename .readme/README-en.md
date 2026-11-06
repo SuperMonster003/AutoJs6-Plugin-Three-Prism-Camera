@@ -184,7 +184,7 @@ _2026/11/05_
 - `Feature` Plugin skeleton: Wake activation protocol and Plugin Center identity service
 - `Feature` Camera capability service: only one session can use the camera at a time and a busy camera names its holder; a foreground notification shows while the camera is in use, and when AutoJs6 exits the camera is released at once and the notification goes away
 - `Feature` Live frames: RGBA frames take turns through 3 shared memory blocks (Android 8.1 or later) or 3 temporary files (Android 7.0 - 8.0) on their way to AutoJs6, at the chosen resolution and frame rate; frames that cannot be handled in time are skipped and counted
-- `Feature` Photo capture: the JPEG reaches AutoJs6 as a read-only file together with its size, EXIF orientation, byte count and whether it is mirrored; quality, resolution and flash mode can be set
+- `Feature` Photo capture: the JPEG reaches AutoJs6 as a read-only file together with its size, EXIF orientation, byte count and whether it is mirrored; quality, resolution and flash mode can be set; a mirrored photo only has its EXIF orientation rewritten, without re-encoding; where a camera does not write the photo orientation (for example the Android 7.0 emulator), the plugin writes the 90 / 270 degree orientation so that the photo shows as the phone was held (a missing 180 degrees cannot be detected)
 - `Feature` Preview: the picture is shown on a surface provided by AutoJs6 and follows screen rotation; the front lens preview is mirrored by default, frames and photos are not; when the surface showing the preview goes away, the preview stops on its own while frames and photos go on
 - `Feature` Controls: torch, flash mode, zoom (ratio or linear), exposure compensation, tap to focus and meter; items the device does not support (such as a flash on the front lens) report UNSUPPORTED
 - `Feature` Camera permission: opening the camera without it reports PERMISSION_DENIED and the permission can be requested; on Android 13 or later the notification permission is requested too, for the camera-in-use notification
@@ -194,6 +194,7 @@ _2026/11/05_
 - `Dependency` Attach Jetpack Compose BOM 2026.09.00 (plugin screens)
 - `Dependency` Attach AndroidX Activity Compose 1.12.2
 - `Dependency` Attach AndroidX Core KTX 1.16.0
+- `Dependency` Attach AndroidX ExifInterface 1.4.2 (writes the EXIF orientation of photos)
 
 ##### For more release history, refer to
 

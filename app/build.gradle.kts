@@ -311,6 +311,10 @@ dependencies {
     implementation(libs.camera.lifecycle)
     implementation(libs.camera.compose)
 
+    // ExifInterface (appendix D Q13 / Q14 = (b)): the capture writes the mirrored or the missing EXIF orientation itself.
+    // zh-CN: ExifInterface (附录 D Q13 / Q14 = (b)): 拍照自行写入镜像后的方向或相机遗漏的 EXIF 方向.
+    implementation(libs.exifinterface)
+
     // Jetpack Compose (roadmap D41): the BOM is the single version source; activity-compose follows it.
     // zh-CN: Jetpack Compose (路线图 D41): BOM 是唯一的版本来源, activity-compose 随之.
     implementation(platform(libs.compose.bom))

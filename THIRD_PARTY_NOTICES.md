@@ -20,7 +20,7 @@ Provenance and SHA-256 digests are recorded in `locks/host-api-aars.lock` and `l
 | CameraX core, Camera2 back end, Camera2 pipe, lifecycle and Compose (`androidx.camera:camera-core`, `camera-camera2`, `camera-camera2-pipe`, `camera-lifecycle`, `camera-compose`) | 1.6.2 | Apache-2.0 |
 | CameraX viewfinder (`androidx.camera.viewfinder:viewfinder-core`, `viewfinder-compose`) | 1.6.2 | Apache-2.0 |
 | CameraX feature combination query (`androidx.camera.featurecombinationquery:featurecombinationquery`) | 1.6.2 | Apache-2.0 |
-| AndroidX ExifInterface (`androidx.exifinterface:exifinterface`) | 1.4.2 | Apache-2.0 |
+| AndroidX ExifInterface (`androidx.exifinterface:exifinterface`, also a direct dependency: the capture writes its EXIF orientation, roadmap appendix D Q13 / Q14) | 1.4.2 | Apache-2.0 |
 | AndroidX Concurrent futures (`androidx.concurrent:concurrent-futures`, `concurrent-futures-ktx`) | 1.1.0 | Apache-2.0 |
 | Guava ListenableFuture (`com.google.guava:listenablefuture`) | 1.0 | Apache-2.0 |
 | Dagger (`com.google.dagger:dagger`, used by the Camera2 pipe) | 2.59 | Apache-2.0 |
