@@ -60,7 +60,7 @@
     },
     {
       "q": "Pueden los scripts recibir fotogramas en segundo plano?",
-      "a": "Sí. Mientras una sesión está abierta, el complemento ejecuta un servicio en primer plano de cámara y la notificación indica que la cámara está en uso. Algunos sistemas de fabricantes restringen aún más la cámara en segundo plano; consulte la matriz de dispositivos en la hoja de ruta."
+      "a": "Sí, siempre que la sesión se abra con AutoJs6 en primer plano. Mientras una sesión está abierta, el complemento ejecuta un servicio en primer plano de cámara y la notificación indica que la cámara está en uso. Si AutoJs6 ya está en segundo plano o el teléfono permanece en la pantalla de bloqueo (Android 11 o posterior), el sistema no permite usar la cámara, y una sesión abierta en ese momento informa CAMERA_DISABLED y se cierra. Algunos sistemas de fabricantes restringen aún más la cámara en segundo plano; consulte la matriz de dispositivos en la hoja de ruta."
     },
     {
       "q": "El complemento guarda las fotos en la galería?",

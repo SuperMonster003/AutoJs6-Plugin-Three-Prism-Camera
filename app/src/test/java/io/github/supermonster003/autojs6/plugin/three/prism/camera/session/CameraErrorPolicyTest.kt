@@ -43,8 +43,6 @@ class CameraErrorPolicyTest {
     @Test
     fun `fatal errors close the session with the protocol reason`() {
         mapOf(
-            CameraErrorPolicy.ERROR_CAMERA_DISABLED to (CameraContract.CLOSE_REASON_POLICY to null),
-            CameraErrorPolicy.ERROR_DO_NOT_DISTURB_MODE_ENABLED to (CameraContract.CLOSE_REASON_POLICY to null),
             CameraErrorPolicy.ERROR_CAMERA_REMOVED to (CameraContract.CLOSE_REASON_CAMERA_DISCONNECTED to null),
             CameraErrorPolicy.ERROR_CAMERA_FATAL_ERROR to (CameraContract.CLOSE_REASON_ERROR to CameraErrorCodes.INTERNAL),
             99 to (CameraContract.CLOSE_REASON_ERROR to CameraErrorCodes.INTERNAL),
@@ -55,6 +53,45 @@ class CameraErrorPolicyTest {
             assertEquals("error $error", expected.first, action.reason)
             assertEquals("error $error", expected.second, action.code)
             assertTrue("error $error: a known close reason", action.reason in CameraContract.CLOSE_REASONS)
+        }
+    }
+
+    @Test
+    fun `a disabled camera reports CAMERA_DISABLED before the policy close`() {
+        // Appendix D Q57 = (a): a session opened while the host is in the background or at the lock screen.
+        // zh-CN: 附录 D Q57 = (a): 宿主在后台或停在锁屏时打开的会话.
+        listOf(CameraErrorPolicy.ERROR_CAMERA_DISABLED, CameraErrorPolicy.ERROR_DO_NOT_DISTURB_MODE_ENABLED).forEach { error ->
+            listOf(false, true).forEach { policyDisabled ->
+                val action = CameraErrorPolicy.actionOf(error, policyDisabled)
+                assertTrue("error $error", action is CameraErrorPolicy.Action.FailAndClose)
+                action as CameraErrorPolicy.Action.FailAndClose
+                assertEquals("error $error", CameraErrorCodes.CAMERA_DISABLED, action.code)
+                assertEquals("error $error: the close reason keeps its meaning", CameraContract.CLOSE_REASON_POLICY, action.reason)
+                assertTrue("error $error: a code a plugin may send", CameraErrorCodes.isKnown(action.code) && action.code !in CameraErrorCodes.HOST_ONLY)
+                assertTrue("error $error: the message names the CameraState error", action.message.endsWith("(CameraState error $error)"))
+            }
+        }
+        assertEquals(CameraErrorPolicy.actionOf(CameraErrorPolicy.ERROR_CAMERA_DISABLED), CameraErrorPolicy.actionOf(CameraErrorPolicy.ERROR_CAMERA_DISABLED, false))
+        val background = CameraErrorPolicy.actionOf(CameraErrorPolicy.ERROR_CAMERA_DISABLED) as CameraErrorPolicy.Action.FailAndClose
+        val policy = CameraErrorPolicy.actionOf(CameraErrorPolicy.ERROR_CAMERA_DISABLED, policyDisabled = true) as CameraErrorPolicy.Action.FailAndClose
+        assertTrue(background.message, "background" in background.message && "lock screen" in background.message)
+        assertTrue(policy.message, "device policy" in policy.message)
+        // Only the message of ERROR_CAMERA_DISABLED depends on the device policy.
+        // zh-CN: 只有 ERROR_CAMERA_DISABLED 的消息取决于设备策略.
+        assertEquals(
+            CameraErrorPolicy.actionOf(CameraErrorPolicy.ERROR_DO_NOT_DISTURB_MODE_ENABLED, false),
+            CameraErrorPolicy.actionOf(CameraErrorPolicy.ERROR_DO_NOT_DISTURB_MODE_ENABLED, true),
+        )
+    }
+
+    @Test
+    fun `no CameraState error closes silently with reason policy`() {
+        // Every policy close comes with an error that says why (appendix D Q57 = (a)).
+        // zh-CN: 每次以 policy 关闭都带有说明原因的错误 (附录 D Q57 = (a)).
+        (0..16).forEach { error ->
+            val action = CameraErrorPolicy.actionOf(error)
+            assertTrue("error $error", !(action is CameraErrorPolicy.Action.Close && action.reason == CameraContract.CLOSE_REASON_POLICY))
+            if (action is CameraErrorPolicy.Action.FailAndClose) assertTrue("error $error", action.reason in CameraContract.CLOSE_REASONS)
         }
     }
 

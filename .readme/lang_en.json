@@ -60,7 +60,7 @@
     },
     {
       "q": "Can scripts receive frames in the background?",
-      "a": "Yes. While a session is open, the plugin runs a camera foreground service and the notification shows that the camera is in use. Some vendor systems restrict background cameras further; see the device matrix in the roadmap."
+      "a": "Yes, as long as the session is opened while AutoJs6 is in the foreground. While a session is open, the plugin runs a camera foreground service and the notification shows that the camera is in use. When AutoJs6 is already in the background or the phone sits at the lock screen (Android 11 and later), the system does not allow camera use, and a session opened then reports CAMERA_DISABLED and closes. Some vendor systems restrict background cameras further; see the device matrix in the roadmap."
     },
     {
       "q": "Does the plugin save photos to the gallery?",

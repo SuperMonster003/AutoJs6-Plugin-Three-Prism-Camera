@@ -130,7 +130,7 @@ La caméra nécessite CameraX et les autorisations de service de premier plan. S
 
 #### Les scripts reçoivent-ils des images en arrière-plan?
 
-Oui. Tant qu'une session est ouverte, le plugin exécute un service de premier plan caméra et la notification indique que la caméra est utilisée. Certains systèmes de constructeurs restreignent davantage la caméra en arrière-plan; consultez la matrice des appareils dans la feuille de route.
+Oui, à condition que la session soit ouverte quand AutoJs6 est au premier plan. Tant qu'une session est ouverte, le plugin exécute un service de premier plan caméra et la notification indique que la caméra est utilisée. Quand AutoJs6 est déjà en arrière-plan ou que le téléphone reste sur l'écran de verrouillage (Android 11 ou ultérieur), le système n'autorise pas l'usage de la caméra, et une session ouverte à ce moment signale CAMERA_DISABLED puis se ferme. Certains systèmes de constructeurs restreignent davantage la caméra en arrière-plan; consultez la matrice des appareils dans la feuille de route.
 
 #### Le plugin enregistre-t-il les photos dans la galerie?
 
@@ -194,6 +194,7 @@ _2026/11/05_
 - `Note` L'icône actuelle est une proposition et peut encore changer
 - `Fonctionnalité` Squelette du plugin: protocole d'activation Wake et service d'identité du centre des plugins
 - `Fonctionnalité` Service de capacité caméra: une seule session peut utiliser la caméra à la fois et une caméra occupée indique son détenteur; une notification de premier plan s'affiche tant que la caméra est utilisée, et quand AutoJs6 se ferme la caméra est libérée aussitôt et la notification disparaît
+- `Fonctionnalité` Quand AutoJs6 est en arrière-plan ou que le téléphone reste sur l'écran de verrouillage (Android 11 ou ultérieur), le système n'autorise pas l'usage de la caméra: une session ouverte à ce moment signale d'abord CAMERA_DISABLED puis se ferme; une session ouverte au premier plan continue de fournir des images après le passage d'AutoJs6 en arrière-plan ou l'extinction de l'écran
 - `Fonctionnalité` Images en direct: les images RGBA parviennent à AutoJs6 à tour de rôle par 3 blocs de mémoire partagée (Android 8.1 ou ultérieur) ou 3 fichiers temporaires (Android 7.0 - 8.0), avec la résolution et la fréquence choisies; les images qui ne peuvent pas être traitées à temps sont sautées et comptées
 - `Fonctionnalité` Prise de photos: le JPEG parvient à AutoJs6 sous forme de fichier en lecture seule avec ses dimensions, l'orientation EXIF, le nombre d'octets et l'indication miroir; la qualité, la résolution et le mode flash sont réglables; une photo en miroir ne voit que son orientation EXIF réécrite, sans réencodage; lorsqu'une caméra n'écrit pas l'orientation de la photo (par exemple l'émulateur Android 7.0), le plugin écrit l'orientation de 90 / 270 degrés pour que la photo s'affiche dans le sens où le téléphone était tenu (un oubli de 180 degrés ne peut pas être détecté)
 - `Fonctionnalité` Aperçu: l'image s'affiche sur une surface fournie par AutoJs6 et suit la rotation de l'écran; l'aperçu de l'objectif avant est en miroir par défaut, pas les images ni les photos; quand la surface qui affiche l'aperçu disparaît, l'aperçu s'arrête de lui-même et les images comme les photos continuent

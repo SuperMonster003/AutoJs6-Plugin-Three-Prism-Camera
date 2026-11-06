@@ -303,7 +303,8 @@ internal class CameraSession(
             lastErrorCode = null
         } else if (error.code != lastErrorCode) {
             lastErrorCode = error.code
-            when (val action = CameraErrorPolicy.actionOf(error.code)) {
+            val policyDisabled = error.code == CameraErrorPolicy.ERROR_CAMERA_DISABLED && CameraEngine.disabledByPolicy(appContext)
+            when (val action = CameraErrorPolicy.actionOf(error.code, policyDisabled)) {
                 is CameraErrorPolicy.Action.Report -> {
                     val target = previewTarget
                     if (error.code == CameraErrorPolicy.ERROR_STREAM_CONFIG && target != null && !target.surface.isValid) {
@@ -317,6 +318,14 @@ internal class CameraSession(
                     }
                 }
                 is CameraErrorPolicy.Action.Close -> CameraExecutors.io.execute { close(action.reason, action.code, action.message, notify = true) }
+                is CameraErrorPolicy.Action.FailAndClose -> {
+                    // `onError` goes out before the close starts; both are one-way calls on the same callback Binder, so the host
+                    // receives them in this order (appendix D Q57 = (a)).
+                    // zh-CN: `onError` 在关闭开始之前发出; 两者都是同一个回调 Binder 上的单向调用, 宿主按此顺序收到 (附录 D Q57 = (a)).
+                    Log.i(TAG, "CameraState error ${error.code}: ${action.code}, then close ${action.reason}")
+                    sendError(CameraFailure(action.code, action.message, cameraId = id))
+                    CameraExecutors.io.execute { close(action.reason, null, action.message, notify = true) }
+                }
             }
         }
         if (state.type == CameraState.Type.OPEN && lastStateType != CameraState.Type.OPEN) applyControls()

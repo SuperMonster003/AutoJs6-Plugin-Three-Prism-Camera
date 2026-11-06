@@ -2,7 +2,7 @@
 """Device matrix of 3-Prism Camera (roadmap P4.2 - P4.4 and appendix D Q41 = (b)) through the host `camera` module.
 
 Usage: py -u .python/device_camera_matrix.py <serial> [--phases smoke,perf,background,bgopen,kill,coldstart,recognize,q41]
-       [--seconds 30] [--sizes 640x480,1280x720] [--allow-device-changes]
+       [--seconds 30] [--sizes 640x480,1280x720] [--allow-device-changes] [--bgopen-via home|lock]
 
 The host must be a build with the `camera` module (versionCode >= 6641) and the plugin must be installed with the camera
 permission granted. Scripts run through RunIntentActivity like device_camera_samples.py (its Device and run_phase are
@@ -16,7 +16,9 @@ reused); the shell adds what only it sees. One line per check: PASS / FAIL / SKI
   then the delay of `session.capture()` (call to ImageWrapper, median of 3) with the session open.
 - background (P4.3): a session analyzes while the host goes home for --seconds and then while the screen is off for
   --seconds; frames in each window, plus the plugin's foreground service and process capability from dumpsys.
-- bgopen (P4.3): the host goes home first, then the script calls `camera.open()` and analyzes 10 s.
+- bgopen (P4.3): the host goes home first (with --bgopen-via lock the screen turns off at the lock screen instead),
+  then the script calls `camera.open()` and analyzes 10 s; without frames the session must report `CAMERA_DISABLED`
+  and then close with reason `policy` (appendix D Q57 = (a)).
 - kill (P4.3): a session analyzes, the host goes home and is killed with `am kill` (`am force-stop` when the process
   survives); the plugin's foreground notification must be gone and its session close must start within 1 s, the camera
   device within 1.3 s (CameraX closes it about 1 s after the graph stops; appendix D Q58 (a)).
@@ -33,7 +35,7 @@ zh-CN: 经宿主 `camera` 模块在设备上跑 3-Prism Camera 的设备矩阵 (
 只有 shell 能看到的由本脚本补充. 每项一行 PASS / FAIL / SKIP / INFO 与关键值. smoke (R3): list, open + 10 帧, capture 到文件, 手电开关;
 perf (P4.4): 每个分辨率分析 --seconds 秒, 记录实际分辨率与帧率, 丢帧, 传感器时间戳到脚本回调的延迟 P50 / P95 (宿主 onFrame 处理的上界),
 两进程 CPU 与 PSS 增量, 以及会话打开时 `session.capture()` 的延迟 (3 次中位数); background (P4.3): 宿主回桌面与熄屏各 --seconds 秒的出帧数,
-以及插件前台服务与进程能力; bgopen: 宿主先回桌面再 open; kill: `am kill` 宿主后插件通知须在 1 秒内消失且会话 1 秒内开始关闭, 相机设备 1.3 秒内释放 (附录 D Q58 (a)); coldstart: 取景页冷启动
+以及插件前台服务与进程能力; bgopen: 宿主先回桌面 (--bgopen-via lock 改为熄屏停在锁屏) 再 open, 没有出帧时会话须先报 CAMERA_DISABLED 再以 policy 关闭 (附录 D Q57 = (a)); kill: `am kill` 宿主后插件通知须在 1 秒内消失且会话 1 秒内开始关闭, 相机设备 1.3 秒内释放 (附录 D Q58 (a)); coldstart: 取景页冷启动
 (`am start -W` 3 次中位数); q41: 写入设置页的默认值 (前置, 320x240, 15 fps), 不带参数的 `camera.open()` 须按其取值, 之后还原.
 """
 from __future__ import annotations
@@ -212,14 +214,22 @@ setTimeout(function () {
         exit();
         return;
     }
-    var count = 0, events = [];
-    session.on('error', function (e) { events.push(describe(e)); });
-    session.on('close', function (reason) { events.push('close ' + reason); });
+    var count = 0, events = [], order = [], first = null, t0 = Date.now();
+    session.on('error', function (e) {
+        events.push('error +' + (Date.now() - t0) + ' ms ' + (e && e.code));
+        order.push('error:' + (e && e.code));
+        first = first || e;
+    });
+    session.on('close', function (reason) { events.push('close +' + (Date.now() - t0) + ' ms ' + reason); order.push('close:' + reason); });
     session.analyze(function () { count++; });
     setTimeout(function () {
         var state = session.state();
-        report('bgopen', 'INFO', 'open in the background succeeded, frames in 10 s=' + count + ' dropped=' + state.dropped + ' open=' + state.open +
-            ' events=' + (events.join('; ') || '-'));
+        // Appendix D Q57 = (a): with no frames the session must say why, CAMERA_DISABLED first, then the policy close.
+        // zh-CN: 附录 D Q57 = (a): 没有出帧时会话须说明原因, 先 CAMERA_DISABLED, 再以 policy 关闭.
+        var verdict = count > 0 ? 'INFO' : (order.join(',') === 'error:CAMERA_DISABLED,close:policy' ? 'PASS' : 'FAIL');
+        report('bgopen', verdict, (count > 0 ? 'open in the background delivered frames' : 'open in the background delivered no frames') +
+            ', frames in 10 s=' + count + ' dropped=' + state.dropped + ' open=' + state.open + ' events=' + (events.join('; ') || '-') +
+            (first ? ' error=' + describe(first) : ''));
         session.close();
         out('done');
         exit();
@@ -397,6 +407,8 @@ def main():
     parser.add_argument("--allow-device-changes", action="store_true")
     parser.add_argument("--yolo-model", default="", help="recognize: a directory with model.json, model.ncnn.param and model.ncnn.bin")
     parser.add_argument("--limit", type=int, default=60, help="recognize: seconds per recognizer")
+    parser.add_argument("--bgopen-via", choices=("home", "lock"), default="home",
+                        help="bgopen: leave the host by going home (default) or by turning the screen off at the lock screen")
     args = parser.parse_args()
     device = Device(args.serial)
     sdk = device.shell("getprop ro.build.version.sdk").strip()
@@ -454,7 +466,19 @@ def main():
 
             run_phase(device, "background", common + fill(BACKGROUND, seconds=args.seconds), 2 * args.seconds + 60, on_background)
         if "bgopen" in phases and unlocked("bgopen"):
-            run_phase(device, "bgopen", common + BGOPEN, 60, lambda line: line == "step:home" and device.shell("input keyevent 3"))
+            # --bgopen-via lock turns the screen off instead of going home: behind the keyguard the host is "top sleeping"
+            # (appendix D Q57); the device stays locked afterwards.
+            # zh-CN: --bgopen-via lock 改为熄屏而不是回桌面: 锁屏之下宿主为 "top sleeping" (附录 D Q57); 之后设备保持锁定.
+            leave = "input keyevent 223" if args.bgopen_via == "lock" else "input keyevent 3"
+            print("INFO bgopen via=%s" % args.bgopen_via, flush=True)
+            device.shell("logcat -c")
+            run_phase(device, "bgopen", common + BGOPEN, 60, lambda line: line == "step:home" and device.shell(leave))
+            # Key lines only: the plugin's error mapping and close, the system's while-in-use refusal.
+            # zh-CN: 只取关键行: 插件的错误映射与关闭, 系统的使用期间拒绝.
+            lines = [line.strip() for line in device.shell("logcat -d -v time -b main,system").splitlines()
+                     if re.search(r"PrismSession.*(CameraState error|Session closed)|can not have .*camera|startForeground.*camera", line)]
+            for line in lines[:6]:
+                print("INFO bgopen log %s" % line[:220], flush=True)
         if "kill" in phases and unlocked("kill"):
             def on_kill(line):
                 if line != "step:kill":
