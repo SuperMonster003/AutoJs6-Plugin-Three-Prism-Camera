@@ -446,7 +446,10 @@ class Device:
         self.shell("am force-stop " + HOST)
         activity = self.launcher()
         if activity:
-            self.shell("am start -n " + activity)
+            # Clear the host's task: an activity of another app left on top of it (for example the overlay permission
+            # page the host opened) would stay in front, and the plugin's camera foreground service needs the host on top.
+            # zh-CN: 清空宿主的任务: 留在其上的其他应用活动 (例如宿主打开的悬浮窗权限页) 会一直在前台, 而插件的相机前台服务需要宿主在最上层.
+            self.shell("am start --activity-clear-task -n " + activity)
             time.sleep(4)
 
     def plugin_launcher(self):
