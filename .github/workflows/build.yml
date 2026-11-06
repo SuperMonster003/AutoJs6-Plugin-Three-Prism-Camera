@@ -112,8 +112,9 @@ jobs:
           arch: x86_64
           profile: pixel_6
           avd-name: Three_Prism_Camera_CI_33
-          # The virtual scene back camera and the emulated front camera give CameraX two cameras (roadmap D35).
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back virtualscene -camera-front emulated
+          # Two emulated cameras give CameraX a back and a front camera (roadmap D35). The virtual scene back camera of the
+          # API 33 image stamps every frame with the same negative timestamp and cameraserver drops them all (appendix D Q54).
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back emulated -camera-front emulated
           # ci_connected_tests.py turns the animations off (and hides system error dialogs) once the emulator settled.
           disable-animations: false
           # The emulator runner executes every script line as a separate shell command, so a backslash continuation would

@@ -4,7 +4,7 @@
 Trimmed from 3-Macaw Speech's script of the same name (roadmap D35, P0.4), whose CI runs showed why: emulators can lose
 the device right after boot, restart system_server while Gradle installs, or fail `package install-commit`, and an
 `adb` call without a time limit then hangs the job until it is cancelled. 3-Prism Camera runs one image (API 33
-google_apis x86_64 with `-camera-back virtualscene -camera-front emulated`, see .github/workflows/build.yml), so the
+google_apis x86_64 with `-camera-back emulated -camera-front emulated`, see .github/workflows/build.yml), so the
 three-button navigation workaround of the API 37.1 image is not carried over.
 
 The script builds the APKs first, waits for a settled emulator, turns the animations off and hides system error
