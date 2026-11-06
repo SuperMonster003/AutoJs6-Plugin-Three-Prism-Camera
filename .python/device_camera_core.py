@@ -19,8 +19,9 @@ Steps (default: all that apply to the device; a step whose assumption fails is r
 - perf: analysis at 640x480 for --seconds; fps, drops and the plugin CPU share (appendix F).
 - capture: one picture; decoded size, EXIF orientation and, with --orientation, the expected shape.
 - captureui: openCaptureUi brings the viewfinder of the plugin to the front; a back press closes it and the callback
-  gets CANCELLED. The test binds the plugin itself, since the host refuses openCaptureUi until the plugin advertises
-  `captureUi` (roadmap P3.1), and starts the launcher activity of AutoJs6 first, since the viewfinder needs a visible host.
+  gets CANCELLED. The test binds the plugin itself (the script path, a photo and a cancel through
+  `camera.capture({ ui: true })`, is the viewfinder phase of device_camera_samples.py) and starts the launcher activity
+  of AutoJs6 first, since the viewfinder needs a visible host.
 - controls: torch, zoom 2x, exposure +2 against 0 by mean luminance, focusAt (asserted with --expect-focus; UNSUPPORTED
   is accepted without it, as on a camera without AF / AE / AWB regions).
 - preview: floating SurfaceView preview with analysis and capture for --seconds, then an invalid surface (needs the

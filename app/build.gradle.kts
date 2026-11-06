@@ -325,6 +325,11 @@ dependencies {
     implementation(libs.compose.activity)
     implementation(libs.compose.ui.tooling.preview)
 
+    // Material Color Utilities (MaterialKolor, MIT): the HCT tone rule of the theme accent (standalone settings specification
+    // section 6, roadmap P3.2).
+    // zh-CN: Material Color Utilities (MaterialKolor, MIT): 主题色的 HCT 色调规则 (独立设置规范第 6 节, 路线图 P3.2).
+    implementation(libs.material.color.utilities)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.test.ext.junit)
     androidTestImplementation(libs.test.runner)

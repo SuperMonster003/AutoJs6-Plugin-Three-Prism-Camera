@@ -77,11 +77,11 @@ class CameraContractMirrorTest {
             assertTrue("API $sdk: ${features - CameraContract.FEATURES}", CameraContract.FEATURES.containsAll(features))
             assertEquals("API $sdk: protocol order", CameraContract.FEATURES.filter { it in features }, features)
             assertEquals("API $sdk", sdk >= 27, CameraContract.FEATURE_SHARED_MEMORY in features)
-            // The viewfinder is advertised with the capture screen of roadmap P3.1 (appendix D Q3 = (b)).
-            // zh-CN: 取景页随路线图 P3.1 的拍照界面声明 (附录 D Q3 = (b)).
-            assertFalse("API $sdk", CameraContract.FEATURE_CAPTURE_UI in features)
+            // The viewfinder of roadmap P3.1 works on every supported API level.
+            // zh-CN: 路线图 P3.1 的取景页在所有支持的 API 级别上可用.
+            assertTrue("API $sdk", CameraContract.FEATURE_CAPTURE_UI in features)
         }
-        assertEquals(CameraContract.FEATURES - CameraContract.FEATURE_CAPTURE_UI, ThreePrismCameraContract.features(35).toSet())
+        assertEquals(CameraContract.FEATURES, ThreePrismCameraContract.features(35).toSet())
     }
 
     @Test

@@ -8,7 +8,7 @@
 
 ###### 2026/11/05
 
-* `Note` Préversion de développement: AutoJs6 peut déjà utiliser le cœur caméra (ouverture de la caméra, images en direct, prise de photos, aperçu et réglages); l'écran de prise de vue et le module de script camera ne sont pas encore livrés
+* `Note` Préversion de développement: AutoJs6 peut déjà utiliser le cœur caméra et le viseur (ouverture de la caméra, images en direct, prise de photos, aperçu, réglages et prise de vue dans le viseur); des détails peuvent encore changer avant la publication
 * `Note` Nécessite AutoJs6 6.8.1 (6641) ou ultérieur (la version minimale exacte sera renseignée une fois les modifications de l'hôte intégrées)
 * `Note` L'icône actuelle est une proposition et peut encore changer
 * `Fonctionnalité` Squelette du plugin: protocole d'activation Wake et service d'identité du centre des plugins
@@ -18,6 +18,10 @@
 * `Fonctionnalité` Aperçu: l'image s'affiche sur une surface fournie par AutoJs6 et suit la rotation de l'écran; l'aperçu de l'objectif avant est en miroir par défaut, pas les images ni les photos; quand la surface qui affiche l'aperçu disparaît, l'aperçu s'arrête de lui-même et les images comme les photos continuent
 * `Fonctionnalité` Réglages: lampe torche, mode flash, zoom (rapport ou linéaire), correction d'exposition, mise au point et mesure par toucher; ce que l'appareil ne prend pas en charge (comme le flash de l'objectif avant) renvoie UNSUPPORTED
 * `Fonctionnalité` Autorisation caméra: ouvrir la caméra sans elle renvoie PERMISSION_DENIED et l'autorisation peut être demandée; sur Android 13 ou ultérieur, l'autorisation des notifications est aussi demandée, pour la notification de caméra en cours d'utilisation
+* `Fonctionnalité` Viseur: ouvert depuis le lanceur, il permet de changer d'objectif, d'allumer la lampe, de zoomer avec le curseur ou en pinçant et de toucher pour faire la mise au point; une photo prise ici montre seulement l'image et sa résolution et n'est pas enregistrée; l'image de l'objectif avant est en miroir à l'écran, la photo ne l'est pas
+* `Fonctionnalité` camera.capture({ ui: true }) dans un script ouvre le même viseur: la photo est remise directement au script, et l'annulation renvoie null; si le viseur ne peut pas s'ouvrir parce qu'AutoJs6 est en arrière-plan, l'appel renvoie UI_REQUIRES_FOREGROUND au bout de 10 secondes au lieu d'attendre indéfiniment
+* `Fonctionnalité` Quand un script utilise la caméra, le viseur indique lequel et peut l'arrêter pour reprendre la caméra
+* `Fonctionnalité` Paramètres (en haut à droite du viseur): apparence (langue, mode nuit, couleur du thème, icône du lanceur), autorisations caméra et notifications, caméra par défaut à l'ouverture depuis le lanceur, notification du service de premier plan, diagnostic (version de CameraX, capacités de chaque objectif, qui utilise la caméra) et historique des versions; Rechercher les mises à jour ouvre la page des versions GitHub dans le navigateur, car le plugin ne demande aucune autorisation réseau
 * `Fonctionnalité` Un paquet par ABI (arm64-v8a, armeabi-v7a, x86_64, x86) et un paquet universal pour tous les appareils; les bibliothèques natives fournies avec CameraX et Compose sont alignées sur des pages mémoire de 16 KB
 * `Fonctionnalité` README, instructions du centre des plugins et journaux des modifications en 10 langues, générés à partir de sources JSON
 * `Dépendance` Ajout de Jetpack CameraX 1.6.2 (ouvre la caméra, prend les photos, fournit les images et le viseur)
@@ -25,3 +29,4 @@
 * `Dépendance` Ajout de AndroidX Activity Compose 1.12.2
 * `Dépendance` Ajout de AndroidX Core KTX 1.16.0
 * `Dépendance` Ajout de AndroidX ExifInterface 1.4.2 (écrit l'orientation EXIF des photos)
+* `Dépendance` Ajout de Material Color Utilities (MaterialKolor) 4.1.1 (couleur du thème des écrans du plugin)

@@ -167,11 +167,11 @@ internal class CameraPluginBinder(context: Context) : ICameraPlugin.Stub() {
     }
 
     /**
-     * Starts the viewfinder for one picture (protocol "Capture", roadmap D15, D31). The viewfinder screen is roadmap P3.1
-     * (appendix D Q3 = (b)): until `captureUi` is advertised the host refuses the call for scripts, while the plugin still
-     * answers it with the skeleton screen, so the registry and the callback path can be checked on a device.
-     * zh-CN: 为一张照片启动取景页 (协议 "Capture" 一节, 路线图 D15, D31). 取景页属于路线图 P3.1 (附录 D Q3 = (b)): 在声明 `captureUi` 之前宿主
-     * 替脚本拒绝该调用, 插件仍以骨架界面应答, 以便在设备上检查登记表与回调路径.
+     * Starts the viewfinder for one picture (protocol "Capture", roadmap D15, D31, P3.1). The result arrives through
+     * [CaptureUiRegistry]; a start the system drops (AutoJs6 not visible) expires after
+     * [CaptureUiRegistry.ATTACH_TIMEOUT_MILLIS] with `UI_REQUIRES_FOREGROUND`.
+     * zh-CN: 为一张照片启动取景页 (协议 "Capture" 一节, 路线图 D15, D31, P3.1). 结果经 [CaptureUiRegistry] 送达; 被系统丢弃的启动 (AutoJs6 不可见)
+     * 在 [CaptureUiRegistry.ATTACH_TIMEOUT_MILLIS] 后以 `UI_REQUIRES_FOREGROUND` 过期.
      */
     override fun openCaptureUi(request: Bundle?, callback: ICameraCaptureCallback?): Bundle = guarded(request, TAG) { requestVersion ->
         callback ?: throw CameraFailure(CameraErrorCodes.INVALID_ARGUMENT, "the capture callback is null")
@@ -193,6 +193,8 @@ internal class CameraPluginBinder(context: Context) : ICameraPlugin.Stub() {
             CaptureUiRegistry.fail(pending.token, CameraFailure(CameraErrorCodes.UI_REQUIRES_FOREGROUND, "the viewfinder could not start"))
             throw CameraFailure(CameraErrorCodes.UI_REQUIRES_FOREGROUND, "the viewfinder could not start: $e")
         }
+        val token = pending.token
+        MainThread.handler.postDelayed({ CaptureUiRegistry.expireUnattached(token) }, CaptureUiRegistry.ATTACH_TIMEOUT_MILLIS)
         answer(requestVersion)
     }
 

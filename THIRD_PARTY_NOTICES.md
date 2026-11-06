@@ -51,6 +51,7 @@ Provenance and SHA-256 digests are recorded in `locks/host-api-aars.lock` and `l
 | kotlinx.serialization core (`org.jetbrains.kotlinx:kotlinx-serialization-core`) | 1.7.3 | Apache-2.0 |
 | atomicfu (`org.jetbrains.kotlinx:atomicfu`) | 0.28.0 | Apache-2.0 |
 | JetBrains annotations (`org.jetbrains:annotations`), JSpecify (`org.jspecify:jspecify`) | 23.0.0, 1.0.0 | Apache-2.0 |
+| Material Color Utilities, Kotlin port by MaterialKolor (`com.materialkolor:material-color-utilities`; the theme accent of the plugin's screens) | 4.1.1 | MIT (https://github.com/jordond/materialkolor) |
 
 ## Native libraries
 

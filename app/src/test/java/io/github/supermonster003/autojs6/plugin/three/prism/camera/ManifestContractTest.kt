@@ -98,12 +98,24 @@ class ManifestContractTest {
     }
 
     @Test
-    fun `the activities are the wake, capture, transparent start and permission screens`() {
+    fun `the activities are the wake, capture, transparent start, permission, settings and release history screens`() {
         assertEquals(
-            listOf(".WakeActivity", CAPTURE_ACTIVITY, ".ThreePrismCameraStartActivity", ".ThreePrismCameraPermissionActivity"),
+            listOf(
+                ".WakeActivity",
+                CAPTURE_ACTIVITY,
+                ".ThreePrismCameraStartActivity",
+                ".ThreePrismCameraPermissionActivity",
+                ".ui.settings.SettingsActivity",
+                ".ui.release.ReleaseHistoryActivity",
+            ),
             application.children("activity").map { it.android("name") },
         )
-        assertEquals("false", activity(CAPTURE_ACTIVITY).android("exported"))
+        listOf(CAPTURE_ACTIVITY, ".ui.settings.SettingsActivity", ".ui.release.ReleaseHistoryActivity").forEach { name ->
+            assertEquals(name, "false", activity(name).android("exported"))
+            // Rotations keep the bound preview and a picture on its way (roadmap P3.1).
+            // zh-CN: 旋转时保留已绑定的预览与处理中的照片 (路线图 P3.1).
+            assertEquals(name, "orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden", activity(name).android("configChanges"))
+        }
         listOf(".ThreePrismCameraStartActivity", ".ThreePrismCameraPermissionActivity").forEach { name ->
             val transparent = activity(name)
             assertEquals("false", transparent.android("exported"))

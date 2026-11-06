@@ -55,10 +55,10 @@ internal object ThreePrismCameraContract {
 
     /**
      * Features this build implements end to end (roadmap D42); the host never calls a method whose feature is not
-     * advertised. `sharedMemory` needs API 27 (frames travel through files on API 24 - 26, roadmap D27). `captureUi` joins
-     * with the capture screen of roadmap P3.1 (appendix D Q3 = (b)).
+     * advertised. `sharedMemory` needs API 27 (frames travel through files on API 24 - 26, roadmap D27). `captureUi` is
+     * the viewfinder of roadmap P3.1 (appendix D Q3 = (b)).
      * zh-CN: 本构建端到端实现的功能 (路线图 D42); 宿主不调用未声明功能的方法. `sharedMemory` 需要 API 27 (API 24 - 26 经文件传帧,
-     * 路线图 D27). `captureUi` 随路线图 P3.1 的取景页加入 (附录 D Q3 = (b)).
+     * 路线图 D27). `captureUi` 即路线图 P3.1 的取景页 (附录 D Q3 = (b)).
      */
     fun features(sdkInt: Int = Build.VERSION.SDK_INT): List<String> = buildList {
         add(CameraContract.FEATURE_PREVIEW)
@@ -69,6 +69,7 @@ internal object ThreePrismCameraContract {
         add(CameraContract.FEATURE_EXPOSURE)
         add(CameraContract.FEATURE_FOCUS)
         add(CameraContract.FEATURE_FLASH)
+        add(CameraContract.FEATURE_CAPTURE_UI)
         if (sdkInt >= Build.VERSION_CODES.O_MR1) add(CameraContract.FEATURE_SHARED_MEMORY)
     }
 

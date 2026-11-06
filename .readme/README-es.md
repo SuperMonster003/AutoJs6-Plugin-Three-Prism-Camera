@@ -46,7 +46,7 @@ El README.md actual admite los siguientes idiomas:
 
 El complemento controla la cámara y se comunica con AutoJs6 por Binder: los fotogramas en vivo viajan por un búfer circular de memoria compartida (archivos temporales en Android 7.0 - 8.0), las fotos llegan a AutoJs6 en JPEG para decodificarlas o guardarlas sin cambios, y la vista previa se dibuja directamente en un `SurfaceView` de la interfaz del script, sin que ningún píxel pase por Binder. Mientras una sesión está abierta, el complemento ejecuta un servicio en primer plano de cámara, así que los scripts siguen recibiendo fotogramas en segundo plano o con la pantalla apagada.
 
-> Esta es una versión preliminar de desarrollo: el centro de complementos de AutoJs6 reconoce el complemento y AutoJs6 ya puede usar el núcleo de cámara (abrir la cámara, fotogramas en vivo, captura de fotos, vista previa y los controles), pero la pantalla de captura y el módulo de script `camera` aún no están disponibles. Las secciones siguientes describen los objetivos de diseño de la 1.0.0; consulte la hoja de ruta para ver el progreso.
+> Esta es una versión preliminar de desarrollo: el centro de complementos de AutoJs6 reconoce el complemento, y el núcleo de cámara (abrir la cámara, fotogramas en vivo, captura de fotos, vista previa y los controles) y la pantalla de captura están terminados; el módulo de script `camera` necesita una versión de AutoJs6 que aún no se ha publicado. Las secciones siguientes describen los objetivos de diseño de la 1.0.0; consulte la hoja de ruta para ver el progreso.
 
 ******
 
@@ -58,7 +58,7 @@ El complemento controla la cámara y se comunica con AutoJs6 por Binder: los fot
 - Fotogramas en vivo: fotogramas RGBA de 640x480 por defecto y hasta 1920x1080, enderezados según la pantalla por defecto; cuando un script se retrasa, los fotogramas se descartan y se cuentan en lugar de acumularse.
 - Vista previa: entregue a la sesión un `SurfaceView` de un script ui o de una ventana flotante para mostrar el visor, junto con los fotogramas en vivo y la captura de fotos.
 - Controles: selección de lente, resolución, velocidad de fotogramas objetivo, linterna, modo de flash, zoom, compensación de exposición y enfoque al tocar, con rangos y estado actual legibles.
-- Pantalla de captura: `camera.capture({ ui: true })` abre la pantalla de captura propia del complemento; el script recibe la foto cuando el usuario pulsa el obturador, o `null` si cancela.
+- Pantalla de captura: al abrir el complemento desde el lanzador se muestra la pantalla de captura, con cambio de lente, linterna, zoom y enfoque al tocar; las fotos tomadas ahí solo se muestran, no se guardan, y el botón de arriba a la derecha abre los ajustes; `camera.capture({ ui: true })` abre la misma pantalla, y el script recibe la foto cuando el usuario pulsa el obturador, o `null` si cancela.
 - Funciona en segundo plano: un servicio en primer plano de cámara se ejecuta mientras hay una sesión abierta, así que los fotogramas siguen llegando en segundo plano o con la pantalla apagada; la cámara se libera cuando el script termina o AutoJs6 se detiene.
 
 ******
@@ -178,7 +178,7 @@ Los planes, las decisiones de diseño y el progreso se registran como lista de v
 
 _2026/11/05_
 
-- `Aviso` Versión preliminar de desarrollo: AutoJs6 ya puede usar el núcleo de cámara (abrir la cámara, fotogramas en vivo, captura de fotos, vista previa y los controles); la pantalla de captura y el módulo de script camera aún no están disponibles
+- `Aviso` Versión preliminar de desarrollo: AutoJs6 ya puede usar el núcleo de cámara y el visor (abrir la cámara, fotogramas en vivo, captura de fotos, vista previa, los controles y la captura desde el visor); algunos detalles aún pueden cambiar antes de la publicación
 - `Aviso` Requiere AutoJs6 6.8.1 (6641) o posterior (la versión mínima exacta se indicará cuando se integren los cambios del anfitrión)
 - `Aviso` El icono actual es un diseño candidato y aún puede cambiar
 - `Función` Esqueleto del complemento: protocolo de activación Wake y servicio de identidad del centro de complementos
@@ -188,6 +188,10 @@ _2026/11/05_
 - `Función` Vista previa: la imagen se muestra en una superficie que proporciona AutoJs6 y sigue la rotación de la pantalla; la vista previa de la lente frontal se refleja por defecto, los fotogramas y las fotos no; cuando desaparece la superficie que muestra la vista previa, esta se detiene sola y los fotogramas y las fotos continúan
 - `Función` Controles: linterna, modo de flash, zoom (proporción o lineal), compensación de exposición, enfoque y medición por toque; lo que el dispositivo no admite (como el flash de la lente frontal) devuelve UNSUPPORTED
 - `Función` Permiso de cámara: abrir la cámara sin él devuelve PERMISSION_DENIED y se puede solicitar; en Android 13 o posterior también se solicita el permiso de notificaciones, para la notificación de cámara en uso
+- `Función` Visor: se abre desde el lanzador y permite cambiar de lente, usar la linterna, hacer zoom con el control deslizante o pellizcando y tocar para enfocar; una foto tomada aquí solo muestra la imagen y su resolución y no se guarda; la imagen de la lente frontal se ve reflejada en pantalla, la foto no
+- `Función` camera.capture({ ui: true }) en un script abre el mismo visor: la foto se entrega directamente al script y al cancelar se devuelve null; si el visor no puede abrirse porque AutoJs6 está en segundo plano, la llamada devuelve UI_REQUIRES_FOREGROUND a los 10 segundos en lugar de esperar indefinidamente
+- `Función` Cuando un script está usando la cámara, el visor indica cuál es y puede detenerlo para tomar la cámara
+- `Función` Ajustes (arriba a la derecha del visor): apariencia (idioma, modo nocturno, color del tema, icono del lanzador), permisos de cámara y notificaciones, cámara predeterminada al abrir desde el lanzador, notificación del servicio en primer plano, diagnóstico (versión de CameraX, capacidades de cada lente, quién usa la cámara) e historial de versiones; Buscar actualizaciones abre la página de versiones de GitHub en el navegador, ya que el complemento no solicita permiso de red
 - `Función` Un paquete por ABI (arm64-v8a, armeabi-v7a, x86_64, x86) y un paquete universal para todos los dispositivos; las bibliotecas nativas que incluyen CameraX y Compose están alineadas a páginas de memoria de 16 KB
 - `Función` README, instrucciones del centro de complementos y registros de cambios en 10 idiomas, generados a partir de fuentes JSON
 - `Dependencia` Se agrega Jetpack CameraX 1.6.2 (abre la cámara, toma fotos, entrega fotogramas y el visor)
@@ -195,6 +199,7 @@ _2026/11/05_
 - `Dependencia` Se agrega AndroidX Activity Compose 1.12.2
 - `Dependencia` Se agrega AndroidX Core KTX 1.16.0
 - `Dependencia` Se agrega AndroidX ExifInterface 1.4.2 (escribe la orientación EXIF de las fotos)
+- `Dependencia` Se agrega Material Color Utilities (MaterialKolor) 4.1.1 (color del tema de las pantallas del complemento)
 
 ##### Para más historial de versiones
 
