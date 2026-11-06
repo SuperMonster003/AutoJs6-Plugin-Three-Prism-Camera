@@ -391,19 +391,19 @@ P0 (插件骨架)                      P1.1 - P1.3 (宿主契约, 绑定, 注册
 
 ### P4.2 真机矩阵 (D36)
 
-- [ ] (测试) 附录 F 每台设备跑 R3 冒烟清单, 记录实际分辨率 / 帧率 / 丢帧 / 拍照延迟; OnePlus (ColorOS) 另记录激活与前台服务通知行为. 证据: 附录 F 表格填满, 未在线设备写 "未执行".
+- [x] (测试) 附录 F 每台设备跑 R3 冒烟清单, 记录实际分辨率 / 帧率 / 丢帧 / 拍照延迟; OnePlus (ColorOS) 另记录激活与前台服务通知行为. 证据: 附录 F 表格填满, 未在线设备写 "未执行". 实施 (prism-p4, 2026-11-06): 新脚本 `py -3 .python/device_camera_matrix.py <serial> --phases smoke,perf,background,bgopen,kill,coldstart` 经宿主 `camera` 模块逐项输出 PASS / FAIL 与关键数值 (克隆宿主 6641 arm64 md5 7b6f4835c2fe866ed0f3ddf5d3732476, 插件构建 22 arm64 md5 c71b1ecee54713743074267e980b79ae, 安装 / 激活 / 授权由 `adb install -g` 完成, 不点按). G8441, XQ-AT72, Redmi 22120RN86C 三台真机 R3 冒烟全部 PASS, 数字见附录 F "P4 设备矩阵"; OnePlus OPD2413 与小米平板 (API 35) 未执行, 等宿主 6.8.1 公开后补 (附录 D Q55), XQ-DQ72 未连接, Samsung 未租用, `AVD_API_24` 本卡未执行 (最低 API 冒烟见 P1.2 / P2.x 记录). R3 的 "取景页拍照" 本卡未重跑, 以 P3.1 `device_camera_samples.py --phases viewfinder` 的记录为准.
 
 ### P4.3 后台, 熄屏与宿主被杀 (D10)
 
-- [ ] (测试) 每台: 宿主退后台 30 秒持续出帧; 熄屏 30 秒持续出帧; 宿主已在后台时 `open` 的行为 (预期 API 33 `CAMERA_DISABLED`, API 35 需透明 Activity 路径); `am kill` 宿主后插件 1 秒内释放相机与通知. 证据: 每台的 `dumpsys activity services` 能力标记 (`--C` 或等价) 与日志片段.
+- [x] (测试) 每台: 宿主退后台 30 秒持续出帧; 熄屏 30 秒持续出帧; 宿主已在后台时 `open` 的行为 (预期 API 33 `CAMERA_DISABLED`, API 35 需透明 Activity 路径); `am kill` 宿主后插件 1 秒内释放相机与通知. 证据: 每台的 `dumpsys activity services` 能力标记 (`--C` 或等价) 与日志片段. 实施 (prism-p4, 2026-11-06, `device_camera_matrix.py --phases background,bgopen,kill`): G8441 / XQ-AT72 / Redmi 后台与熄屏 30 秒都持续出帧 (前台服务 `isForeground=true`), `am kill` 后插件通知 0.16 - 0.54 s 消失, 相机 0.03 - 0.04 s 关闭 (相机服务日志 `Closed Camera 0`; G8441 的 CameraX 日志被 chatty 折叠, 以通知为准), 均在 1 秒内; 后台 `open`: API 28 成功并出帧, API 31 / 33 `open` 返回后 0 帧, 会话以 `policy` 关闭, 不是预期的 `CAMERA_DISABLED` (附录 D Q57). 发现: 手机停在安全锁屏时宿主为 "top sleeping", 插件此时启动的前台服务被系统判为后台启动 (`Foreground service started from background can not have location/camera/microphone access`), 之后回桌面即 `ERROR_CAMERA_DISABLED`; 脚本据此在每个阶段前等待解锁. API 35 未执行 (Q55). 数字见附录 F.
 
 ### P4.4 性能基线
 
-- [ ] (测试) API 28 / 31 / 35 各一台: 480p 与 720p 的 30 秒分析 (帧率, 丢帧, 宿主 `onFrame` 处理耗时 P50 / P95, 两进程 CPU 与内存增量), 拍照延迟 (调用到 `ImageWrapper` 返回), 取景页冷启动时间. 目标: 480p 不低于 25 fps 且宿主处理 P95 不超过 5 ms; 不达标时记录并登记待决. 证据: 附录 F 性能表.
+- [ ] (测试) API 28 / 31 / 35 各一台: 480p 与 720p 的 30 秒分析 (帧率, 丢帧, 宿主 `onFrame` 处理耗时 P50 / P95, 两进程 CPU 与内存增量), 拍照延迟 (调用到 `ImageWrapper` 返回), 取景页冷启动时间. 目标: 480p 不低于 25 fps 且宿主处理 P95 不超过 5 ms; 不达标时记录并登记待决. 证据: 附录 F 性能表. 进展 (prism-p4, 2026-11-06, `device_camera_matrix.py --phases perf,coldstart`): API 28 (G8441) 与 API 31 (XQ-AT72) 已测, 480p 分别 30 / 29.9 fps (丢 1 / 0), 达到 25 fps 目标; 720p 29.8 / 29.9 fps; 会话打开时拍照中位数 1.21 - 1.39 s; 取景页冷启动 2.5 s / 3.0 s; Redmi (API 33) 额外记录 (相机自身约 14 fps). 宿主 `onFrame` 处理耗时无法用现有手段单独测: 脚本只能测 "传感器时间戳到脚本回调" (含曝光读出, 插件拷贝, 跨进程与宿主处理, P95 91 - 183 ms, 是上界), 宿主 instrumentation 的 perf 用例只有 640x480 且不分段计时, 改用例需改宿主并重建克隆 (附录 D Q56). 未完成: API 35 (等宿主 6.8.1 公开, Q55) 与宿主 onFrame P95 (Q56), 故不勾选. 数字见附录 F "P4 性能基线".
 
 ### P4.5 识别联动样例实测 (D7)
 
-- [ ] (测试) P1.6 的 OCR / 条码 / YOLO 三个样例在 API 31 与 35 各跑一次, 记录从出帧到首次命中的时间. 证据: 数字与日志片段.
+- [ ] (测试) P1.6 的 OCR / 条码 / YOLO 三个样例在 API 31 与 35 各跑一次, 记录从出帧到首次命中的时间. 证据: 数字与日志片段. 进展 (prism-p4, 2026-11-06): API 31 (XQ-AT72, 克隆宿主 6641, 插件构建 22, ML Kit Barcode 36 与 YOLO 61 临时安装) 用 `device_camera_matrix.py QV710AF65F --phases recognize --yolo-model <AutoJs6-Plugin-Yolo-NCNN>/fixtures/local/yolo11n` 跑三个样例的同款调用 (维护者按 toast 依次对准目标), 全部命中: OCR (`ocr.recognizeText`, 1280x720) 首帧到命中 32959 ms (第 71 帧, "Autojs6", 单帧识别 P50 419 ms, 计时含对准文字的时间), 扫码 (`barcode.recognizeText`, 1280x720 / 15 fps) 2151 ms (第 4 帧, "hello world", P50 513 ms), YOLO (`yolo11n`, 640x480) 788 ms (第 1 帧, mouse / keyboard, 含模型加载). 未完成: API 35 (等宿主 6.8.1 公开, Q55), 故不勾选.
 
 ---
 
@@ -667,6 +667,9 @@ oneway interface ICameraSessionCallback {
 | Q51 | `camera.list` / `capabilities` / `isAvailable` / `requestPermission` 在 UI 线程且插件尚未绑定时仍会卡住 (Q44 (b) 实施发现: 四者都经 `AidlPluginHost` 绑定插件, `isAvailable` 的探测也一样, 绑定回调与超时都投递到主线程, `CameraScriptCalls.call` 的 `runBlocking` 在 UI 线程上等不到; 同 Q44 根因, `open` 已解决) | 子会话原登记的选项 (保留作记录): (a) 这四个调用在 UI 线程且未绑定时报 `INVALID_ARGUMENT` (`isAvailable` 文档写明 "从不抛出", 改为返回 false) (推荐, 未先行; 宿主约 1 小时含测试与文档); (b) `AidlPluginHost` 改用带 Executor 的 `bindService` 让 UI 线程可等待 (仅 API 29+, API 24 - 28 仍需 (a) 或预先异步绑定; 影响全部插件, 约 3 - 4 小时并需回归全部插件); (c) 只靠文档 (现状, 误用仍 ANR). 调度会话出题时的 (b) (维护者所选的变体): 与 Q44 (b) 的 `open` 同机制, UI 线程未绑定时走后台线程绑定并排队, 不阻塞 UI 线程, 这四个调用的交付形式可改为异步 | 已拍板 (2026-11-06 13:05): (b) (非推荐项, 维护者选择), 指调度会话出题时的变体 (后台线程绑定并排队, 交付形式可改为异步), 不是原登记的 (b) "`AidlPluginHost` 改用带 Executor 的 `bindService`" (该方案不做, `AidlPluginHost` 保持不动, 与 Q44 (b) 一致). UI 线程上的同步返回值在插件未绑定时等不到, 交付形式涉及公开签名, 登记为 Q53 并由维护者拍板 (2026-11-06, AskUserQuestion): A 沿用 `dialogs` 惯例 (推荐; 其余选项: B 只在 UI 线程返回 Promise, C 只加回调参数且 UI 线程未绑定报 `INVALID_ARGUMENT`, D 新增 `xxxAsync` 方法). 宿主已落实 (prism-host-fixes, 2026-11-06): 宿主提交 e856c613f5, 只改宿主 camera 模块, `AidlPluginHost` 未动: UI 线程上不传回调时返回 Promise (以同步形式的值兑现, 失败以 `CameraError` 拒绝; `isAvailable` 只兑现); 任意线程上唯一参数为函数时立即返回 undefined, 在调用它的脚本线程上调用 `callback(value, null)` 或 `callback(null, error)` (与 `http` 一致); 其他线程不传回调时仍同步返回; 返回形式只取决于线程, 与是否已绑定无关; `undefined` / null 视为未传回调, 其他参数报 `INVALID_ARGUMENT`; `requestPermission` 在 UI 线程也可用 (Promise / 回调形式). 协议文档新增 "Discovery calls: on the UI thread and with a callback", 6.8.1 camera 功能条目 10 种语言补充说明. 附录 A.1 的四行与 P5.1 文档 / d.ts 须写明这两种形式. 证据: JVM CameraDiscoveryArgsTest 4 例, 克隆 camera / core.plugin.camera / RuntimeCameraBridgeTest 共 102 例 0 失败; `tools/camera/ui_thread_open_check.py` 新增 discovery 阶段 (先 force-stop 宿主, 首批调用遇到未绑定的插件), 克隆宿主 6641 (x86_64 md5 e9b672434411ef60594e5e3a2ad6a253) + 插件构建 16 在 `AVD_API_26_PRISM` 与 `AVD_API_33` 全部阶段 (discovery, starve, fps, repro, a5, uiopen, uifail, uiclose, thread) 通过: UI 线程上四个调用 23 - 55 ms 返回 Promise 并兑现 (API 33 插件冷启动 6.3 s 后兑现), 回调形式在 UI 线程与工作线程各回调一次且都在原线程, 工作线程同步形式不变, 4 种坏参数均为 `INVALID_ARGUMENT`, 50 ms UI 定时器最大间隔 134 ms, 无 ANR / 崩溃; API 33 只读 AVD 未装插件时的一次运行顺带验证失败路径 (Promise 以 `PLUGIN_NOT_INSTALLED` 拒绝, 回调收到 `(null, CameraError)`). |
 | Q52 | Q44 (b) 连接期间 UI 线程读 `zoomState` / `exposureState` 报 `INVALID_ARGUMENT` (两者要镜头应答, 连接期间没有可返回的值) | (a) 保持, 脚本在 `state().open` 为 true 后再读 (推荐, 已先行, 宿主 69c5528499); (b) 新增 `open` 事件 (宿主约 1 小时, 另需 d.ts / 文档 / Node / Bun facade 同步) | 已拍板 (2026-11-06 13:05): (a) 保持现状 (已实施, 69c5528499). 协议文档 "Open: on the UI thread" 已写明在 `state().open` 为 true 后读取 (宿主提交 e856c613f5); 影响附录 A.2 / A.5 与 P5.1 文档. |
 | Q54 | CI 模拟器后置镜头用 `virtualscene` 还是 `emulated` (P4.1 发现: 本机 `AVD_API_33` 以 CI 的 `-camera-back virtualscene` 启动时相机 HAL 每帧给出同一个负时间戳, cameraserver 丢弃全部帧, `CameraSmokeTest` 收不到帧; `emulated` 正常, 6 / 6 通过. 远端 Linux 运行器上是否同样未知, 因仓库还没有 remote) | (a) `.github/workflows/build.yml` 的 `emulator-options` 改为 `-camera-back emulated -camera-front emulated`, D35 同步改写 (推荐, 未先行; 1 行 + D35 一句, 约 5 分钟); (b) 保持 `virtualscene`, 建仓后第一次远端运行失败再改; (c) 两种各跑一次 (job 矩阵, CI 时长翻倍) | 待拍板. 影响 P4.1 远端运行与 D35; 改选 (b) 无返工, (c) 约 15 分钟. |
+| Q55 | API 35 设备 (OPD2413 `63751f63`, 小米平板 `968e9f18`) 的 P4.2 - P4.5 项 (两台按卡片约定不换装克隆宿主, 公开宿主 6.8.0 没有 `camera` 模块) | (a) 等宿主 6.8.1 公开后用公开宿主补测 (推荐, 已先行: 本卡未测, 表中写 "未执行"); (b) 维护者同意后临时换装克隆宿主 6641 测完还原 (约 40 分钟, 需维护者确认 ColorOS 安装对话框) | 待拍板. 影响 P4.2 / P4.3 / P4.4 / P4.5 的 API 35 行 (P4.4 / P4.5 因此未勾选); 改选 (b) 约 40 分钟, 无返工. |
+| Q56 | P4.4 的 "宿主 `onFrame` 处理耗时 P50 / P95" 无法单独测 (脚本只能测传感器时间戳到回调, 含曝光读出与插件拷贝, P95 91 - 183 ms; 宿主 instrumentation `analysisRunsThirtySeconds` 只有 640x480, 不分段计时) | (a) 宿主测试加 `prismWidth` / `prismHeight` 参数并记录 `onFrame` 收到到交给脚本的分段耗时, 重建克隆后在 API 28 / 31 补测 (推荐, 未先行; 宿主约 1 小时 + 补测 20 分钟); (b) 以 "传感器到回调" 上界作为基线, 5 ms 目标改为 "帧率不低于 25 fps 且丢帧低于 1%" (已有数据即满足, 改 P4.4 一句); (c) 去掉该指标 | 待拍板. 影响 P4.4 与附录 F 性能表; 改选 (b) / (c) 约 5 分钟. |
+| Q57 | 宿主已在后台时 `camera.open()` 在 API 31 / 33 的行为与 P4.3 预期不符 (实测: `open` 正常返回, 10 秒 0 帧, 会话以 `close` 事件 `policy` 关闭, 没有 `error` 事件; 系统日志 `Foreground service started from background can not have ... camera access`, CameraX `ERROR_CAMERA_DISABLED`; 预期是 `CAMERA_DISABLED` 错误. 手机停在安全锁屏时 (宿主 "top sleeping") 同样如此) | (a) 插件在前台服务没有相机能力时把 `ERROR_CAMERA_DISABLED` 转成会话 `error` (`CAMERA_DISABLED`, 说明 "宿主在后台或锁屏") 再以 `policy` 关闭, 文档写明 (推荐, 未先行; 插件 `app/src/main` 约 1 小时, 交 prism-p5 或后续卡片, 另需 P5.1 文档一句); (b) 保持现状, 只在文档写明 "宿主在后台或锁屏时打开的会话会以 policy 关闭" (约 10 分钟); (c) 插件改走透明 Activity 路径取得前台 (D25), 后台启动 Activity 在 API 29+ 受限, 收益不确定 | 待拍板. 影响 P4.3, P5.1 文档与附录 A.4; 改选 (b) 约 10 分钟, (c) 约半天. |
 | Q61 | README 截图 (P5.3 发现: R2 写 "界面有变化时重采 `docs/images/screenshots`", 但仓库没有该目录, README 模板也没有截图位置; P3 的截图按约定未入库) | (a) 1.0.0 README 不放截图, R2 的截图项视为不适用, 发布后界面稳定再补 (推荐, 已先行; 零返工); (b) P5.4 前用 API 33 AVD 合成素材采取景页与设置页明暗各 1 张 (1080 x 2340) 放进 `docs/images/screenshots`, README 10 种语言加截图段 (约 1 - 1.5 小时, 需借 AVD) | 已按推荐先行待确认 (2026-11-06, prism-p5); 影响 P5.3 / P5.4 R2; 改选 (b) 约 1 - 1.5 小时 |
 
 ---
@@ -731,6 +734,37 @@ oneway interface ICameraSessionCallback {
 | 模拟器 `AVD_API_33` (API 33, virtualscene) | Rhino (对照) | 11 fps (318) | 43 | 15.7 fps (450) | 64 |
 | 模拟器 `AVD_API_33` (API 33, virtualscene) | Node | 19.1 fps (570) | 6 | 19.5 fps (577) | 16 |
 | 模拟器 `AVD_API_33` (API 33, virtualscene) | Bun | 16.7 fps (495) | 37 | 17.6 fps (521) | 57 |
+
+
+P4 设备矩阵 (P4.2 / P4.3, prism-p4, 2026-11-06): `py -3 .python/device_camera_matrix.py <serial>`, 克隆宿主 6641 (arm64 md5 7b6f4835c2fe866ed0f3ddf5d3732476), 插件构建 22 (arm64 md5 c71b1ecee54713743074267e980b79ae). 冒烟 = list / open + 10 帧 / `capture({ path })` / 手电开关; 帧率按脚本回调计; 拍照为一次性 `camera.capture({ path })` (含 open 与 close); 后台与熄屏各 30 秒 640x480; kill 时间从击杀命令返回起算.
+
+| 设备 | API | 冒烟 | 实际分辨率 / 帧率 | 拍照 (一次性) | 后台 30 秒 | 熄屏 30 秒 | 宿主在后台时 open | am kill 后释放 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Sony G8441 `BH900ASK9E` | 28 | PASS (2 镜头) | 480x640, 30.4 fps | 2448x3264, 1400 ms | 900 帧, 30 fps, 丢 1 | 901 帧, 30 fps, 丢 2 | 成功, 10 秒 284 帧 | `am kill` 生效; 通知 0.54 s 消失 (相机关闭行被 chatty 折叠) |
+| Sony XQ-AT72 `QV710AF65F` | 31 | PASS (5 镜头) | 480x640, 30.2 fps | 3024x4032, 1411 ms | 896 帧, 29.9 fps, 丢 0 | 897 帧, 29.9 fps, 丢 2 | `open` 返回, 0 帧, 会话以 `policy` 关闭 (Q57) | `am kill` 生效; 通知 0.16 s, 相机 0.04 s |
+| Redmi 22120RN86C `bek749scrwv4wo8h` | 33 | PASS (2 镜头) | 480x640, 14.3 fps (相机自身) | 2448x3264, 1726 ms | 428 帧, 14.3 fps, 丢 0 | 428 帧, 14.3 fps, 丢 0 | 同 XQ-AT72 | 宿主有前台服务, `am kill` 生效; 通知 0.28 s, 相机 0.03 s |
+| 模拟器 `AVD_API_33` (emulated) | 33 | `CameraSmokeTest` 6 / 6 (P4.1), Q41 (b) PASS | 480x640, 29 fps | 1392x1856, 525 ms | 未执行 | 未执行 | 未执行 | 未执行 |
+| Sony XQ-DQ72 `QV770340J7` | 33 | 未执行 (未连接) | - | - | - | - | - | - |
+| Xiaomi Pad 23046RP50C `968e9f18` | 35 | 未执行 (等宿主 6.8.1 公开, Q55) | - | - | - | - | - | - |
+| OnePlus OPD2413 `63751f63` | 35 | 未执行 (等宿主 6.8.1 公开, Q55; ColorOS 激活与通知同) | - | - | - | - | - | - |
+| Samsung SM-A566B / SM-F971B | 36 / 37 | 未执行 (未租用) | - | - | - | - | - | - |
+| `AVD_API_24` | 24 | 未执行 (本卡; 见 P1.2 / P2.x) | - | - | - | - | - | - |
+
+前台服务与进程能力: 三台在后台阶段都是 `isForeground=true`; `dumpsys activity processes` 的 `curCapability` 在 Sony / Redmi 上对插件进程只给出 `----` 或 `LCMN`, 不能稳定区分, 以出帧与相机服务日志为准. G8441 的 `am kill` 直接生效; XQ-AT72 宿主带前台服务时 `am kill` 不杀, 脚本退到 `am force-stop` (两种都测到, 结果相同).
+
+P4 性能基线 (P4.4, prism-p4, 2026-11-06, `--phases perf,coldstart`): 640x480 / 1280x720 各 30 秒, 不指定帧率. "回调延迟" 为传感器时间戳到脚本回调 (含曝光读出, 插件拷贝, 跨进程与宿主处理, 是宿主 `onFrame` 的上界, Q56); CPU 按单核 100%; PSS 为前后差 (受 GC 影响, 只作参考); 会话拍照为会话打开时 `session.capture()` 3 次中位数; 冷启动为 `am force-stop` 后 `am start -W` 启动器入口 3 次中位数 (XQ-AT72 只有 WaitTime).
+
+| 设备 | 分辨率 | 帧率 (帧) | 丢帧 | 回调延迟 P50 / P95 | 宿主 CPU | 插件 CPU | 宿主 / 插件 PSS 差 | 会话拍照 | 取景页冷启动 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| G8441 (API 28) | 640x480 | 30 fps (883) | 1 | 95.5 / 105.4 ms | 53.4% | 31.6% | +2.9 / +2.9 MB | 1237 ms | 2527 ms (首次 15054 ms) |
+| G8441 (API 28) | 1280x720 | 29.8 fps (876) | 8 | 113.2 / 144.4 ms | 103.6% | 30.0% | -84.5 / -2.8 MB | 1214 ms | - |
+| XQ-AT72 (API 31) | 640x480 | 29.9 fps (873) | 0 | 85.7 / 91.3 ms | 41.3% | 24.7% | -21.8 / +3.9 MB | 1387 ms | 3018 ms |
+| XQ-AT72 (API 31) | 1280x720 | 29.9 fps (872) | 0 | 84.0 / 92.8 ms | 71.0% | 23.0% | +1.3 / -0.1 MB | 1348 ms | - |
+| Redmi 22120RN86C (API 33, 参考) | 640x480 | 14.2 fps (421) | 1 | 152.4 / 178.0 ms | 41.0% | 35.5% | -33.4 / +0.3 MB | 1240 ms | 2099 ms |
+| Redmi 22120RN86C (API 33, 参考) | 1280x720 | 14.3 fps (421) | 1 | 172.9 / 183.5 ms | 57.8% | 35.4% | -3.2 / -14.9 MB | 1199 ms | - |
+| API 35 | - | 未执行 (Q55) | - | - | - | - | - | - | - |
+
+宿主修复复核 (prism-p4, 2026-11-06): G8441 换装新克隆 (md5 7b6f4835) 后 `py -3.12 -I AutoJs6/tools/camera/ui_thread_open_check.py -s BH900ASK9E` 全部阶段 PASS (discovery 的 uiPromise / uiCallback / threadForms / badArgument / uiHeartbeat 最大间隔 125 ms, starve 3171 ms 触发, fps 30.0 丢 0, repro 45 ms, a5, uiOpen / uiFail / uiClose / threadOpen), 0 ANR, 0 崩溃.
 
 ---
 

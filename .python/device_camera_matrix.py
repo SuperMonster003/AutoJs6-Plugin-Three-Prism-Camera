@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Device matrix of 3-Prism Camera (roadmap P4.2 - P4.4 and appendix D Q41 = (b)) through the host `camera` module.
 
-Usage: py -u .python/device_camera_matrix.py <serial> [--phases smoke,perf,background,bgopen,kill,coldstart,q41]
+Usage: py -u .python/device_camera_matrix.py <serial> [--phases smoke,perf,background,bgopen,kill,coldstart,recognize,q41]
        [--seconds 30] [--sizes 640x480,1280x720] [--allow-device-changes]
 
 The host must be a build with the `camera` module (versionCode >= 6641) and the plugin must be installed with the camera
@@ -21,6 +21,8 @@ reused); the shell adds what only it sees. One line per check: PASS / FAIL / SKI
   survives); the plugin's foreground notification and its camera client must be gone within 1 s.
 - coldstart (P4.4): the plugin is force-stopped and its launcher (the viewfinder) started with `am start -W`, 3 times;
   TotalTime median.
+- recognize (P4.5, with --yolo-model and the ML Kit Barcode and YOLO NCNN plugins): the calls of the OCR, barcode and
+  YOLO samples on frames; a toast says what to point the back camera at; the time from the first frame to the first hit.
 - q41 (Q41 = (b), a debuggable plugin and an emulator or --allow-device-changes): the plugin's settings store gets
   facing front, 320x240 and 15 fps (the values the settings page writes), `camera.open()` without options must report
   them, then the store is put back.
@@ -36,6 +38,7 @@ perf (P4.4): 每个分辨率分析 --seconds 秒, 记录实际分辨率与帧率
 from __future__ import annotations
 
 import argparse
+import pathlib
 import re
 import statistics
 import subprocess
@@ -254,6 +257,60 @@ probe('q41explicit', { facing: 'back', resolution: '640x480', fps: 30 }, { facin
 next();
 """
 
+# P4.5: the calls of the three recognition samples (OCR, barcode, YOLO) with the time from the first frame to the first
+# hit; a toast on the device says what to point the back camera at.
+# zh-CN: P4.5: 三个识别样例 (OCR, 扫码, YOLO) 的同款调用, 记录首帧到首次命中的时间; 设备上的 toast 提示后置镜头对准什么.
+RECOGNIZE = r"""
+var limit = %(limit)d * 1000;
+function hunt(name, aim, options, recognize) {
+    step(function (next) {
+        toastLog('AIM: ' + aim);
+        out('step:aim-' + name);
+        setTimeout(function () {
+            var session = null, frames = 0, first = 0, hitAt = 0, hit = null, failure = null, ms = [];
+            try { session = camera.open(options); } catch (e) { report(name, 'FAIL', describe(e)); next(); return; }
+            var started = Date.now();
+            session.analyze(function (img) {
+                if (hit !== null || failure !== null) return;
+                frames++;
+                if (!first) first = Date.now();
+                var t0 = Date.now();
+                try { hit = recognize(img); } catch (e) { failure = describe(e); }
+                ms.push(Date.now() - t0);
+                if (hit !== null) hitAt = Date.now();
+            });
+            var timer = setInterval(function () {
+                if (hit === null && failure === null && Date.now() - started < limit) return;
+                clearInterval(timer);
+                var dropped = session.state().dropped;
+                session.close();
+                var detail = 'frames=' + frames + ' dropped=' + dropped + ' recognizeP50=' + pct(ms, 0.5) + 'ms';
+                if (failure !== null) report(name, 'FAIL', failure + ' ' + detail);
+                else if (hit === null) report(name, 'FAIL', 'no hit within ' + limit / 1000 + ' s ' + detail);
+                else report(name, 'PASS', 'firstFrameToHit=' + (hitAt - first) + 'ms hitFrame=' + frames + ' hit="' + String(hit).slice(0, 60) + '" ' + detail);
+                next();
+            }, 200);
+        }, 8000);
+    });
+}
+hunt('ocr', 'text AutoJs6', { resolution: '1280x720' }, function (img) {
+    var texts = ocr.recognizeText(img);
+    for (var i = 0; i < texts.length; i++) if (String(texts[i]).toLowerCase().indexOf('autojs6') >= 0) return String(texts[i]);
+    return null;
+});
+hunt('barcode', 'a QR code or barcode', { resolution: '1280x720', fps: 15 }, function (img) {
+    var text = barcode.recognizeText(img);
+    return text ? String(text) : null;
+});
+var detector = null;
+hunt('yolo', 'a common object (cup, phone, keyboard...)', { facing: 'back', resolution: '640x480' }, function (img) {
+    if (!detector) detector = yolo.load('%(model)s', { component: 'io.github.supermonster003.autojs6.plugin.yolo.ncnn/.provider.YoloProviderService' });
+    var found = detector.detect(img, { confidence: 0.4, maxDetections: 20 });
+    return found.length ? found.map(function (d) { return String(d.label); }).join('/') : null;
+});
+next();
+"""
+
 Q41_PREFS = ("<?xml version='1.0' encoding='utf-8' standalone='yes' ?>\n<map>\n"
              "    <string name=\"default_facing\">front</string>\n"
              "    <string name=\"default_analysis_size\">320x240</string>\n"
@@ -276,7 +333,9 @@ def wait_unlocked(device, seconds=300):
     asked = False
     end = time.time() + seconds
     while time.time() < end:
-        if "isKeyguardShowing=true" not in device.shell("dumpsys window | grep -F isKeyguardShowing"):
+        # isKeyguardShowing (API 31+) or mDreamingLockscreen (API 28 has no isKeyguardShowing line).
+        # zh-CN: isKeyguardShowing (API 31+) 或 mDreamingLockscreen (API 28 没有 isKeyguardShowing 行).
+        if "=true" not in device.shell("dumpsys window | grep -oE '(isKeyguardShowing|mDreamingLockscreen)=true'"):
             return True
         if not asked:
             print("UNLOCK the device (secure lock screen), waiting up to %d s" % seconds, flush=True)
@@ -335,6 +394,8 @@ def main():
     parser.add_argument("--seconds", type=int, default=30)
     parser.add_argument("--sizes", default="640x480,1280x720")
     parser.add_argument("--allow-device-changes", action="store_true")
+    parser.add_argument("--yolo-model", default="", help="recognize: a directory with model.json, model.ncnn.param and model.ncnn.bin")
+    parser.add_argument("--limit", type=int, default=60, help="recognize: seconds per recognizer")
     args = parser.parse_args()
     device = Device(args.serial)
     sdk = device.shell("getprop ro.build.version.sdk").strip()
@@ -410,10 +471,13 @@ def main():
                 # The camera release is read from the camera service log (some dumpsys media.camera dumps keep exited
                 # clients): the first close or disconnect line of the plugin's client after the kill.
                 # zh-CN: 相机释放取自相机服务日志 (部分系统的 dumpsys media.camera 保留已退出的客户端): 击杀后插件客户端的首个关闭或断开行.
+                # The plugin's own CameraX close counts as well (chatty hides it on some releases); read 2 s after the kill.
+                # zh-CN: 插件自身的 CameraX 关闭行同样计入 (部分系统被 chatty 折叠); 击杀 2 秒后读取.
+                time.sleep(max(0.0, 2.0 - (time.time() - t0)))
                 released = None
                 for line in device.shell("logcat -d -v epoch -b main,system").splitlines():
-                    if re.search(r"(Camera2ClientBase|CameraService|CameraDeviceClient).*(Closed|[Dd]isconnect)", line) and (
-                            plugin_pid in line or "Closed" in line):
+                    if re.search(r"(Camera2ClientBase|CameraService|CameraDeviceClient).*(Closed|[Dd]isconnect)", line) or (
+                            " %s " % plugin_pid in line and "Closed Camera2CameraController" in line):
                         stamp = re.match(r"\s*(\d+\.\d+)", line)
                         if stamp and killed_at:
                             released = float(stamp.group(1)) - killed_at
@@ -444,6 +508,14 @@ def main():
                 device.shell("input keyevent 4")
             device.shell("am force-stop " + PLUGIN)
             print("coldstart %s TotalTime/WaitTime=%s median=%s ms" % ("PASS" if times else "FAIL", times, statistics.median(times) if times else "-"), flush=True)
+        if "recognize" in phases:
+            model = DEVICE_DIR + "/models/yolo11n"
+            if args.yolo_model:
+                device.shell("mkdir -p '%s'" % model)
+                for name in ("model.json", "model.ncnn.param", "model.ncnn.bin"):
+                    device.run("push", str(pathlib.Path(args.yolo_model) / name), "%s/%s" % (model, name), check=True)
+            run_phase(device, "recognize", common + fill(RECOGNIZE, limit=args.limit, model=model), 3 * (args.limit + 30) + 60,
+                      lambda line: line.startswith("step:aim-") and print("AIM " + line[len("step:aim-"):], flush=True))
         if "q41" in phases:
             if not (device.emulator or args.allow_device_changes):
                 print("q41 SKIP needs an emulator or --allow-device-changes", flush=True)
