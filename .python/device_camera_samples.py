@@ -1,7 +1,7 @@
 """Runs the host `camera` script module against 3-Prism Camera on a device (roadmap P1.4 / P1.6 / P2.5 integration).
 
 Usage: py -u .python/device_camera_samples.py <serial> [--host-tree ../AutoJs6]
-       [--phases main,ui,viewfinder,busyui,detect,barcode,background,denied,missing,disabled,toolow] [--seconds 30]
+       [--phases main,a5,ui,viewfinder,busyui,detect,barcode,background,denied,missing,disabled,toolow] [--seconds 30]
        [--screenshot <dir>] [--yolo-model <dir>] [--plugin-apk <apk>] [--too-low-apk <apk>] [--allow-device-changes] [--keep]
 
 The host must already be a build with the `camera` module (versionCode >= 6641) and the plugin must be installed with the
@@ -15,6 +15,11 @@ check: PASS / FAIL / SKIP / INFO with the key values.
   the callback; the target text is not expected in front of the camera); "viewfinder capture" waits for the shutter
   and runs in the viewfinder phase. The barcode and object detection samples need other plugins and are listed as
   SKIP.
+- a5: the appendix A.5 examples as written: 1 `camera.capture({ path })` (a file and its size), 3 a frame kept with
+  `img.clone()` and read after the callback and the session ended, 4 `camera.open().preview(ui.cam).torch(true).zoom(2)`
+  chained on a worker thread of a ui script (appendix D Q44; the state must show the preview, the torch and zoom 2; a
+  screenshot goes to --screenshot).
+  Example 2 is the barcode phase, example 5 the viewfinder phase.
 - ui: a ui script shows the preview in a `<SurfaceView>`, analyzes 640x480 frames and takes a picture every 10 s for
   --seconds; halfway through an emulator is turned to landscape (a phone: the person at the device turns it when the
   ROTATE line appears). Screenshots go to --screenshot.
@@ -47,7 +52,10 @@ zh-CN: 在设备上用宿主 `camera` 脚本模块驱动 3-Prism Camera (路线�
 插件须已安装并获得相机权限. 每个阶段推送一个生成的脚本, 把宿主启动器活动切到前台, 经 RunIntentActivity 运行, 读取其结果文件 (不读 logcat:
 OPD2413 会丢 console 行). 每项检查一行 PASS / FAIL / SKIP / INFO 与关键值. main: 模块成员, 第二次 `camera.open()` 得到 CAMERA_BUSY 并写明占用者,
 持有会话时 `camera.capture({ ui: true })` 得到 CAMERA_BUSY (附录 D Q22), 以及两个样例 ("拍一张存文件", "连续帧识别文字" 只要求帧到达回调);
-"取景页拍照" 要等快门, 放在 viewfinder 阶段; 扫码与物体检测样例需要其他插件, 记 SKIP. ui: ui 脚本在 `<SurfaceView>` 中预览,
+"取景页拍照" 要等快门, 放在 viewfinder 阶段; 扫码与物体检测样例需要其他插件, 记 SKIP. a5: 附录 A.5 示例的原样写法: 示例 1
+`camera.capture({ path })` (文件与尺寸), 示例 3 用 `img.clone()` 保留一帧并在回调与会话结束后读取, 示例 4 在 ui 脚本的工作线程上链式调用
+`camera.open().preview(ui.cam).torch(true).zoom(2)` (附录 D Q44; 状态应显示预览, 手电与 2 倍变焦; 截图存入 --screenshot); 示例 2 即 barcode 阶段, 示例 5 即
+viewfinder 阶段. ui: ui 脚本在 `<SurfaceView>` 中预览,
 同时分析 640x480 帧并每 10 秒拍一张, 持续 --seconds 秒; 过半时模拟器转为横屏 (真机在出现 ROTATE 行时由设备旁的人转动), 截图存入 --screenshot.
 viewfinder (路线图 P3.1): "取景页拍照" 样例运行两次, 第一次点按插件取景页的快门 (按测试标签在 uiautomator 转储中查找, 节点必须属于插件包),
 脚本应拿到照片与文件, 第二次按返回键关闭取景页, 结果应为 null. busyui (附录 D Q7 = (a)): 脚本持有会话时从启动器打开插件, 取景页应写明占用的脚本,
@@ -220,6 +228,81 @@ threads.start(function () {
                 ' dropped=' + st.dropped + ' shots=' + shots.join(',') + ' previewing=' + st.previewing + ' analyzing=' + st.analyzing +
                 ' errors=' + errors.join(','));
         }, SECONDS * 1000 + 500);
+    }, 200);
+});
+"""
+
+# Appendix A.5 examples 1 and 3 as written (example 2 is the barcode phase, example 5 the viewfinder phase).
+# zh-CN: 附录 A.5 示例 1 与 3 的原样写法 (示例 2 即 barcode 阶段, 示例 5 即 viewfinder 阶段).
+A5 = r"""
+check('a5Capture', function () {
+    var path = files.join(DIR, 'a5.jpg');
+    var img = camera.capture({ path: path });
+    try {
+        assert(files.exists(path), 'no file');
+        return img.getWidth() + 'x' + img.getHeight() + ' bytes=' + new java.io.File(path).length();
+    } finally {
+        img.recycle();
+    }
+});
+var session = camera.open({ resolution: '1280x720' });
+var kept = null;
+var frames = 0;
+session.analyze(function (img) { frames += 1; if (!kept) kept = img.clone(); });
+var deadline = Date.now() + 15000;
+var timer = setInterval(function () {
+    if (!kept && Date.now() < deadline) return;
+    clearInterval(timer);
+    try {
+        session.close();
+        assert(kept, 'no frame within 15 s');
+        // The callback's own frame is recycled by now; the clone outlives the callback and the session.
+        // zh-CN: 回调自己的帧此时已回收; 副本在回调与会话结束后仍然有效.
+        var w = kept.getWidth();
+        var h = kept.getHeight();
+        var center = colors.toString(images.pixel(kept, Math.floor(w / 2), Math.floor(h / 2)));
+        kept.recycle();
+        report('a5Clone', 'PASS', w + 'x' + h + ' frames=' + frames + ' center=' + center);
+    } catch (e) {
+        report('a5Clone', 'FAIL', describe(e));
+    }
+    out('done');
+}, 200);
+"""
+
+# Appendix A.5 example 4: open, preview, torch and zoom chained (layout tag per appendix D Q23). The chain runs on a
+# worker thread: `camera.open()` on the UI thread of a ui script waits for the plugin binding, whose callback needs that
+# same thread, and the host stops responding (appendix D Q44).
+# zh-CN: 附录 A.5 示例 4: 链式调用 open, preview, torch 与 zoom (布局标签按附录 D Q23). 调用链在工作线程上运行: 在 ui 脚本的 UI 线程上调用
+# `camera.open()` 会等待插件绑定, 而绑定回调需要同一线程, 宿主随之无响应 (附录 D Q44).
+A5_UI = r""""ui";
+%(common)s
+ui.layout(<frame><SurfaceView id="cam" w="*" h="*"/></frame>);
+threads.start(function () {
+    var s = null;
+    try {
+        s = camera.open().preview(ui.cam).torch(true).zoom(2);
+    } catch (e) {
+        report('a5Preview', 'FAIL', describe(e));
+        out('done');
+        ui.post(function () { ui.finish(); });
+        return;
+    }
+    var deadline = Date.now() + 10000;
+    var timer = setInterval(function () {
+        var st = s.state();
+        if (!st.previewing && Date.now() < deadline) return;
+        clearInterval(timer);
+        out('step:preview');
+        setTimeout(function () {
+            var st = s.state();
+            var ok = st.previewing && st.torch === true && Math.abs(st.zoom - 2) < 0.05;
+            report('a5Preview', ok ? 'PASS' : 'FAIL', 'previewing=' + st.previewing + ' torch=' + st.torch + ' zoom=' + st.zoom);
+            s.torch(false);
+            s.close();
+            out('done');
+            ui.post(function () { ui.finish(); });
+        }, 3000);
     }, 200);
 });
 """
@@ -521,7 +604,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("serial")
     parser.add_argument("--host-tree", default=str(pathlib.Path(__file__).resolve().parents[2] / "AutoJs6"))
-    parser.add_argument("--phases", default="main,ui,viewfinder,busyui,detect,background,denied,missing,disabled,toolow")
+    parser.add_argument("--phases", default="main,a5,ui,viewfinder,busyui,detect,background,denied,missing,disabled,toolow")
     parser.add_argument("--seconds", type=int, default=30)
     parser.add_argument("--screenshot", default="")
     parser.add_argument("--plugin-apk", default="")
@@ -545,6 +628,14 @@ def main():
     try:
         if "main" in phases:
             run_phase(device, "main", common + fill(MAIN, shot=SHOT, ocr=OCR, viewfinder=VIEWFINDER), 420)
+        if "a5" in phases:
+            run_phase(device, "a5", common + A5, 120)
+
+            def on_a5(line):
+                if line == "step:preview" and shots:
+                    device.screenshot(shots, "a5-preview-%s.png" % args.serial)
+
+            run_phase(device, "a5ui", fill(A5_UI, common=common), 90, on_a5)
         if "ui" in phases:
             state = {"rotated": False}
             rotation = device.shell("settings get system accelerometer_rotation").strip()
