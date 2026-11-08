@@ -6,10 +6,10 @@
 
 # v1.0.0
 
-###### 2026/11/05
+###### 2026/11/08
 
 * `Note` API de script: [Documentation AutoJs6 > Camera](https://docs.autojs6.com/#/camera)
-* `Note` Nécessite AutoJs6 6.8.1 (6641) ou ultérieur (la version minimale exacte sera renseignée une fois les modifications de l'hôte intégrées)
+* `Note` Le module camera dans les scripts nécessite AutoJs6 6.8.1 (version interne 6641) ou ultérieure; le viseur et la page des paramètres du plugin ne dépendent pas d'AutoJs6
 * `Note` L'icône actuelle est une proposition et peut encore changer
 * `Fonctionnalité` Squelette du plugin: protocole d'activation Wake et service d'identité du centre des plugins
 * `Fonctionnalité` Service de capacité caméra: une seule session peut utiliser la caméra à la fois et une caméra occupée indique son détenteur; une notification de premier plan s'affiche tant que la caméra est utilisée, et quand AutoJs6 se ferme la caméra est libérée aussitôt et la notification disparaît

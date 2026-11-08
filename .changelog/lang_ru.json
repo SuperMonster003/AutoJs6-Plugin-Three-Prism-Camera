@@ -6,10 +6,10 @@
   "changelog_label_dependency": "Зависимость",
   "$data": {
     "v1.0.0": {
-      "released_date": "2026/11/05",
+      "released_date": "2026/11/08",
       "hint": [
         "API скриптов: [Документация AutoJs6 > Camera](https://docs.autojs6.com/#/camera)",
-        "Требуется AutoJs6 {{ required_host_version_name }} ({{ required_host_version_code }}) или новее (точная минимальная версия будет указана после внесения изменений в хост)",
+        "Модулю camera в скриптах нужен AutoJs6 {{ required_host_version_name }} (внутренняя версия {{ required_host_version_code }}) или новее; видоискатель и страница настроек плагина от AutoJs6 не зависят",
         "Текущий значок - вариант-кандидат и ещё может измениться"
       ],
       "feature": [

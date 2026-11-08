@@ -6,10 +6,10 @@
   "changelog_label_dependency": "依存関係",
   "$data": {
     "v1.0.0": {
-      "released_date": "2026/11/05",
+      "released_date": "2026/11/08",
       "hint": [
         "スクリプト API: [AutoJs6 ドキュメント > Camera](https://docs.autojs6.com/#/camera)",
-        "AutoJs6 {{ required_host_version_name }} ({{ required_host_version_code }}) 以降が必要です (正確な最低バージョンはホスト側の変更が反映された後に記入されます)",
+        "スクリプトで camera モジュールを使うには AutoJs6 {{ required_host_version_name }} (内部バージョン {{ required_host_version_code }}) 以降が必要です. プラグインのファインダー画面と設定画面は AutoJs6 に依存しません",
         "現在のアイコンは候補のデザインで, 今後変わる可能性があります"
       ],
       "feature": [

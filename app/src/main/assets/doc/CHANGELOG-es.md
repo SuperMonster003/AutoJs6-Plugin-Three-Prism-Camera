@@ -6,10 +6,10 @@
 
 # v1.0.0
 
-###### 2026/11/05
+###### 2026/11/08
 
 * `Aviso` API de script: [Documentación de AutoJs6 > Camera](https://docs.autojs6.com/#/camera)
-* `Aviso` Requiere AutoJs6 6.8.1 (6641) o posterior (la versión mínima exacta se indicará cuando se integren los cambios del anfitrión)
+* `Aviso` El módulo camera en scripts requiere AutoJs6 6.8.1 (versión interna 6641) o posterior; el visor y la página de ajustes del complemento no dependen de AutoJs6
 * `Aviso` El icono actual es un diseño candidato y aún puede cambiar
 * `Función` Esqueleto del complemento: protocolo de activación Wake y servicio de identidad del centro de complementos
 * `Función` Servicio de capacidad de cámara: solo una sesión puede usar la cámara a la vez y, si está ocupada, se indica quién la ocupa; mientras la cámara está en uso se muestra una notificación en primer plano, y cuando AutoJs6 se cierra la cámara se libera de inmediato y la notificación desaparece

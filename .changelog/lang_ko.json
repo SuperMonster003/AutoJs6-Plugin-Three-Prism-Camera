@@ -6,10 +6,10 @@
   "changelog_label_dependency": "의존성",
   "$data": {
     "v1.0.0": {
-      "released_date": "2026/11/05",
+      "released_date": "2026/11/08",
       "hint": [
         "스크립트 API: [AutoJs6 문서 > Camera](https://docs.autojs6.com/#/camera)",
-        "AutoJs6 {{ required_host_version_name }} ({{ required_host_version_code }}) 이상이 필요합니다 (정확한 최소 버전은 호스트 쪽 변경이 반영된 뒤 기입됩니다)",
+        "스크립트에서 camera 모듈을 쓰려면 AutoJs6 {{ required_host_version_name }} (내부 버전 {{ required_host_version_code }}) 이상이 필요합니다. 플러그인의 뷰파인더 화면과 설정 화면은 AutoJs6에 의존하지 않습니다",
         "현재 아이콘은 후보 디자인이며 이후 바뀔 수 있습니다"
       ],
       "feature": [

@@ -6,10 +6,10 @@
 
 # v1.0.0
 
-###### 2026/11/05
+###### 2026/11/08
 
 * `Hint` Script API: [AutoJs6 documentation > Camera](https://docs.autojs6.com/#/camera)
-* `Hint` Requires AutoJs6 6.8.1 (6641) or later (the exact minimum build will be filled in once the host changes land)
+* `Hint` The camera module in scripts needs AutoJs6 6.8.1 (internal build 6641) or later; the viewfinder and the settings page of the plugin do not depend on AutoJs6
 * `Hint` The current icon is a candidate design and may still change
 * `Feature` Plugin skeleton: Wake activation protocol and Plugin Center identity service
 * `Feature` Camera capability service: only one session can use the camera at a time and a busy camera names its holder; a foreground notification shows while the camera is in use, and when AutoJs6 exits the camera is released at once and the notification goes away

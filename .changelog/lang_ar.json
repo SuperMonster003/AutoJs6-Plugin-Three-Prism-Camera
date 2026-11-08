@@ -6,10 +6,10 @@
   "changelog_label_dependency": "تبعية",
   "$data": {
     "v1.0.0": {
-      "released_date": "2026/11/05",
+      "released_date": "2026/11/08",
       "hint": [
         "واجهة السكربت البرمجية: [وثائق AutoJs6 > Camera](https://docs.autojs6.com/#/camera)",
-        "يتطلب AutoJs6 {{ required_host_version_name }} ({{ required_host_version_code }}) أو أحدث (سيُحدَّد الحد الأدنى الدقيق للإصدار بعد اكتمال تغييرات المضيف)",
+        "تتطلب الوحدة camera في السكربتات AutoJs6 {{ required_host_version_name }} (الإصدار الداخلي {{ required_host_version_code }}) أو أحدث; ولا تعتمد شاشة عدسة التصوير وصفحة الإعدادات في الإضافة على AutoJs6",
         "الأيقونة الحالية تصميم مرشح وقد تتغير لاحقا"
       ],
       "feature": [

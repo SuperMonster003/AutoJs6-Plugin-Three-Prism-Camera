@@ -6,10 +6,10 @@
   "changelog_label_dependency": "Dépendance",
   "$data": {
     "v1.0.0": {
-      "released_date": "2026/11/05",
+      "released_date": "2026/11/08",
       "hint": [
         "API de script: [Documentation AutoJs6 > Camera](https://docs.autojs6.com/#/camera)",
-        "Nécessite AutoJs6 {{ required_host_version_name }} ({{ required_host_version_code }}) ou ultérieur (la version minimale exacte sera renseignée une fois les modifications de l'hôte intégrées)",
+        "Le module camera dans les scripts nécessite AutoJs6 {{ required_host_version_name }} (version interne {{ required_host_version_code }}) ou ultérieure; le viseur et la page des paramètres du plugin ne dépendent pas d'AutoJs6",
         "L'icône actuelle est une proposition et peut encore changer"
       ],
       "feature": [

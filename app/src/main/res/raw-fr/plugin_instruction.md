@@ -1,6 +1,6 @@
 3-Prism Camera est le plugin caméra d'AutoJs6. Basé sur Jetpack CameraX, il offre aux scripts la prise de photos, l'analyse continue des images et l'aperçu du viseur. Les images en direct arrivent dans le script sous forme d'objets `ImageWrapper` d'AutoJs6, que le script peut transmettre directement aux modules existants comme `ocr`, `barcode` ou `yolo` pour la lecture de codes en direct, la reconnaissance de texte et la détection d'objets.
 
-> Le cœur caméra, le viseur et la page des paramètres de la 1.0.0 sont terminés, et les vérifications de publication sont en cours. Le module de script `camera` nécessite AutoJs6 6.8.1 (version interne 6641) ou ultérieure.
+> La version 1.0.0 est la première publication. Le module de script `camera` nécessite AutoJs6 6.8.1 (version interne 6641) ou ultérieure; le viseur et la page des paramètres du plugin ne dépendent pas d'AutoJs6.
 
 ### Points Forts
 

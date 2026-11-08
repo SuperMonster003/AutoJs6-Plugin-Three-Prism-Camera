@@ -46,7 +46,7 @@ Le README.md actuel prend en charge les langues suivantes:
 
 Le plugin détient la caméra et communique avec AutoJs6 par Binder: les images en direct passent par un tampon circulaire en mémoire partagée (des fichiers temporaires sous Android 7.0 - 8.0), les photos arrivent dans AutoJs6 en JPEG pour être décodées ou enregistrées telles quelles, et l'aperçu s'affiche directement dans une `SurfaceView` de l'interface du script, sans faire passer de pixels par Binder. Tant qu'une session est ouverte, le plugin exécute un service de premier plan caméra, si bien que les scripts continuent de recevoir des images en arrière-plan ou écran éteint.
 
-> Le cœur caméra, le viseur et la page des paramètres de la 1.0.0 sont terminés, et les vérifications de publication sont en cours. Le module de script `camera` nécessite AutoJs6 6.8.1 (version interne 6641) ou ultérieure.
+> La version 1.0.0 est la première publication. Le module de script `camera` nécessite AutoJs6 6.8.1 (version interne 6641) ou ultérieure; le viseur et la page des paramètres du plugin ne dépendent pas d'AutoJs6.
 
 ******
 
@@ -187,10 +187,10 @@ Les plans, décisions de conception et l'avancement sont suivis sous forme de li
 
 #### v1.0.0
 
-_2026/11/05_
+_2026/11/08_
 
 - `Note` API de script: [Documentation AutoJs6 > Camera](https://docs.autojs6.com/#/camera)
-- `Note` Nécessite AutoJs6 6.8.1 (6641) ou ultérieur (la version minimale exacte sera renseignée une fois les modifications de l'hôte intégrées)
+- `Note` Le module camera dans les scripts nécessite AutoJs6 6.8.1 (version interne 6641) ou ultérieure; le viseur et la page des paramètres du plugin ne dépendent pas d'AutoJs6
 - `Note` L'icône actuelle est une proposition et peut encore changer
 - `Fonctionnalité` Squelette du plugin: protocole d'activation Wake et service d'identité du centre des plugins
 - `Fonctionnalité` Service de capacité caméra: une seule session peut utiliser la caméra à la fois et une caméra occupée indique son détenteur; une notification de premier plan s'affiche tant que la caméra est utilisée, et quand AutoJs6 se ferme la caméra est libérée aussitôt et la notification disparaît

@@ -6,10 +6,10 @@
   "changelog_label_dependency": "相依性",
   "$data": {
     "v1.0.0": {
-      "released_date": "2026/11/05",
+      "released_date": "2026/11/08",
       "hint": [
         "指令碼 API 見 [AutoJs6 文件 > 相機 (Camera)](https://docs.autojs6.com/#/camera)",
-        "需要 AutoJs6 {{ required_host_version_name }} ({{ required_host_version_code }}) 或更高版本 (確切的最低版本號待宿主端變更完成後回填)",
+        "指令碼使用 camera 模組需要 AutoJs6 {{ required_host_version_name }} (內部版本號 {{ required_host_version_code }}) 或更高版本; 外掛的取景頁與設定頁不依賴 AutoJs6",
         "目前圖示為候選圖案, 之後可能更換"
       ],
       "feature": [

@@ -25,7 +25,7 @@
   "p_roadmap": "功能規劃, 設計決策與完成情況以可勾選清單維護在 ROADMAP.md 中. 未勾選的項目表示規劃意向, 不代表目前版本的能力.",
   "p_introduction_what": "3-Prism Camera 是 AutoJs6 的相機外掛, 基於 Jetpack CameraX 為指令碼提供拍照, 連續影格分析與取景預覽. 連續影格以 AutoJs6 的 `ImageWrapper` 交給指令碼, 指令碼可以直接把它交給 `ocr`, `barcode` 或 `yolo` 等現有模組, 實現即時掃碼, 文字辨識與物件偵測.",
   "p_introduction_how": "外掛持有相機並透過 Binder 與 AutoJs6 通訊: 連續影格經共用記憶體環狀緩衝傳給 AutoJs6 (Android 7.0 - 8.0 改用暫存檔), 相片以 JPEG 交給 AutoJs6 解碼或原樣儲存, 預覽直接算繪到指令碼介面中的 `SurfaceView`, 像素不經過 Binder. 工作階段開啟期間外掛執行相機前景服務, 指令碼在背景或螢幕關閉時也能繼續擷取影格.",
-  "p_status_note": "1.0.0 的相機核心, 取景頁與設定頁均已完成, 正在進行發行前驗證. 指令碼使用的 `camera` 模組需要 AutoJs6 {{ required_host_version_name }} (內部版本號 {{ required_host_version_code }}) 或更高版本.",
+  "p_status_note": "1.0.0 是首個正式版本. 指令碼使用的 `camera` 模組需要 AutoJs6 {{ required_host_version_name }} (內部版本號 {{ required_host_version_code }}) 或更高版本; 外掛的取景頁與設定頁不依賴 AutoJs6.",
   "features": [
     "拍照: 傳回依 EXIF 方向轉正的 `ImageWrapper`, 也可以把原始 JPEG (含 EXIF) 儲存到指定路徑; 可設定閃光模式, 畫質與解析度.",
     "連續影格: RGBA 影格預設 640x480 (可在設定頁修改), 最高 1920x1080, 預設依螢幕方向轉正; 處理不及時自動捨棄影格並計數, 不會排隊積壓.",

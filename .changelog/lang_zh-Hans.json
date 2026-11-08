@@ -6,10 +6,10 @@
   "changelog_label_dependency": "依赖",
   "$data": {
     "v1.0.0": {
-      "released_date": "2026/11/05",
+      "released_date": "2026/11/08",
       "hint": [
         "脚本 API 见 [AutoJs6 文档 > 相机 (Camera)](https://docs.autojs6.com/#/camera)",
-        "需要 AutoJs6 {{ required_host_version_name }} ({{ required_host_version_code }}) 或更高版本 (准确的最低版本号待宿主侧改动落地后回填)",
+        "脚本使用 camera 模块需要 AutoJs6 {{ required_host_version_name }} (内部版本号 {{ required_host_version_code }}) 或更高版本; 插件的取景页与设置页不依赖 AutoJs6",
         "当前图标为候选图案, 之后可能更换"
       ],
       "feature": [

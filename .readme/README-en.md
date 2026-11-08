@@ -46,7 +46,7 @@ The README.md file is currently available in the following languages:
 
 The plugin owns the camera and talks to AutoJs6 over Binder: live frames travel through a shared memory ring buffer (temporary files on Android 7.0 - 8.0), photos reach AutoJs6 as JPEG to be decoded or saved unchanged, and the preview renders straight into a `SurfaceView` of the script's interface, so no pixels cross Binder. While a session is open, the plugin runs a camera foreground service, so scripts keep receiving frames in the background or with the screen off.
 
-> The camera core, the viewfinder and the settings page of 1.0.0 are done, and the release checks are in progress. The `camera` script module needs AutoJs6 6.8.1 (internal version 6641) or later.
+> Version 1.0.0 is the first release. The `camera` script module needs AutoJs6 6.8.1 (internal version 6641) or later; the viewfinder and the settings page of the plugin do not depend on AutoJs6.
 
 ******
 
@@ -187,10 +187,10 @@ Plans, design decisions and progress are tracked as a checklist in ROADMAP.md. U
 
 #### v1.0.0
 
-_2026/11/05_
+_2026/11/08_
 
 - `Hint` Script API: [AutoJs6 documentation > Camera](https://docs.autojs6.com/#/camera)
-- `Hint` Requires AutoJs6 6.8.1 (6641) or later (the exact minimum build will be filled in once the host changes land)
+- `Hint` The camera module in scripts needs AutoJs6 6.8.1 (internal build 6641) or later; the viewfinder and the settings page of the plugin do not depend on AutoJs6
 - `Hint` The current icon is a candidate design and may still change
 - `Feature` Plugin skeleton: Wake activation protocol and Plugin Center identity service
 - `Feature` Camera capability service: only one session can use the camera at a time and a busy camera names its holder; a foreground notification shows while the camera is in use, and when AutoJs6 exits the camera is released at once and the notification goes away
