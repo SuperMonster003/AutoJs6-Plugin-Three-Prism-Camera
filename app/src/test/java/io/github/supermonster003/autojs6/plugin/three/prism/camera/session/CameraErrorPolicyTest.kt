@@ -85,6 +85,18 @@ class CameraErrorPolicyTest {
     }
 
     @Test
+    fun `a foreground service refused after the open reports CAMERA_DISABLED before the policy close`() {
+        // Appendix D Q64 = (a): the same order as a disabled camera, and the message of the refused openSession.
+        // zh-CN: 附录 D Q64 = (a): 与相机被禁用的顺序相同, 消息与被拒的 openSession 相同.
+        val action = CameraErrorPolicy.foregroundRefused("the system dropped the start")
+        assertEquals(CameraErrorCodes.CAMERA_DISABLED, action.code)
+        assertEquals(CameraContract.CLOSE_REASON_POLICY, action.reason)
+        assertTrue(CameraErrorCodes.isKnown(action.code) && action.code !in CameraErrorCodes.HOST_ONLY)
+        assertEquals(CameraErrorPolicy.foregroundRefusedMessage("the system dropped the start"), action.message)
+        assertTrue(action.message, action.message.startsWith("the camera foreground service was refused: ") && action.message.endsWith("the system dropped the start"))
+    }
+
+    @Test
     fun `no CameraState error closes silently with reason policy`() {
         // Every policy close comes with an error that says why (appendix D Q57 = (a)).
         // zh-CN: 每次以 policy 关闭都带有说明原因的错误 (附录 D Q57 = (a)).

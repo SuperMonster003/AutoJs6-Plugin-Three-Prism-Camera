@@ -22,13 +22,16 @@ import java.util.concurrent.TimeUnit
  * camera keeps working after AutoJs6 leaves the foreground or the screen turns off (the capability the host binding
  * passes on ends with the host's own). It must start while the plugin still has the camera capability it inherits from
  * the visible host, so [acquire] runs when a session opens. Android may refuse the start (API 31+ background starts,
- * API 34+ while-in-use checks): [Listener.onRefused] tells the session, which then reports `CAMERA_DISABLED`. The
- * service stops with the last session, also when the host dies (roadmap D30). The same pattern as the microphone
- * service of 3-Macaw Speech.
+ * API 34+ while-in-use checks): [Listener.onRefused] tells the session, which then reports `CAMERA_DISABLED`. A start
+ * Android drops silently (`startForegroundService` answers null, or `onStartCommand` does not come within
+ * [ForegroundStartWatch.TIMEOUT_MILLIS]) is a refusal too, so the next session starts the service again (appendix D
+ * Q64 = (a)). The service stops with the last session, also when the host dies (roadmap D30). The same pattern as the
+ * microphone service of 3-Macaw Speech.
  * zh-CN: 相机前台服务 (路线图 D10, D25, `foregroundServiceType="camera"`, 不导出): 相机会话打开期间, 插件以 [ThreePrismCameraApplication.CHANNEL_CAMERA]
  * 的常驻通知持有它, 使 AutoJs6 离开前台或熄屏后相机仍可使用 (宿主绑定传递的能力随宿主自身的能力结束). 它必须在插件仍继承可见宿主的相机能力时启动,
  * 因此会话打开时即调用 [acquire]. Android 可能拒绝启动 (API 31+ 的后台启动, API 34+ 的使用期间检查): [Listener.onRefused] 通知会话, 会话随后报告
- * `CAMERA_DISABLED`. 最后一个会话结束时服务停止, 宿主死亡时同样如此 (路线图 D30). 与 3-Macaw Speech 的麦克风服务同构.
+ * `CAMERA_DISABLED`. 被 Android 静默丢弃的启动 (`startForegroundService` 返回 null, 或 [ForegroundStartWatch.TIMEOUT_MILLIS] 内没有 `onStartCommand`)
+ * 同样按被拒处理, 下一个会话会重新启动服务 (附录 D Q64 = (a)). 最后一个会话结束时服务停止, 宿主死亡时同样如此 (路线图 D30). 与 3-Macaw Speech 的麦克风服务同构.
  */
 class ThreePrismCameraForegroundService : Service() {
 
@@ -41,7 +44,8 @@ class ThreePrismCameraForegroundService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        starting = false
+        start.arrived()
+        Log.i(TAG, "onStartCommand: sessions=${users.size}")
         try {
             // startForeground must follow startForegroundService, even when the last session already ended.
             // zh-CN: 即使最后一个会话已经结束, startForegroundService 之后也必须调用 startForeground.
@@ -114,7 +118,7 @@ class ThreePrismCameraForegroundService : Service() {
         // Touched on the main thread only. zh-CN: 只在主线程访问.
         private val users = LinkedHashMap<Listener, String>()
         private var running: ThreePrismCameraForegroundService? = null
-        private var starting = false
+        private val start = ForegroundStartWatch({ delayMillis, action -> main.postDelayed(action, delayMillis) })
         private var starter: ThreePrismCameraStartActivity? = null
         private var starterSeen = false
 
@@ -133,19 +137,16 @@ class ThreePrismCameraForegroundService : Service() {
             onMain {
                 users[listener] = label
                 val service = running
-                when {
-                    service != null -> {
-                        service.refreshNotification()
-                        listener.onStarted()
-                    }
-                    starting -> Unit
-                    else -> {
-                        starting = true
-                        state = STATE_STARTING
-                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE || !launchStarter(application)) {
-                            startService(application)?.let(::refused)
-                        }
-                    }
+                if (service != null) {
+                    service.refreshNotification()
+                    listener.onStarted()
+                    return@onMain
+                }
+                // A start under way answers this listener too. zh-CN: 进行中的启动同样答复此监听器.
+                if (!start.begin()) return@onMain
+                state = STATE_STARTING
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE || !launchStarter(application)) {
+                    startService(application)?.let(::refused)
                 }
             }
         }
@@ -163,6 +164,7 @@ class ThreePrismCameraForegroundService : Service() {
          */
         private fun launchStarter(context: Context): Boolean {
             starterSeen = false
+            val attempt = start.attempt
             return try {
                 context.startActivity(
                     Intent(context, ThreePrismCameraStartActivity::class.java).addFlags(
@@ -170,7 +172,7 @@ class ThreePrismCameraForegroundService : Service() {
                     ),
                 )
                 main.postDelayed({
-                    if (starting && !starterSeen) {
+                    if (start.isCurrent(attempt) && !starterSeen) {
                         Log.w(TAG, "The camera start activity did not appear; starting the service without it")
                         startService(context)?.let(::refused)
                     }
@@ -187,7 +189,7 @@ class ThreePrismCameraForegroundService : Service() {
             starterSeen = true
             starter = activity
             main.postDelayed(::finishStarter, STARTER_LIFETIME_MILLIS)
-            if (!starting || running != null) {
+            if (!start.starting || running != null) {
                 finishStarter()
                 return
             }
@@ -200,15 +202,34 @@ class ThreePrismCameraForegroundService : Service() {
             if (!activity.isFinishing) activity.finish()
         }
 
-        /** Starts the service; answers the reason of a refusal. zh-CN: 启动服务; 被拒时返回原因. */
-        private fun startService(context: Context): String? = try {
-            ContextCompat.startForegroundService(context, Intent(context, ThreePrismCameraForegroundService::class.java))
-            null
-        } catch (e: Exception) {
-            starting = false
+        /**
+         * Starts the service; answers the reason of a refusal. `ContextCompat.startForegroundService` drops the answer of
+         * `Context.startForegroundService`, which is null when Android drops the start silently (appendix D Q64 = (a)), so
+         * the platform call is made here; a start that is accepted but never reaches `onStartCommand` is refused later,
+         * through [refused], by [ForegroundStartWatch].
+         * zh-CN: 启动服务; 被拒时返回原因. `ContextCompat.startForegroundService` 丢弃 `Context.startForegroundService` 的返回值, 而 Android 静默丢弃启动时
+         * 它为 null (附录 D Q64 = (a)), 因此这里直接调用平台方法; 被接受却始终没有到达 `onStartCommand` 的启动, 由 [ForegroundStartWatch] 稍后经 [refused] 拒绝.
+         */
+        private fun startService(context: Context): String? {
+            val intent = Intent(context, ThreePrismCameraForegroundService::class.java)
+            val component = try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) context.startForegroundService(intent) else context.startService(intent)
+            } catch (e: Exception) {
+                // ForegroundServiceStartNotAllowedException (API 31+, for example ColorOS with the host in the background) or
+                // SecurityException. zh-CN: ForegroundServiceStartNotAllowedException (API 31+, 例如宿主在后台时的 ColorOS) 或 SecurityException.
+                start.abandon()
+                finishStarter()
+                Log.w(TAG, "Camera foreground service not started: $e")
+                return e.toString()
+            }
+            val reason = start.requested(component != null) { late ->
+                Log.w(TAG, "Camera foreground service not started: $late")
+                finishStarter()
+                refused(late)
+            } ?: return null
             finishStarter()
-            Log.w(TAG, "Camera foreground service not started: $e")
-            e.toString()
+            Log.w(TAG, "Camera foreground service not started: $reason")
+            return reason
         }
 
         /** A camera session ended (any thread). zh-CN: 一个相机会话已结束 (任意线程). */

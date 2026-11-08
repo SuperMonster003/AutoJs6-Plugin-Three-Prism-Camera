@@ -60,7 +60,7 @@
     },
     {
       "q": "Les scripts reçoivent-ils des images en arrière-plan?",
-      "a": "Oui, à condition que la session soit ouverte quand AutoJs6 est au premier plan. Tant qu'une session est ouverte, le plugin exécute un service de premier plan caméra et la notification indique que la caméra est utilisée. Quand AutoJs6 est déjà en arrière-plan ou que le téléphone reste sur l'écran de verrouillage (Android 11 ou ultérieur), le système n'autorise pas l'usage de la caméra, et une session ouverte à ce moment signale CAMERA_DISABLED puis se ferme. Certains systèmes de constructeurs restreignent davantage la caméra en arrière-plan; consultez la matrice des appareils dans la feuille de route."
+      "a": "Oui, à condition que la session soit ouverte quand AutoJs6 est au premier plan. Tant qu'une session est ouverte, le plugin exécute un service de premier plan caméra et la notification indique que la caméra est utilisée. Quand AutoJs6 est déjà en arrière-plan ou que le téléphone reste sur l'écran de verrouillage (Android 11 ou ultérieur), le système n'autorise pas l'usage de la caméra, et ouvrir la caméra à ce moment signale CAMERA_DISABLED: selon le système, l'ouverture échoue aussitôt, ou la session s'ouvre, signale l'erreur puis se ferme. Une nouvelle ouverture une fois AutoJs6 revenu au premier plan fonctionne normalement, sans redémarrer le plugin. Certains systèmes de constructeurs restreignent davantage la caméra en arrière-plan; consultez la matrice des appareils dans la feuille de route."
     },
     {
       "q": "Le plugin enregistre-t-il les photos dans la galerie?",

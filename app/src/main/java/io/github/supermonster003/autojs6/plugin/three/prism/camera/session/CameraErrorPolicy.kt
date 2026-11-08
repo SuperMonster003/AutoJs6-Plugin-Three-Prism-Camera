@@ -71,4 +71,16 @@ internal object CameraErrorPolicy {
             Action.Close(CameraContract.CLOSE_REASON_ERROR, CameraErrorCodes.INTERNAL, "unknown CameraState error $error")
     }
 
+    /**
+     * The action for a camera foreground service Android refused after `openSession` answered (appendix D Q64 = (a)):
+     * without the service the camera stops once AutoJs6 leaves the foreground, so the session fails like a disabled
+     * camera. A refusal before the answer fails `openSession` itself with the same code and [message][foregroundRefusedMessage].
+     * zh-CN: `openSession` 应答之后 Android 拒绝相机前台服务时的动作 (附录 D Q64 = (a)): 没有该服务, AutoJs6 一离开前台相机就停止, 因此会话像相机被禁用
+     * 一样失败. 应答之前的拒绝直接以同样的错误码与 [消息][foregroundRefusedMessage] 使 `openSession` 失败.
+     */
+    fun foregroundRefused(reason: String): Action.FailAndClose =
+        Action.FailAndClose(CameraErrorCodes.CAMERA_DISABLED, CameraContract.CLOSE_REASON_POLICY, foregroundRefusedMessage(reason))
+
+    fun foregroundRefusedMessage(reason: String) = "the camera foreground service was refused: $reason"
+
 }

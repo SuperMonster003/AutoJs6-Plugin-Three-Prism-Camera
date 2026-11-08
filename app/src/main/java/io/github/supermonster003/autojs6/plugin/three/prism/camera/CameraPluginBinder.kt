@@ -11,6 +11,7 @@ import androidx.camera.core.CameraInfo
 import androidx.camera.lifecycle.ProcessCameraProvider
 import io.github.supermonster003.autojs6.plugin.three.prism.camera.session.BundleOptions
 import io.github.supermonster003.autojs6.plugin.three.prism.camera.session.CameraEngine
+import io.github.supermonster003.autojs6.plugin.three.prism.camera.session.CameraErrorPolicy
 import io.github.supermonster003.autojs6.plugin.three.prism.camera.session.CameraExclusivity
 import io.github.supermonster003.autojs6.plugin.three.prism.camera.session.CameraFailure
 import io.github.supermonster003.autojs6.plugin.three.prism.camera.session.CameraRequests
@@ -124,8 +125,11 @@ internal class CameraPluginBinder(context: Context) : ICameraPlugin.Stub() {
 
     /**
      * Starts the camera foreground service for [session] and waits for its outcome (roadmap D10, D25): a refusal closes
-     * the session and fails the call with `CAMERA_DISABLED`; a refusal after the answer only reports `onError`.
-     * zh-CN: 为 [session] 启动相机前台服务并等待结果 (路线图 D10, D25): 被拒时关闭会话并以 `CAMERA_DISABLED` 结束调用; 应答之后的拒绝只报告 `onError`.
+     * the session and fails the call with `CAMERA_DISABLED`; a refusal after the answer (for example a start Android
+     * dropped silently, which shows only after [ForegroundStartWatch.TIMEOUT_MILLIS]) reports `onError`
+     * `CAMERA_DISABLED` and then closes the session with reason `policy` (appendix D Q64 = (a)).
+     * zh-CN: 为 [session] 启动相机前台服务并等待结果 (路线图 D10, D25): 被拒时关闭会话并以 `CAMERA_DISABLED` 结束调用; 应答之后的拒绝 (例如被 Android 静默丢弃,
+     * [ForegroundStartWatch.TIMEOUT_MILLIS] 之后才显现的启动) 先报告 `onError` `CAMERA_DISABLED`, 再以 `policy` 关闭会话 (附录 D Q64 = (a)).
      */
     private fun holdForeground(foreground: ForegroundHold) {
         val session = foreground.session
@@ -135,14 +139,16 @@ internal class CameraPluginBinder(context: Context) : ICameraPlugin.Stub() {
         }
         foreground.answer()?.let { reason ->
             session.close(CameraContract.CLOSE_REASON_ERROR, null, null, notify = false)
-            throw CameraFailure(CameraErrorCodes.CAMERA_DISABLED, "the camera foreground service was refused: $reason")
+            throw CameraFailure(CameraErrorCodes.CAMERA_DISABLED, CameraErrorPolicy.foregroundRefusedMessage(reason))
         }
     }
 
     /**
      * The foreground service listener of one session. [onStarted] may come more than once (a later session restarts the
-     * notification), so it only opens the latch. A refusal before [answer] fails `openSession`, a later one is reported.
-     * zh-CN: 一个会话的前台服务监听器. [onStarted] 可能不止一次 (后续会话刷新通知), 因此只打开闩锁. [answer] 之前的拒绝使 `openSession` 失败, 之后的拒绝被报告.
+     * notification), so it only opens the latch. A refusal before [answer] fails `openSession`, a later one fails the
+     * session ([CameraErrorPolicy.foregroundRefused]).
+     * zh-CN: 一个会话的前台服务监听器. [onStarted] 可能不止一次 (后续会话刷新通知), 因此只打开闩锁. [answer] 之前的拒绝使 `openSession` 失败, 之后的拒绝使会话失败
+     * ([CameraErrorPolicy.foregroundRefused]).
      */
     private class ForegroundHold(val session: CameraSession) : ThreePrismCameraForegroundService.Listener {
         val latch = CountDownLatch(1)
@@ -157,7 +163,10 @@ internal class CameraPluginBinder(context: Context) : ICameraPlugin.Stub() {
                 answered
             }
             latch.countDown()
-            if (late) session.reportError(CameraFailure(CameraErrorCodes.CAMERA_DISABLED, "the camera foreground service was refused: $reason"))
+            if (late) {
+                Log.i(TAG, "The camera foreground service was refused after the open: CAMERA_DISABLED, then close policy")
+                session.fail(CameraErrorPolicy.foregroundRefused(reason))
+            }
         }
 
         /** Marks the call answered and returns an earlier refusal. zh-CN: 标记调用已应答并返回此前的拒绝. */

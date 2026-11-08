@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Device matrix of 3-Prism Camera (roadmap P4.2 - P4.4 and appendix D Q41 = (b)) through the host `camera` module.
 
-Usage: py -u .python/device_camera_matrix.py <serial> [--phases smoke,perf,background,bgopen,kill,coldstart,recognize,q41]
+Usage: py -u .python/device_camera_matrix.py <serial> [--phases smoke,perf,background,bgopen,fgopen,kill,coldstart,recognize,q41]
        [--seconds 30] [--sizes 640x480,1280x720] [--allow-device-changes] [--bgopen-via home|lock]
 
 The host must be a build with the `camera` module (versionCode >= 6641) and the plugin must be installed with the camera
@@ -18,7 +18,11 @@ reused); the shell adds what only it sees. One line per check: PASS / FAIL / SKI
   --seconds; frames in each window, plus the plugin's foreground service and process capability from dumpsys.
 - bgopen (P4.3): the host goes home first (with --bgopen-via lock the screen turns off at the lock screen instead),
   then the script calls `camera.open()` and analyzes 10 s; without frames the session must report `CAMERA_DISABLED`
-  and then close with reason `policy` (appendix D Q57 = (a)).
+  and then close with reason `policy` (appendix D Q57 = (a)), or `open` itself must fail with `CAMERA_DISABLED` (the
+  system refused or dropped the plugin's camera foreground service, appendix D Q64 = (a)).
+- fgopen (P4.3, appendix D Q64 = (a); run it right after bgopen): the host is in front, `camera.open()` analyzes 6 s;
+  frames must arrive, and 3 s in the plugin's foreground service must run (`isForeground=true`) with its notification
+  shown, also after a background open in the same plugin process.
 - kill (P4.3): a session analyzes, the host goes home and is killed with `am kill` (`am force-stop` when the process
   survives); the plugin's foreground notification must be gone and its session close must start within 1 s, the camera
   device within 1.5 s of the kill (CameraX closes it about 1.2 s after the session closes; appendix D Q58 (a), Q65 (a)).
@@ -35,7 +39,9 @@ zh-CN: 经宿主 `camera` 模块在设备上跑 3-Prism Camera 的设备矩阵 (
 只有 shell 能看到的由本脚本补充. 每项一行 PASS / FAIL / SKIP / INFO 与关键值. smoke (R3): list, open + 10 帧, capture 到文件, 手电开关;
 perf (P4.4): 每个分辨率分析 --seconds 秒, 记录实际分辨率与帧率, 丢帧, 传感器时间戳到脚本回调的延迟 P50 / P95 (宿主 onFrame 处理的上界),
 两进程 CPU 与 PSS 增量, 以及会话打开时 `session.capture()` 的延迟 (3 次中位数); background (P4.3): 宿主回桌面与熄屏各 --seconds 秒的出帧数,
-以及插件前台服务与进程能力; bgopen: 宿主先回桌面 (--bgopen-via lock 改为熄屏停在锁屏) 再 open, 没有出帧时会话须先报 CAMERA_DISABLED 再以 policy 关闭 (附录 D Q57 = (a)); kill: `am kill` 宿主后插件通知须在 1 秒内消失且会话 1 秒内开始关闭, 相机设备随 CameraX 约 1.2 秒延迟关闭, 击杀后 1.5 秒内释放 (附录 D Q58 (a), Q65 (a)); coldstart: 取景页冷启动
+以及插件前台服务与进程能力; bgopen: 宿主先回桌面 (--bgopen-via lock 改为熄屏停在锁屏) 再 open, 没有出帧时会话须先报 CAMERA_DISABLED 再以 policy 关闭 (附录 D Q57 = (a)),
+或 open 本身以 CAMERA_DISABLED 失败 (系统拒绝或丢弃插件的相机前台服务, 附录 D Q64 = (a)); fgopen (紧接 bgopen 运行): 宿主在前台时 open 并分析 6 秒, 须有帧, 第 3 秒插件前台服务须在运行
+(`isForeground=true`) 且通知可见, 同一插件进程里此前有过后台 open 时同样如此 (附录 D Q64 = (a)); kill: `am kill` 宿主后插件通知须在 1 秒内消失且会话 1 秒内开始关闭, 相机设备随 CameraX 约 1.2 秒延迟关闭, 击杀后 1.5 秒内释放 (附录 D Q58 (a), Q65 (a)); coldstart: 取景页冷启动
 (`am start -W` 3 次中位数); q41: 写入设置页的默认值 (前置, 320x240, 15 fps), 不带参数的 `camera.open()` 须按其取值, 之后还原.
 """
 from __future__ import annotations
@@ -206,15 +212,21 @@ BGOPEN = r"""
 out('step:home');
 setTimeout(function () {
     var session = null;
+    var t0 = Date.now();
     try {
         session = camera.open({ facing: 'back', resolution: '640x480' });
     } catch (e) {
-        report('bgopen', 'INFO', 'open in the background: ' + describe(e));
+        // Appendix D Q64 = (a): a camera foreground service the system refuses or drops before `open` answers fails the
+        // open itself with CAMERA_DISABLED. zh-CN: 附录 D Q64 = (a): 系统在 `open` 应答之前拒绝或丢弃相机前台服务时, open 本身以 CAMERA_DISABLED 失败.
+        report('bgopen', e && e.code === 'CAMERA_DISABLED' ? 'PASS' : 'INFO',
+            'open in the background failed after ' + (Date.now() - t0) + ' ms: ' + describe(e));
         out('done');
         exit();
         return;
     }
-    var count = 0, events = [], order = [], first = null, t0 = Date.now();
+    var count = 0, events = [], order = [], first = null;
+    events.push('open +' + (Date.now() - t0) + ' ms');
+    t0 = Date.now();
     session.on('error', function (e) {
         events.push('error +' + (Date.now() - t0) + ' ms ' + (e && e.code));
         order.push('error:' + (e && e.code));
@@ -235,6 +247,31 @@ setTimeout(function () {
         exit();
     }, 10000);
 }, 5000);
+"""
+
+FGOPEN = r"""
+var t0 = Date.now(), session = null;
+try {
+    session = camera.open({ facing: 'back', resolution: '640x480' });
+} catch (e) {
+    out('step:frames-0-' + (Date.now() - t0) + '-open_' + (e && e.code));
+    out('done');
+    exit();
+}
+if (session) {
+    var opened = Date.now() - t0;
+    var count = 0, events = [];
+    session.on('error', function (e) { events.push('error_' + (e && e.code)); });
+    session.on('close', function (reason) { events.push('close_' + reason); });
+    session.analyze(function () { count++; });
+    setTimeout(function () { out('step:check'); }, 3000);
+    setTimeout(function () {
+        out('step:frames-' + count + '-' + opened + '-' + (events.join(',') || 'none'));
+        session.close();
+        out('done');
+        exit();
+    }, 6000);
+}
 """
 
 KILL = r"""
@@ -476,9 +513,34 @@ def main():
             # Key lines only: the plugin's error mapping and close, the system's while-in-use refusal.
             # zh-CN: 只取关键行: 插件的错误映射与关闭, 系统的使用期间拒绝.
             lines = [line.strip() for line in device.shell("logcat -d -v time -b main,system").splitlines()
-                     if re.search(r"PrismSession.*(CameraState error|Session closed)|can not have .*camera|startForeground.*camera", line)]
-            for line in lines[:6]:
+                     if re.search(r"PrismSession.*(CameraState error|Session closed)|/PrismCameraService\(|PrismPlugin.*refused|can not have .*camera|"
+                                  r"startForeground.*camera|Background start not allowed.*%s" % re.escape(PLUGIN), line)]
+            for line in lines[:8]:
                 print("INFO bgopen log %s" % line[:220], flush=True)
+        if "fgopen" in phases and unlocked("fgopen"):
+            seen = {}
+
+            def on_fgopen(line):
+                if line == "step:check":
+                    seen["notification"] = notified(device)
+                    seen["fg"] = foreground_info(device)
+                elif line.startswith("step:frames-"):
+                    frames, opened, events = line[len("step:frames-"):].split("-", 2)
+                    seen.update(frames=int(frames), opened=opened, events=events)
+
+            device.shell("logcat -c")
+            run_phase(device, "fgopen", common + FGOPEN, 60, on_fgopen)
+            # Appendix D Q64 = (a): after a background open the plugin starts its foreground service again.
+            # zh-CN: 附录 D Q64 = (a): 有过后台 open 之后, 插件仍会重新启动前台服务.
+            ok = (seen.get("frames", 0) > 0 and seen.get("notification") is True and "isForeground=true" in seen.get("fg", "")
+                  and seen.get("events") == "none")
+            print("fgopen %s open %s ms, frames in 6 s=%s, notification=%s %s, events=%s" % (
+                "PASS" if ok else "FAIL", seen.get("opened", "-"), seen.get("frames", "-"), seen.get("notification", "-"),
+                seen.get("fg", "-"), seen.get("events", "-")), flush=True)
+            lines = [line.strip() for line in device.shell("logcat -d -v time -b main,system").splitlines()
+                     if re.search(r"/PrismCameraService\(|PrismPlugin.*(refused|did not start)|Background start not allowed.*%s" % re.escape(PLUGIN), line)]
+            for line in lines[:4]:
+                print("INFO fgopen log %s" % line[:220], flush=True)
         if "kill" in phases and unlocked("kill"):
             def on_kill(line):
                 if line != "step:kill":
