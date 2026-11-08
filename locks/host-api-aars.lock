@@ -1,10 +1,11 @@
 # Host API release AARs (roadmap 5.5, P2.1). camera-api is the camera contract module of roadmap P1.1, restaged from
-#   host master c82c5b27f9 (2026-11-06, adds CameraResultKeys.STATE_PREVIEW_MIRRORED, appendix D Q11 = (b));
+#   host master 58386d0ed7 (2026-11-08, adds CameraOptionKeys.OUTPUT_UPRIGHT and CameraFrameKeys.APPLIED_ROTATION_DEGREES,
+#   appendix D Q66 (a));
 #   common-plugin-api is the release build of host master 2a5bafc67a (2026-11-05, VERSION_BUILD 6641 in the isolated
 #   clone E:/.cache/autojs6-prism-host), unchanged since, kept because camera-api refers to its PluginInfo parcelable.
 #   See libs/README.md.
 format=1
 camera-api.file=camera-api.aar
-camera-api.sha256=9063b4a9019b896119f5688d5d2b0142d240737869fa534102079706cf1a1200
+camera-api.sha256=5ca8c1e9252c0f6c3b4a2453daf99a19b571647f2dd68a882e5079b351f90b7c
 common-plugin-api.file=common-plugin-api.aar
 common-plugin-api.sha256=9849b15091dcb255cd1c47140790081eebc074aec2e3e9b28c18f12bf9ef4a6a

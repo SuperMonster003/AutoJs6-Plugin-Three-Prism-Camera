@@ -1,5 +1,6 @@
 package io.github.supermonster003.autojs6.plugin.three.prism.camera.session
 
+import android.graphics.Matrix
 import android.graphics.PixelFormat
 import android.os.Bundle
 import android.os.RemoteException
@@ -22,9 +23,13 @@ internal class FrameCounters {
 /**
  * The `ImageAnalysis` analyzer of one analysis (protocol "Frame transport" steps 3 and 6): paces the frames, takes a
  * free block of the [ring] (or counts a drop), packs the RGBA plane into the block and sends `onFrame`; drops go out as
- * `onDropped` every 30. [finish] waits for the frame in progress, so nothing reaches [callback] after it returns.
+ * `onDropped` every 30. [finish] waits for the frame in progress, so nothing reaches [callback] after it returns. With
+ * [outputUpright] the use case turns the frames upright ([UprightFrames], roadmap appendix D Q66 (a)): the header names
+ * the turn applied and the size of the turned frame, [expectedTurn] is the camera's rotation for the use case's target
+ * rotation.
  * zh-CN: 一次分析的 `ImageAnalysis` 分析器 (协议 "Frame transport" 第 3, 6 步): 对帧限速, 从 [ring] 取空闲块 (或计一次丢帧), 把 RGBA 平面紧排写入块并
- * 发送 `onFrame`; 丢帧每 30 次以 `onDropped` 报告. [finish] 等待进行中的帧, 因此它返回后不再有调用到达 [callback].
+ * 发送 `onFrame`; 丢帧每 30 次以 `onDropped` 报告. [finish] 等待进行中的帧, 因此它返回后不再有调用到达 [callback]. 带 [outputUpright] 时由用例旋正帧
+ * ([UprightFrames], 路线图附录 D Q66 (a)): 帧头写明已施加的旋转与旋正后的尺寸, [expectedTurn] 为用例目标旋转对应的相机旋转.
  */
 internal class FrameAnalyzer(
     private val store: FrameStore,
@@ -34,11 +39,14 @@ internal class FrameAnalyzer(
     private val facing: String,
     private val pacer: FramePacer,
     private val counters: FrameCounters,
+    private val outputUpright: Boolean = false,
+    private val expectedTurn: () -> Int = { 0 },
 ) : ImageAnalysis.Analyzer {
 
     private val lock = Any()
     private var active = true
     private var warned = false
+    private val matrixValues = FloatArray(9)
 
     override fun analyze(image: ImageProxy) {
         try {
@@ -54,14 +62,20 @@ internal class FrameAnalyzer(
 
     private fun handle(image: ImageProxy) {
         val plane = image.planes.firstOrNull()
-        if (image.format != PixelFormat.RGBA_8888 || image.width != store.width || image.height != store.height || plane == null || plane.pixelStride != 4) {
+        val info = image.imageInfo
+        val shape = if (image.format == PixelFormat.RGBA_8888 && plane != null && plane.pixelStride == 4) {
+            val matrixTurn = if (outputUpright) matrixTurnOf(info.sensorToBufferTransformMatrix) else null
+            UprightFrames.shape(store.width, store.height, image.width, image.height, outputUpright, matrixTurn, if (outputUpright) expectedTurn() else 0)
+        } else {
+            null
+        }
+        if (shape == null || plane == null) {
             if (!warned) {
                 warned = true
-                Log.w(TAG, "Unexpected frame ${image.width}x${image.height} format ${image.format}; expected ${store.width}x${store.height} RGBA_8888")
+                Log.w(TAG, "Unexpected frame ${image.width}x${image.height} format ${image.format}; expected ${store.width}x${store.height} RGBA_8888 (outputUpright $outputUpright)")
             }
             return
         }
-        val info = image.imageInfo
         if (!pacer.admit(info.timestamp)) return
         when (val slot = ring.acquire()) {
             is FrameRing.Slot.Dropped -> {
@@ -70,7 +84,7 @@ internal class FrameAnalyzer(
             }
             is FrameRing.Slot.Block -> {
                 val fd = try {
-                    store.write(slot.index) { target -> RgbaPacker.pack(plane.buffer, plane.rowStride, store.width, store.height, target) }
+                    store.write(slot.index) { target -> RgbaPacker.pack(plane.buffer, plane.rowStride, shape.width, shape.height, target) }
                     store.frameFd(slot.index)
                 } catch (throwable: Throwable) {
                     ring.abort(slot)
@@ -80,9 +94,10 @@ internal class FrameAnalyzer(
                 val frame = answer(version) {
                     putLong(CameraFrameKeys.SEQ, slot.seq)
                     putInt(CameraFrameKeys.BUFFER_INDEX, slot.index)
-                    putInt(CameraFrameKeys.WIDTH, store.width)
-                    putInt(CameraFrameKeys.HEIGHT, store.height)
+                    putInt(CameraFrameKeys.WIDTH, shape.width)
+                    putInt(CameraFrameKeys.HEIGHT, shape.height)
                     putInt(CameraFrameKeys.ROTATION_DEGREES, info.rotationDegrees)
+                    shape.appliedRotationDegrees?.let { putInt(CameraFrameKeys.APPLIED_ROTATION_DEGREES, it) }
                     putLong(CameraFrameKeys.TIMESTAMP_NANOS, info.timestamp)
                     putString(CameraFrameKeys.FACING, facing)
                     fd?.let { putParcelable(CameraFrameKeys.FRAME_FD, it) }
@@ -96,6 +111,11 @@ internal class FrameAnalyzer(
                 }
             }
         }
+    }
+
+    private fun matrixTurnOf(matrix: Matrix): Int? {
+        matrix.getValues(matrixValues)
+        return UprightFrames.quarterTurnOf(matrixValues)
     }
 
     private fun droppedBundle(): Bundle = answer(version) {

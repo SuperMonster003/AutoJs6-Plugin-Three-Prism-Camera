@@ -511,6 +511,9 @@ internal class CameraSession(
             .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .setTargetRotation(displayRotation)
+            // CameraX turns the frames during its native YUV to RGBA conversion (roadmap appendix D Q66 (a)).
+            // zh-CN: CameraX 在原生 YUV 转 RGBA 时旋正帧 (路线图附录 D Q66 (a)).
+            .setOutputImageRotationEnabled(request.outputUpright)
             .setResolutionSelector(
                 ResolutionSelector.Builder()
                     .setAspectRatioStrategy(aspectOf(longSide, shortSide))
@@ -533,7 +536,11 @@ internal class CameraSession(
             throw CameraFailure(CameraErrorCodes.INTERNAL, "the frame blocks could not be allocated: ${ErrorText.describe(e)}", cause = e)
         }
         val ring = FrameRing()
-        val analyzer = FrameAnalyzer(store, ring, frameCallback, version, facing, FramePacer(plan.throttleFps), counters)
+        val analyzer = FrameAnalyzer(
+            store, ring, frameCallback, version, facing, FramePacer(plan.throttleFps), counters,
+            outputUpright = request.outputUpright,
+            expectedTurn = { cameraInfo.getSensorRotationDegrees(useCase.targetRotation) },
+        )
         analysis = AnalysisRun(useCase, analyzer, store, ring, plan.actualFps)
         useCase.setAnalyzer(CameraExecutors.analysis, analyzer)
         val answer = answer(version) {

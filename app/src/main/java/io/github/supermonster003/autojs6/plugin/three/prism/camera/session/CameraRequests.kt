@@ -30,7 +30,20 @@ internal data class OpenRequest(
     val holderLabel: String,
 )
 
-internal data class AnalysisRequest(val width: Int, val height: Int, val fps: Int?, val upright: Boolean, val mirror: Boolean)
+/**
+ * `startAnalysis`: [upright] and [mirror] are informational (the host mirrors); [outputUpright] asks the plugin to turn
+ * the frames upright itself (protocol "Upright frames from the plugin", roadmap appendix D Q66 (a)).
+ * zh-CN: `startAnalysis`: [upright] 与 [mirror] 仅供参考 (由宿主镜像); [outputUpright] 请插件自行旋正帧 (协议 "Upright frames from the plugin" 一节,
+ * 路线图附录 D Q66 (a)).
+ */
+internal data class AnalysisRequest(
+    val width: Int,
+    val height: Int,
+    val fps: Int?,
+    val upright: Boolean,
+    val mirror: Boolean,
+    val outputUpright: Boolean = false,
+)
 
 internal data class CaptureRequest(val quality: Int, val flashMode: String?, val width: Int?, val height: Int?, val mirror: Boolean)
 
@@ -138,6 +151,8 @@ internal object CameraRequests {
             fps = fps(options) ?: defaults?.fps,
             upright = bool(options, CameraOptionKeys.UPRIGHT) ?: true,
             mirror = bool(options, CameraOptionKeys.MIRROR) ?: false,
+            // An older host leaves it out and turns the frames itself. zh-CN: 旧宿主不发送该键, 自行旋正.
+            outputUpright = bool(options, CameraOptionKeys.OUTPUT_UPRIGHT) ?: false,
         )
     }
 

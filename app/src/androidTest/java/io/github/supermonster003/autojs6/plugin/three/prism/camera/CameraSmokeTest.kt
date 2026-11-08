@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.os.IBinder
 import android.os.ParcelFileDescriptor
 import android.os.SharedMemory
+import android.util.Log
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -44,11 +45,14 @@ import java.util.concurrent.atomic.AtomicReference
  * capability service opens, delivers 10 frames whose `seq` rises by one while the 3 buffers are used in turn, takes a
  * picture that decodes as a JPEG and closes, after which a second session opens again. The test binds the service in
  * its own process, the way `ThreePrismCameraContractTest` does, and plays the host's part of the frame protocol: it
- * reads every frame from its buffer and releases it. `CAMERA` is granted by the rule (no dialog). The CI AVD starts
- * with `-camera-back virtualscene -camera-front emulated` (roadmap D35).
+ * reads every frame from its buffer and releases it. The first session asks for frames in the sensor orientation (an
+ * older host), the second one for upright frames (`outputUpright`, roadmap appendix D Q66 (a)), whose header names the
+ * applied rotation and the turned size. `CAMERA` is granted by the rule (no dialog). The CI AVD starts with
+ * `-camera-back virtualscene -camera-front emulated` (roadmap D35).
  * zh-CN: CameraX 冒烟测试 (路线图 P0.4, 由 P4.1 补全): `ProcessCameraProvider` 报告镜头; 能力服务的会话能打开, 交付 10 帧
  * (`seq` 逐一递增, 3 个缓冲依次轮用), 拍出可解码的 JPEG 并关闭, 之后第二个会话能再次打开. 测试像 `ThreePrismCameraContractTest`
- * 一样在自身进程内绑定服务, 并扮演帧协议中宿主的一方: 读取每一帧的缓冲并释放. `CAMERA` 由规则授予 (不弹对话框). CI 的 AVD 以
+ * 一样在自身进程内绑定服务, 并扮演帧协议中宿主的一方: 读取每一帧的缓冲并释放. 第一个会话请求传感器方向的帧 (旧宿主), 第二个会话请求旋正的帧
+ * (`outputUpright`, 路线图附录 D Q66 (a)), 其帧头写明已施加的旋转与旋正后的尺寸. `CAMERA` 由规则授予 (不弹对话框). CI 的 AVD 以
  * `-camera-back virtualscene -camera-front emulated` 启动 (路线图 D35).
  */
 @RunWith(AndroidJUnit4::class)
@@ -78,10 +82,10 @@ class CameraSmokeTest {
         capture(first.session)
         closeAndWait(first)
 
-        // Second session: the camera opens again after a close and still delivers frames.
-        // zh-CN: 第二个会话: 关闭后镜头能再次打开, 仍能出帧.
+        // Second session: the camera opens again after a close and still delivers frames, upright this time.
+        // zh-CN: 第二个会话: 关闭后镜头能再次打开, 仍能出帧, 这次是旋正的帧.
         val second = openReady(plugin)
-        assertEquals((1L..3L).toList(), analyze(second.session, 3).map { it.first })
+        assertEquals((1L..3L).toList(), analyze(second.session, 3, outputUpright = true).map { it.first })
         closeAndWait(second)
     }
 
@@ -113,8 +117,12 @@ class CameraSmokeTest {
         return Opened(session, closed)
     }
 
-    /** Collects [count] frames as (`seq`, `bufferIndex`), reading and releasing each one like the host. */
-    private fun analyze(session: ICameraSession, count: Int): List<Pair<Long, Int>> {
+    /**
+     * Collects [count] frames as (`seq`, `bufferIndex`), reading and releasing each one like the host. With
+     * [outputUpright] every frame names the rotation the plugin applied and has the answered sides swapped after a
+     * quarter turn; without it no frame names one and every frame has the answered size.
+     */
+    private fun analyze(session: ICameraSession, count: Int, outputUpright: Boolean = false): List<Pair<Long, Int>> {
         // A frame with the size of its frame file (-1 without one). The plugin closes its frame descriptor when onFrame
         // returns, and in one process no binder copy is made, so the descriptor is read here and not on the test thread.
         // zh-CN: 帧及其帧文件大小 (无帧文件为 -1). 插件在 onFrame 返回时关闭帧描述符, 同进程内没有 binder 副本, 因此在这里读取, 不在测试线程读取.
@@ -128,7 +136,8 @@ class CameraSmokeTest {
 
             override fun onDropped(info: Bundle) = Unit
         }
-        val answer = session.startAnalysis(request(), callback)
+        val options = request().apply { if (outputUpright) putBoolean(CameraOptionKeys.OUTPUT_UPRIGHT, true) }
+        val answer = session.startAnalysis(options, callback)
         assertNull("startAnalysis error: ${answer.getString(CameraContract.KEY_ERROR_MESSAGE)}", answer.getString(CameraContract.KEY_ERROR_CODE))
         val width = answer.getInt(CameraResultKeys.WIDTH)
         val height = answer.getInt(CameraResultKeys.HEIGHT)
@@ -146,13 +155,26 @@ class CameraSmokeTest {
             null
         }
         val seen = ArrayList<Pair<Long, Int>>()
+        val shapes = LinkedHashSet<String>()
         try {
             while (seen.size < count) {
                 val (frame, fileSize) = requireWithin(queue.poll(10, TimeUnit.SECONDS), "frame ${seen.size + 1} within 10 s")
                 val seq = frame.getLong(CameraFrameKeys.SEQ)
                 val index = frame.getInt(CameraFrameKeys.BUFFER_INDEX)
-                assertEquals(width, frame.getInt(CameraFrameKeys.WIDTH))
-                assertEquals(height, frame.getInt(CameraFrameKeys.HEIGHT))
+                if (outputUpright) {
+                    val applied = frame.getInt(CameraFrameKeys.APPLIED_ROTATION_DEGREES, -1)
+                    assertTrue("frame $seq names the applied rotation, got $applied", applied in setOf(0, 90, 180, 270))
+                    assertEquals("frame $seq is upright already", 0, frame.getInt(CameraFrameKeys.ROTATION_DEGREES))
+                    val quarter = applied == 90 || applied == 270
+                    assertEquals("frame $seq width after $applied", if (quarter) height else width, frame.getInt(CameraFrameKeys.WIDTH))
+                    assertEquals("frame $seq height after $applied", if (quarter) width else height, frame.getInt(CameraFrameKeys.HEIGHT))
+                } else {
+                    assertFalse("frame $seq names no applied rotation", frame.containsKey(CameraFrameKeys.APPLIED_ROTATION_DEGREES))
+                    assertEquals(width, frame.getInt(CameraFrameKeys.WIDTH))
+                    assertEquals(height, frame.getInt(CameraFrameKeys.HEIGHT))
+                }
+                shapes += "${frame.getInt(CameraFrameKeys.WIDTH)}x${frame.getInt(CameraFrameKeys.HEIGHT)}" +
+                    "@${frame.getInt(CameraFrameKeys.APPLIED_ROTATION_DEGREES, -1)}/${frame.getInt(CameraFrameKeys.ROTATION_DEGREES)}"
                 if (buffers != null) {
                     assertTrue("block $index holds a frame", buffers[index].capacity() >= frameBytes)
                     buffers[index].get(0)
@@ -166,6 +188,7 @@ class CameraSmokeTest {
             session.stopAnalysis()
             buffers?.forEach { SharedMemory.unmap(it) }
         }
+        Log.i(TAG, "SMOKE_FRAMES outputUpright=$outputUpright answer=${width}x$height frames=$shapes (size@applied/rotation)")
         return seen
     }
 
@@ -241,4 +264,7 @@ class CameraSmokeTest {
         }
     }
 
+    private companion object {
+        const val TAG = "PrismSmoke"
+    }
 }

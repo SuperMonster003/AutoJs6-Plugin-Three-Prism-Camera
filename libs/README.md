@@ -12,13 +12,14 @@ process and needs the AIDL stubs and constants at run time.
 
 | File | Host module | Content | SHA-256 |
 | --- | --- | --- | --- |
-| `camera-api.aar` | `plugin-api/camera-api` | `ICameraPlugin`, `ICameraSession` and the three callback AIDL interfaces, `CameraContract`, `CameraOptionKeys`, `CameraResultKeys`, `CameraFrameKeys`, `CameraLimits`, `CameraErrorCodes`, `CameraCapabilityKeys`, `CameraPluginActions`, `CameraPluginIds` | `9063b4a9019b896119f5688d5d2b0142d240737869fa534102079706cf1a1200` |
+| `camera-api.aar` | `plugin-api/camera-api` | `ICameraPlugin`, `ICameraSession` and the three callback AIDL interfaces, `CameraContract`, `CameraOptionKeys`, `CameraResultKeys`, `CameraFrameKeys`, `CameraLimits`, `CameraErrorCodes`, `CameraCapabilityKeys`, `CameraPluginActions`, `CameraPluginIds` | `5ca8c1e9252c0f6c3b4a2453daf99a19b571647f2dd68a882e5079b351f90b7c` |
 | `common-plugin-api.aar` | `plugin-api/common-plugin-api` | `PluginInfo`, `IPluginInfoProvider`, `PluginActions`, `PluginCapabilityKeys`, `AutoJs6HostSettingsContract` | `9849b15091dcb255cd1c47140790081eebc074aec2e3e9b28c18f12bf9ef4a6a` |
 
 Provenance (roadmap P2.1): both AARs are `assembleRelease` outputs of the host. `camera-api.aar` is the camera
-contract module of roadmap P1.1, restaged on 2026-11-06 from host master `c82c5b27f9`, which adds
-`CameraResultKeys.STATE_PREVIEW_MIRRORED` (appendix D Q11 = (b)); the host commits that touch `plugin-api/camera-api`
-are `4a10154c44` and `c82c5b27f9`. `common-plugin-api.aar` is the 2026-11-05 build of host master `2a5bafc67a` in the
+contract module of roadmap P1.1, restaged on 2026-11-08 from host master `58386d0ed7`, which adds
+`CameraOptionKeys.OUTPUT_UPRIGHT` and `CameraFrameKeys.APPLIED_ROTATION_DEGREES` (appendix D Q66 (a), the plugin turns
+analysis frames upright); the host commits that touch `plugin-api/camera-api` are `4a10154c44`, `c82c5b27f9`
+(`CameraResultKeys.STATE_PREVIEW_MIRRORED`, appendix D Q11 = (b)) and `58386d0ed7`. `common-plugin-api.aar` is the 2026-11-05 build of host master `2a5bafc67a` in the
 isolated clone `E:/.cache/autojs6-prism-host` (its `version.properties` set to `VERSION_BUILD=6641`, not committed;
 appendix D Q9), restaged because `camera-api` refers to its `PluginInfo` parcelable; nothing in it changed since. The
 P0 copy (13220 bytes, host 6.8.0 build 5697) is superseded.

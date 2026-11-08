@@ -145,6 +145,21 @@ class CameraRequestsTest {
     }
 
     @Test
+    fun `analysis turns frames upright only when the host asks`() {
+        // Roadmap appendix D Q66 (a): an older host never sends outputUpright and turns the frames itself.
+        // zh-CN: 路线图附录 D Q66 (a): 旧宿主从不发送 outputUpright, 自行旋正.
+        assertFalse(CameraRequests.analysis(options(), null).outputUpright)
+        assertFalse(CameraRequests.analysis(null, null).outputUpright)
+        assertFalse(CameraRequests.analysis(options(CameraOptionKeys.OUTPUT_UPRIGHT to false), null).outputUpright)
+        assertTrue(CameraRequests.analysis(options(CameraOptionKeys.OUTPUT_UPRIGHT to true), null).outputUpright)
+        assertEquals(
+            AnalysisRequest(640, 480, null, upright = true, mirror = true, outputUpright = true),
+            CameraRequests.analysis(options(CameraOptionKeys.UPRIGHT to true, CameraOptionKeys.MIRROR to true, CameraOptionKeys.OUTPUT_UPRIGHT to true), null),
+        )
+        failure { CameraRequests.analysis(options(CameraOptionKeys.OUTPUT_UPRIGHT to "yes"), null) }
+    }
+
+    @Test
     fun `capture checks the quality, the size pair and the mirror flag`() {
         assertEquals(CaptureRequest(CameraLimits.DEFAULT_QUALITY, null, null, null, false), CameraRequests.capture(null))
         assertEquals(

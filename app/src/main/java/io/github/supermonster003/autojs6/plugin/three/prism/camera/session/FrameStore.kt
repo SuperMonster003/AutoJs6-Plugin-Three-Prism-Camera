@@ -18,10 +18,11 @@ import java.nio.channels.FileChannel
 /**
  * The frame blocks of one analysis (protocol "Frame transport", "Resource ownership"): three `SharedMemory` blocks
  * named `prism-frame-<i>` on API 27+, three files `cacheDir/frames/<i>.rgba` with one read-only descriptor per frame
- * below. Every block holds `width * height * 4` bytes. Written on the analyzer thread only; closed after the analyzer
- * stopped.
+ * below. Every block holds `width * height * 4` bytes, also for a frame turned upright with its sides swapped (roadmap
+ * appendix D Q66 (a)). Written on the analyzer thread only; closed after the analyzer stopped.
  * zh-CN: 一次分析的帧块 (协议 "Frame transport", "Resource ownership" 两节): API 27+ 为三块名为 `prism-frame-<i>` 的 `SharedMemory`, 以下为三个
- * 文件 `cacheDir/frames/<i>.rgba`, 每帧附一个只读描述符. 每块 `width * height * 4` 字节. 只在分析器线程写入; 分析器停止后关闭.
+ * 文件 `cacheDir/frames/<i>.rgba`, 每帧附一个只读描述符. 每块 `width * height * 4` 字节, 旋正后宽高互换的帧也是如此 (路线图附录 D Q66 (a)). 只在分析器
+ * 线程写入; 分析器停止后关闭.
  */
 internal interface FrameStore : Closeable {
 
