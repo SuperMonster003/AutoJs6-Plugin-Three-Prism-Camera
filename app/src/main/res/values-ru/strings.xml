@@ -41,8 +41,12 @@
     <string name="notification_channel_camera_description">Отображается, пока скрипт держит сеанс камеры открытым</string>
     <string name="notification_channel_camera_name">Камера</string>
     <string name="plugin_description">Фотосъёмка, непрерывный анализ кадров и предпросмотр видоискателя через CameraX, кадры можно сразу передавать модулям распознавания OCR, штрихкодов, YOLO и другим</string>
-    <string name="release_history_title">История версий</string>
-    <string name="release_history_unavailable">Не удалось загрузить историю версий</string>
+    <string name="release_history">История выпусков</string>
+    <string name="release_history_collapse_all">Свернуть всё</string>
+    <string name="release_history_collapsed">Свёрнуто</string>
+    <string name="release_history_expand_all">Развернуть всё</string>
+    <string name="release_history_expanded">Развёрнуто</string>
+    <string name="release_history_unavailable">Не удалось загрузить историю выпусков</string>
     <string name="settings_about">О приложении</string>
     <string name="settings_analysis_fps">Частота анализа по умолчанию</string>
     <string name="settings_analysis_fps_device">Частота устройства</string>
@@ -98,7 +102,7 @@
     <string name="settings_open_failed">Не удалось открыть</string>
     <string name="settings_permission_granted">Предоставлено</string>
     <string name="settings_permission_missing">Не предоставлено. Нажмите, чтобы запросить</string>
-    <string name="settings_release_history_summary">Открыть историю выпусков, встроенную в плагин</string>
+    <string name="settings_release_history_summary">Открыть встроенную историю выпусков приложения</string>
     <string name="settings_save_failed">Не удалось сохранить настройку</string>
     <string name="settings_theme_color">Цвет темы</string>
     <string name="settings_title">Настройки</string>

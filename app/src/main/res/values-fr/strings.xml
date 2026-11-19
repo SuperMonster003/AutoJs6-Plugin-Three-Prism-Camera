@@ -41,7 +41,11 @@
     <string name="notification_channel_camera_description">Affichée tant qu\'un script garde une session caméra ouverte</string>
     <string name="notification_channel_camera_name">Caméra</string>
     <string name="plugin_description">Prise de photos, analyse continue des images et aperçu du viseur via CameraX, avec des images prêtes pour les modules de reconnaissance OCR, codes-barres, YOLO et autres</string>
-    <string name="release_history_title">Historique des versions</string>
+    <string name="release_history">Historique des versions</string>
+    <string name="release_history_collapse_all">Tout réduire</string>
+    <string name="release_history_collapsed">Réduit</string>
+    <string name="release_history_expand_all">Tout développer</string>
+    <string name="release_history_expanded">Développé</string>
     <string name="release_history_unavailable">Impossible de charger l\'historique des versions</string>
     <string name="settings_about">À propos</string>
     <string name="settings_analysis_fps">Fréquence d\'analyse par défaut</string>
@@ -98,7 +102,7 @@
     <string name="settings_open_failed">Impossible de l\'ouvrir</string>
     <string name="settings_permission_granted">Accordée</string>
     <string name="settings_permission_missing">Non accordée. Appuyez pour la demander</string>
-    <string name="settings_release_history_summary">Lire l\'historique des versions inclus dans le plugin</string>
+    <string name="settings_release_history_summary">Consulter l\'historique des versions inclus dans l\'application</string>
     <string name="settings_save_failed">Impossible d\'enregistrer le paramètre</string>
     <string name="settings_theme_color">Couleur du thème</string>
     <string name="settings_title">Paramètres</string>

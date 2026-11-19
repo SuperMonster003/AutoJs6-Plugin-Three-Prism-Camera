@@ -76,5 +76,57 @@
   ],
   "p_license": "專案程式碼使用 [Mozilla Public License 2.0]({{ license_url }}). 第三方元件的授權見第三方聲明.",
   "text_link_third_party": "第三方聲明 (THIRD_PARTY_NOTICES.md)",
-  "p_instruction_docs": "腳本 API 見 [AutoJs6 文件 > 相機 (Camera)](https://docs.autojs6.com/#/camera), 開發進度與設計見 [項目主頁]({{ repo_url }})."
+  "instruction_p_what": "3-Prism Camera 是 AutoJs6 的相機插件, 讓腳本可以拍照, 連續取幀並顯示取景預覽. 取得的幀可以直接交給 `ocr`, `barcode` 或 YOLO 等識別模組, 實現即時掃碼, 文字識別與目標檢測.",
+  "instruction_h3_start": "開始使用",
+  "instruction_start_steps": [
+    "從啓動器開啟 3-Prism Camera, 在取景頁點按 \"授予權限\", 允許插件使用相機.",
+    "點按 \"拍照\" 試拍一張. 相片只在 \"相片預覽\" 中顯示, 不會儲存.",
+    "在 AutoJs6 的 \"插件中心\" 啟用本插件.",
+    "在腳本中調用 `camera` 模組拍照或取幀, 範例見下文."
+  ],
+  "instruction_h3_features": "主要功能",
+  "instruction_features": [
+    "**取景頁**: 從啓動器開啟插件即進入取景頁, 可以 \"切換鏡頭\", 開關手電筒, 用滑桿或雙指捏合變焦, 點按畫面對焦.",
+    "**拍照**: 腳本取得按方向轉正的圖像, 也可以把原始 JPEG 儲存到指定路徑; `camera.capture({ ui: true })` 改由使用者在取景頁拍照.",
+    "**連續取幀**: 幀預設為 640x480, 最高 1920x1080, 並按螢幕方向轉正; 來不及處理的幀會被略過並計數, 不會排隊積壓.",
+    "**預覽**: 把 ui 介面或懸浮窗中的 `SurfaceView` 交給會話即可顯示取景畫面, 可以與取幀和拍照同時進行.",
+    "**相機控制**: 腳本可以控制手電筒, 閃光模式, 變焦, 曝光補償與點按對焦, 並讀取各項的範圍與目前的值.",
+    "**相機獨佔**: 同一時間只有一個會話使用相機. 腳本佔用相機時, 取景頁顯示是哪個腳本, 點按 \"停止該腳本\" 即可接管相機.",
+    "**背景取幀**: 會話開啟期間顯示 \"相機使用中\" 通知, AutoJs6 退到背景或熄屏後仍可取幀; 腳本結束後相機立即釋放.",
+    "**預設值**: 在取景頁右上角的 \"設定\" 中可以設定 \"預設鏡頭\", \"預設分析解像度\" 與 \"預設分析幀率\"; 腳本指定的值總是優先.",
+    "**診斷與更新**: 設定頁的 \"診斷\" 部分列出各鏡頭的能力與 \"目前持有者\"; \"檢查更新\" 在官方插件索引中查找新版本.",
+    "**外觀**: \"語言\", \"夜間模式\" 與 \"主題色\" 預設跟隨 AutoJs6, 亦可以單獨設定; 還可以切換 \"啓動器圖標\"."
+  ],
+  "instruction_h3_script": "在腳本中使用",
+  "instruction_p_script": "在 AutoJs6 的 Rhino 腳本中透過全域模組 `camera` 使用相機. 下例拍一張相片, 並把 JPEG 儲存為內部儲存空間根目錄下的 prism.jpg:",
+  "instruction_p_script_analyze": "下例以 1280x720 連續取幀並識別條碼, 識別到後關閉會話. 條碼識別需要在 \"插件中心\" 啟用 ML Kit Barcode 插件:",
+  "instruction_script_notes": [
+    "`analyze` 回調中的幀只在回調執行期間有效; 要在回調之外使用, 先調用 `img.clone()` 取得副本, 用完後調用 `recycle()`.",
+    "`camera.capture` 不能在 UI 線程上調用, ui 腳本的介面回調中請改用 `camera.captureAsync`.",
+    "Node.js 腳本透過 `require('autojs6:camera')` 使用同一組方法, 傳回值為 Promise; Node.js 與 Bun 中不能顯示預覽.",
+    "完整用法與錯誤碼見 [AutoJs6 文件 > 相機 (Camera)](https://docs.autojs6.com/#/camera)."
+  ],
+  "instruction_h3_requirements": "運行要求",
+  "instruction_requirements": [
+    "Android {{ min_android_version }} 或更高版本. 取景頁與設定頁不需要 AutoJs6.",
+    "`camera` 模組需要 AutoJs6 {{ required_host_version_name }} 或更高版本, 並在 \"插件中心\" 啟用本插件.",
+    "相機權限由插件自己持有, AutoJs6 的相機權限不能代替. 可以在設定頁的 \"相機權限\" 一行授予, 腳本亦可以調用 `camera.requestPermission()`.",
+    "通知權限 (Android 13 及以上) 用於顯示 \"相機使用中\" 通知; 網絡權限只用於檢查更新, 相機畫面與相片不會離開裝置."
+  ],
+  "instruction_h3_faq": "常見問題",
+  "instruction_faq": [
+    {
+      "q": "開啟相機時報告 `CAMERA_DISABLED` 的原因",
+      "a": "Android 11 及以上, AutoJs6 在背景或手機停在鎖屏時, 系統不允許開啟相機. 讓 AutoJs6 回到前景後再開啟即可; 在前景開啟的會話退到背景或熄屏後照常取幀."
+    },
+    {
+      "q": "相機被佔用 (`CAMERA_BUSY`) 時的處理",
+      "a": "同一時間只有一個會話能使用相機, 錯誤的 `details.holder` 指出佔用者: 腳本的路徑, 或表示取景頁的 `pluginUi`. 關閉佔用相機的會話或取景頁後再開啟; 亦可以在取景頁上點按 \"停止該腳本\"."
+    },
+    {
+      "q": "相片的儲存位置",
+      "a": "插件不儲存相片, 也不寫入系統相簿. 只有腳本傳入 `path` 時, AutoJs6 才把 JPEG 寫到該路徑."
+    }
+  ],
+  "instruction_p_more": "各廠商系統的相容情況與權限說明見 [項目主頁]({{ repo_url }})."
 }

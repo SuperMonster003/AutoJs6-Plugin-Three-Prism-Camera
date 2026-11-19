@@ -41,8 +41,12 @@
     <string name="notification_channel_camera_description">スクリプトがカメラセッションを開いている間に表示されます</string>
     <string name="notification_channel_camera_name">カメラ</string>
     <string name="plugin_description">CameraX による写真撮影, 連続フレーム解析, ファインダープレビューを提供し, フレームを OCR, バーコード, YOLO などの認識モジュールへ直接渡せます</string>
-    <string name="release_history_title">バージョン履歴</string>
-    <string name="release_history_unavailable">バージョン履歴を読み込めませんでした</string>
+    <string name="release_history">リリース履歴</string>
+    <string name="release_history_collapse_all">すべて折りたたむ</string>
+    <string name="release_history_collapsed">折りたたみ中</string>
+    <string name="release_history_expand_all">すべて展開する</string>
+    <string name="release_history_expanded">展開中</string>
+    <string name="release_history_unavailable">リリース履歴を読み込めませんでした</string>
     <string name="settings_about">アプリについて</string>
     <string name="settings_analysis_fps">既定の解析フレームレート</string>
     <string name="settings_analysis_fps_device">デバイスのフレームレート</string>
@@ -98,7 +102,7 @@
     <string name="settings_open_failed">開けませんでした</string>
     <string name="settings_permission_granted">許可済み</string>
     <string name="settings_permission_missing">未許可. タップしてリクエスト</string>
-    <string name="settings_release_history_summary">プラグインに含まれるリリース履歴を表示します</string>
+    <string name="settings_release_history_summary">アプリに含まれるリリース履歴を表示します</string>
     <string name="settings_save_failed">設定を保存できませんでした</string>
     <string name="settings_theme_color">テーマ色</string>
     <string name="settings_title">設定</string>

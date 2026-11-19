@@ -353,6 +353,13 @@ dependencies {
     androidTestImplementation(libs.test.ext.junit)
     androidTestImplementation(libs.test.runner)
     androidTestImplementation(libs.test.rules)
+    // Compose UI tests of the release history page. They pull Espresso 3.5.0, whose idling sync reflects on
+    // InputManager.getInstance (gone on API 36), so Espresso is pinned to the catalog version.
+    // 发行历史页的 Compose UI 测试. 它们带入的 Espresso 3.5.0 在空闲同步时反射 InputManager.getInstance (API 36 已移除),
+    // 所以 Espresso 固定为版本目录里的版本.
+    androidTestImplementation(libs.test.espresso.core)
+    androidTestImplementation(platform(libs.compose.bom))
+    androidTestImplementation(libs.compose.ui.test.junit4)
 }
 
 tasks {

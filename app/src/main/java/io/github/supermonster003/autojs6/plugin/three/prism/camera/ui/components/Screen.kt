@@ -65,14 +65,17 @@ internal object RowDefaults {
 internal fun Color.disabledIf(disabled: Boolean): Color = if (disabled) copy(alpha = alpha * 0.38f) else this
 
 /**
- * Standard page: neutral background, a top bar with the back arrow and the system bar insets handled by [Scaffold].
- * zh-CN: 标准页面: 中性背景, 带返回箭头的顶栏, 系统栏 insets 由 [Scaffold] 处理.
+ * Standard page: neutral background, a top bar with the back arrow and the system bar insets handled by [Scaffold]. With
+ * a [subtitle] (the plugin name under "Release history", plugin-center P21.1) both lines stay single and ellipsized.
+ * zh-CN: 标准页面: 中性背景, 带返回箭头的顶栏, 系统栏 insets 由 [Scaffold] 处理. 有 [subtitle] 时 (发行历史页标题下的插件名称,
+ * plugin-center P21.1) 两行都单行显示, 超出省略.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun PrismScreen(
     title: String,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
     onBack: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
     snackbarHostState: SnackbarHostState? = null,
@@ -85,7 +88,22 @@ internal fun PrismScreen(
         topBar = {
             TopAppBar(
                 // The direction follows the text, so the Latin title "3-Prism Camera" keeps its order in RTL layouts.
-                title = { Text(title, style = MaterialTheme.typography.titleLarge.copy(textDirection = TextDirection.Content), maxLines = 2, overflow = TextOverflow.Ellipsis) },
+                title = {
+                    if (subtitle.isNullOrEmpty()) {
+                        Text(title, style = MaterialTheme.typography.titleLarge.copy(textDirection = TextDirection.Content), maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    } else {
+                        Column {
+                            Text(title, style = MaterialTheme.typography.titleLarge.copy(textDirection = TextDirection.Content), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(
+                                subtitle,
+                                style = MaterialTheme.typography.bodySmall.copy(textDirection = TextDirection.Content),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+                },
                 navigationIcon = {
                     if (onBack != null) {
                         IconButton(onClick = onBack, modifier = Modifier.testTag("prism.topBar.back")) {

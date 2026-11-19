@@ -41,7 +41,11 @@
     <string name="notification_channel_camera_description">Se muestra mientras un script mantiene abierta una sesión de cámara</string>
     <string name="notification_channel_camera_name">Cámara</string>
     <string name="plugin_description">Captura de fotos, análisis continuo de fotogramas y vista previa del visor con CameraX, con fotogramas listos para módulos de reconocimiento OCR, de códigos de barras, YOLO y otros</string>
-    <string name="release_history_title">Historial de versiones</string>
+    <string name="release_history">Historial de versiones</string>
+    <string name="release_history_collapse_all">Contraer todo</string>
+    <string name="release_history_collapsed">Contraído</string>
+    <string name="release_history_expand_all">Expandir todo</string>
+    <string name="release_history_expanded">Expandido</string>
     <string name="release_history_unavailable">No se pudo cargar el historial de versiones</string>
     <string name="settings_about">Acerca de</string>
     <string name="settings_analysis_fps">Velocidad de análisis predeterminada</string>
@@ -98,7 +102,7 @@
     <string name="settings_open_failed">No se pudo abrir</string>
     <string name="settings_permission_granted">Concedido</string>
     <string name="settings_permission_missing">No concedido. Toca para solicitarlo</string>
-    <string name="settings_release_history_summary">Leer el historial de versiones incluido en el complemento</string>
+    <string name="settings_release_history_summary">Consultar el historial de versiones incluido en la aplicación</string>
     <string name="settings_save_failed">No se pudo guardar el ajuste</string>
     <string name="settings_theme_color">Color del tema</string>
     <string name="settings_title">Ajustes</string>

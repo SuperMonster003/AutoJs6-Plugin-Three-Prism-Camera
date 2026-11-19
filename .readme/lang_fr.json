@@ -76,5 +76,57 @@
   ],
   "p_license": "Le code du projet est distribué sous [Mozilla Public License 2.0]({{ license_url }}). Les licences des composants tiers figurent dans les mentions tierces.",
   "text_link_third_party": "Mentions tierces (THIRD_PARTY_NOTICES.md)",
-  "p_instruction_docs": "L'API de script est décrite dans [Documentation AutoJs6 > Camera](https://docs.autojs6.com/#/camera), l'avancement et la conception sur la [page du projet]({{ repo_url }})."
+  "instruction_p_what": "3-Prism Camera est le plugin caméra d'AutoJs6: les scripts peuvent prendre des photos, recevoir des images en direct et afficher l'aperçu du viseur. Les images peuvent être passées directement à des modules de reconnaissance comme `ocr`, `barcode` ou YOLO pour lire des codes, reconnaître du texte ou détecter des objets en temps réel.",
+  "instruction_h3_start": "Prise en main",
+  "instruction_start_steps": [
+    "Ouvrez 3-Prism Camera depuis le lanceur et appuyez sur \"Accorder l'autorisation\" dans le viseur pour permettre au plugin d'utiliser la caméra.",
+    "Appuyez sur \"Prendre une photo\" pour un essai. La photo s'affiche seulement dans \"Aperçu de la photo\" et n'est pas enregistrée.",
+    "Activez ce plugin dans le \"Centre des plugins\" d'AutoJs6.",
+    "Appelez le module `camera` dans un script pour prendre des photos ou recevoir des images, comme dans les exemples ci-dessous."
+  ],
+  "instruction_h3_features": "Fonctionnalités principales",
+  "instruction_features": [
+    "**Viseur**: ouvrir le plugin depuis le lanceur affiche le viseur, où vous pouvez \"Changer de caméra\", allumer ou éteindre la lampe, zoomer avec le curseur ou en pinçant, et appuyer sur l'image pour faire la mise au point.",
+    "**Photos**: les scripts reçoivent une image redressée et peuvent aussi enregistrer le JPEG d'origine dans un chemin; avec `camera.capture({ ui: true })`, c'est l'utilisateur qui prend la photo dans le viseur.",
+    "**Images en direct**: 640x480 par défaut et jusqu'à 1920x1080, redressées selon l'écran; les images qu'un script n'a pas le temps de traiter sont ignorées et comptées au lieu de s'accumuler.",
+    "**Aperçu**: confiez à la session une `SurfaceView` d'une mise en page ui ou d'une fenêtre flottante pour afficher l'image du viseur, en parallèle des images en direct et des photos.",
+    "**Commandes**: les scripts contrôlent la lampe, le mode flash, le zoom, la compensation d'exposition et la mise au point par appui, et lisent la plage et la valeur actuelle de chacun.",
+    "**Une session à la fois**: une seule session utilise la caméra à la fois. Quand un script la détient, le viseur indique lequel, et \"Arrêter ce script\" permet de reprendre la caméra.",
+    "**Images en arrière-plan**: la notification \"Caméra en cours d'utilisation\" s'affiche tant qu'une session est ouverte, et les images continuent d'arriver quand AutoJs6 est en arrière-plan ou l'écran éteint; la caméra est libérée dès que le script se termine.",
+    "**Valeurs par défaut**: dans \"Paramètres\", en haut à droite du viseur, réglez \"Caméra par défaut\", \"Taille d'analyse par défaut\" et \"Fréquence d'analyse par défaut\"; les valeurs passées par un script sont toujours prioritaires.",
+    "**Diagnostic et mises à jour**: la section \"Diagnostic\" des paramètres liste les capacités de chaque caméra et le \"Détenteur actuel\"; \"Rechercher les mises à jour\" cherche les nouvelles versions dans l'index officiel des plugins.",
+    "**Apparence**: \"Langue\", \"Mode nuit\" et \"Couleur du thème\" suivent AutoJs6 par défaut et peuvent aussi être réglés à part; le réglage \"Icône du lanceur\" permet aussi de changer d'icône."
+  ],
+  "instruction_h3_script": "Utilisation dans les scripts",
+  "instruction_p_script": "Dans AutoJs6, les scripts Rhino utilisent la caméra via le module global `camera`. L'exemple ci-dessous prend une photo et enregistre le JPEG sous prism.jpg à la racine du stockage interne:",
+  "instruction_p_script_analyze": "L'exemple ci-dessous reçoit des images en 1280x720 et reconnaît les codes-barres, puis ferme la session dès qu'un code est lu. La reconnaissance des codes-barres nécessite le plugin ML Kit Barcode activé dans le \"Centre des plugins\":",
+  "instruction_script_notes": [
+    "Une image reçue dans le rappel de `analyze` n'est valable que pendant l'exécution du rappel; pour l'utiliser ensuite, appelez `img.clone()` pour obtenir une copie, puis `recycle()` une fois terminé.",
+    "`camera.capture` ne peut pas être appelé sur le thread UI; dans les rappels d'interface des scripts ui, utilisez `camera.captureAsync`.",
+    "Les scripts Node.js utilisent les mêmes méthodes via `require('autojs6:camera')`, qui renvoient des Promise; Node.js et Bun ne peuvent pas afficher d'aperçu.",
+    "L'utilisation complète et les codes d'erreur sont décrits dans [Documentation AutoJs6 > Camera](https://docs.autojs6.com/#/camera)."
+  ],
+  "instruction_h3_requirements": "Prérequis",
+  "instruction_requirements": [
+    "Android {{ min_android_version }} ou version ultérieure. Le viseur et les paramètres n'ont pas besoin d'AutoJs6.",
+    "Le module `camera` nécessite AutoJs6 {{ required_host_version_name }} ou version ultérieure, avec ce plugin activé dans le \"Centre des plugins\".",
+    "L'autorisation caméra appartient au plugin lui-même; celle d'AutoJs6 ne la remplace pas. Accordez-la sur la ligne \"Autorisation Caméra\" des paramètres, ou appelez `camera.requestPermission()` depuis un script.",
+    "L'autorisation des notifications (Android 13 et versions ultérieures) sert à afficher la notification \"Caméra en cours d'utilisation\"; l'accès réseau sert uniquement à rechercher les mises à jour, et les images de la caméra et les photos ne quittent jamais l'appareil."
+  ],
+  "instruction_h3_faq": "Questions fréquentes",
+  "instruction_faq": [
+    {
+      "q": "Raisons pour lesquelles l'ouverture de la caméra signale `CAMERA_DISABLED`",
+      "a": "Sur Android 11 et versions ultérieures, le système n'autorise pas la caméra quand AutoJs6 est en arrière-plan ou que le téléphone est sur l'écran de verrouillage. Ramenez AutoJs6 au premier plan, puis rouvrez la caméra; une session ouverte au premier plan continue de recevoir des images en arrière-plan ou écran éteint."
+    },
+    {
+      "q": "Cas où la caméra est occupée (`CAMERA_BUSY`)",
+      "a": "Une seule session peut utiliser la caméra à la fois, et `details.holder` dans l'erreur indique qui la détient: le chemin d'un script, ou `pluginUi` pour le viseur. Fermez cette session ou le viseur, puis rouvrez la caméra; dans le viseur, vous pouvez aussi appuyer sur \"Arrêter ce script\"."
+    },
+    {
+      "q": "Emplacement d'enregistrement des photos",
+      "a": "Le plugin n'enregistre pas les photos et n'écrit pas dans la galerie du système. AutoJs6 n'écrit le JPEG que si un script passe `path`."
+    }
+  ],
+  "instruction_p_more": "La compatibilité avec les systèmes des fabricants et les autorisations sont détaillées sur la [page du projet]({{ repo_url }})."
 }

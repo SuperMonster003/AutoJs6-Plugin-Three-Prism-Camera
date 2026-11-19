@@ -41,7 +41,11 @@
     <string name="notification_channel_camera_description">يظهر طوال إبقاء نص برمجي جلسة الكاميرا مفتوحة</string>
     <string name="notification_channel_camera_name">الكاميرا</string>
     <string name="plugin_description">التقاط الصور وتحليل الإطارات المتتابعة ومعاينة العدسة عبر CameraX مع تمرير الإطارات مباشرة إلى وحدات التعرف مثل OCR والرموز الشريطية و YOLO</string>
-    <string name="release_history_title">سجل الإصدارات</string>
+    <string name="release_history">سجل الإصدارات</string>
+    <string name="release_history_collapse_all">طيّ الكل</string>
+    <string name="release_history_collapsed">مطوي</string>
+    <string name="release_history_expand_all">توسيع الكل</string>
+    <string name="release_history_expanded">موسَّع</string>
     <string name="release_history_unavailable">تعذر تحميل سجل الإصدارات</string>
     <string name="settings_about">حول</string>
     <string name="settings_analysis_fps">معدل إطارات التحليل الافتراضي</string>
@@ -98,7 +102,7 @@
     <string name="settings_open_failed">تعذر الفتح</string>
     <string name="settings_permission_granted">ممنوح</string>
     <string name="settings_permission_missing">غير ممنوح. انقر للطلب</string>
-    <string name="settings_release_history_summary">قراءة سجل الإصدارات المضمن في الإضافة</string>
+    <string name="settings_release_history_summary">عرض سجل الإصدارات المضمن في التطبيق</string>
     <string name="settings_save_failed">تعذر حفظ الإعداد</string>
     <string name="settings_theme_color">لون السمة</string>
     <string name="settings_title">الإعدادات</string>
